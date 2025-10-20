@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -19,12 +19,14 @@ import { supabase } from '@/lib/supabase';
 import { signOut } from '@/lib/auth';
 import type { User } from '@supabase/supabase-js';
 import { useCart } from '@/components/cart-context';
+import { useAuthHydration } from '@/components/auth-provider';
 
 export function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const { initialUser, initialProfile } = useAuthHydration();
+  const [user, setUser] = useState<User | null>(initialUser ?? null);
+  const [profile, setProfile] = useState<any>(initialProfile ?? null);
   const [scrolled, setScrolled] = useState(false);
   const { count } = useCart();
 
@@ -40,6 +42,7 @@ export function Navbar() {
           last.val = next;
           setScrolled(next);
         }
+
       });
     };
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -84,7 +87,7 @@ export function Navbar() {
   };
 
   const navLinks = [
-    { href: '/automations', label: 'Ürünler', icon: Package },
+    { href: '/automations', label: 'Otomasyonlar', icon: Package },
     { href: '/categories', label: 'Kategoriler', icon: Layers },
     { href: '/developer/register', label: 'Geliştirici Ol', icon: Code2 },
     { href: '/blog', label: 'Blog', icon: BookOpen },
@@ -164,11 +167,11 @@ export function Navbar() {
                     <Avatar className="h-8 w-8 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
                       <AvatarImage src={profile?.avatar_url} alt={profile?.username || 'User'} />
                       <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-sm font-semibold">
-                        {profile?.username?.charAt(0).toUpperCase() || 'U'}
+                        {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium max-w-[100px] truncate">
-                      {profile?.username || 'Kullanıcı'}
+                      {profile?.username || user?.email || '...'}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     {/* DEV rozeti kaldırıldı */}
@@ -180,7 +183,7 @@ export function Navbar() {
                       <Avatar className="h-10 w-10 ring-2 ring-primary/20">
                         <AvatarImage src={profile?.avatar_url} />
                         <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white font-semibold">
-                          {profile?.username?.charAt(0).toUpperCase() || 'U'}
+                          {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col space-y-1">
@@ -248,16 +251,26 @@ export function Navbar() {
             )}
           </div>
 
-          <button
-            className="md:hidden rounded-xl p-2 hover:bg-primary/5 transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <Link href="/cart" className="relative" aria-label="Sepet">
+              <Button variant="ghost" size="icon" className="rounded-xl">
+                <ShoppingCart className="h-5 w-5" />
+              </Button>
+              {count > 0 && (
+                <span className="absolute -top-1 -right-1 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 font-bold">
+                  {count}
+                </span>
+              )}
+            </Link>
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg p-2 text-foreground hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Menüyü aç"
+            >
+              <Menu className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         {mobileMenuOpen && (
@@ -265,87 +278,108 @@ export function Navbar() {
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
+
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors rounded-xl ${
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
                     isActive
-                      ? 'text-primary bg-primary/5'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      ? 'text-primary bg-primary/10'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-primary/5'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Icon className="h-5 w-5" />
-                  {link.label}
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-5 w-5" />
+                    {link.label}
+                  </div>
+                  {isActive && <span className="text-xs text-primary">Aktif</span>}
                 </Link>
               );
             })}
-            <div className="pt-4 space-y-2 border-t border-border/40 mt-4">
-              {user ? (
-                <>
-                  <div className="px-4 py-2 mb-2">
+            <div className="border-t border-border/60 pt-6">
+              <div className="space-y-4">
+                <Link
+                  href="/cart"
+                  className="flex items-center justify-between rounded-xl border border-border/60 bg-primary/5 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/10"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShoppingCart className="h-5 w-5" />
+                    <span>Sepetim</span>
+                  </div>
+                  {count > 0 && (
+                    <span className="rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs font-bold">
+                      {count}
+                    </span>
+                  )}
+                </Link>
+                {user ? (
+                  <div className="rounded-2xl border border-border/60 bg-card/60 p-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 ring-2 ring-primary/20">
                         <AvatarImage src={profile?.avatar_url} />
                         <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white font-semibold">
-                          {profile?.username?.charAt(0).toUpperCase() || 'U'}
+                          {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-semibold">{profile?.username}</p>
+                        <p className="font-semibold">{profile?.username || 'Kullanıcı'}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
+                    <div className="mt-4 space-y-2">
+                      <Button variant="outline" className="w-full rounded-xl justify-start" asChild>
+                        <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                          <LayoutGrid className="mr-2 h-4 w-4" />
+                          Panelim
+                        </Link>
+                      </Button>
+                      {profile?.role === 'admin' && (
+                        <Button variant="outline" className="w-full rounded-xl justify-start" asChild>
+                          <Link href="/admin/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                            <Shield className="mr-2 h-4 w-4 text-red-500" />
+                            <span className="text-red-500 font-semibold">Admin Paneli</span>
+                          </Link>
+                        </Button>
+                      )}
+                      {profile?.is_developer && (
+                        <Button variant="outline" className="w-full rounded-xl justify-start" asChild>
+                          <Link href="/developer/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                            <Code2 className="mr-2 h-4 w-4" />
+                            Geliştirici Paneli
+                          </Link>
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-xl justify-start text-destructive hover:text-destructive"
+                        onClick={() => {
+                          handleSignOut();
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        Çıkış Yap
+                      </Button>
+                    </div>
                   </div>
-                  <Button variant="outline" className="w-full rounded-xl justify-start" asChild>
-                    <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                      <LayoutGrid className="mr-2 h-4 w-4" />
-                      Panelim
-                    </Link>
-                  </Button>
-                  {profile?.role === 'admin' && (
-                    <Button variant="outline" className="w-full rounded-xl justify-start border-red-500/20" asChild>
-                      <Link href="/admin/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                        <Shield className="mr-2 h-4 w-4 text-red-500" />
-                        <span className="text-red-500 font-semibold">Admin Paneli</span>
+                ) : (
+                  <>
+                    <Button variant="outline" className="w-full rounded-xl" asChild>
+                      <Link href="/auth/signin" onClick={() => setMobileMenuOpen(false)}>
+                        Giriş Yap
                       </Link>
                     </Button>
-                  )}
-                  {profile?.is_developer && (
-                    <Button variant="outline" className="w-full rounded-xl justify-start" asChild>
-                      <Link href="/developer/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                        <Code2 className="mr-2 h-4 w-4" />
-                        Geliştirici Paneli
+                    <Button className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg" asChild>
+                      <Link href="/auth/signup" onClick={() => setMobileMenuOpen(false)}>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Kayıt Ol
                       </Link>
                     </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    className="w-full rounded-xl justify-start text-destructive hover:text-destructive"
-                    onClick={() => {
-                      handleSignOut();
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    Çıkış Yap
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="outline" className="w-full rounded-xl" asChild>
-                    <Link href="/auth/signin" onClick={() => setMobileMenuOpen(false)}>
-                      Giriş Yap
-                    </Link>
-                  </Button>
-                  <Button className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg" asChild>
-                    <Link href="/auth/signup" onClick={() => setMobileMenuOpen(false)}>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Kayıt Ol
-                    </Link>
-                  </Button>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}

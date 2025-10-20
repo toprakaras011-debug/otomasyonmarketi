@@ -13,8 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, TrendingUp, DollarSign, Package, Pencil, Trash2, CircleAlert as AlertCircle, CreditCard } from 'lucide-react';
+import { Plus, TrendingUp, DollarSign, Package, Pencil, Trash2 } from 'lucide-react';
 import { supabase, type Automation } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { FileUpload } from '@/components/file-upload';
@@ -27,7 +26,6 @@ export default function DeveloperDashboardPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalSales: 0, totalEarnings: 0, totalProducts: 0 });
   const [loading, setLoading] = useState(true);
-  const [stripeAccount, setStripeAccount] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
   const [formUploading, setFormUploading] = useState(false);
@@ -73,7 +71,6 @@ export default function DeveloperDashboardPage() {
       const [
         { data: automationsData },
         { data: categoriesData },
-        { data: stripeData },
         { data: purchasesData }
       ] = await Promise.all([
         supabase
@@ -85,11 +82,6 @@ export default function DeveloperDashboardPage() {
           .eq('developer_id', currentUser.id)
           .order('created_at', { ascending: false }),
         supabase.from('categories').select('*').order('name'),
-        supabase
-          .from('stripe_accounts')
-          .select('*')
-          .eq('developer_id', currentUser.id)
-          .maybeSingle(),
         supabase
           .from('purchases')
           .select('developer_earnings, status')
@@ -115,7 +107,6 @@ export default function DeveloperDashboardPage() {
         setCategories(categoriesData);
       }
 
-      setStripeAccount(stripeData);
       setLoading(false);
     };
 
@@ -423,33 +414,6 @@ toast.error(`İşlem başarısız: ${error.details || error.message}`);
             </DialogContent>
           </Dialog>
         </div>
-
-        {!stripeAccount && (
-          <Card className="mb-6 border-2 border-yellow-500/20 bg-yellow-500/5">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-full bg-yellow-500/10">
-                  <AlertCircle className="h-6 w-6 text-yellow-500" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-2">Stripe Hesabınızı Bağlayın</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Satışlarınızdan ödeme alabilmek için Stripe Connect hesabınızı bağlamanız gerekiyor.
-                    Platform her satıştan %{process.env.PLATFORM_FEE_PERCENTAGE || '15'} komisyon alır, geri kalan tutar doğrudan sizin hesabınıza aktarılır.
-                  </p>
-                  <Button
-                    onClick={() => router.push('/developer/stripe-onboarding')}
-                    variant="default"
-                  >
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Şimdi Bağla
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

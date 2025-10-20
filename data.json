@@ -1,0 +1,28 @@
+import { createClient } from '@supabase/supabase-js'
+
+// Supabase projenin bilgileri
+const supabaseUrl = 'https://kizewqavkosvrwfnbxme.supabase.co' // <-- Tırnak işareti eklendi
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpemV3cWF2a29zdnJ3Zm5ieG1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1OTY0MTcsImV4cCI6MjA3NTE3MjQxN30.296FJktWIFWtvET6b_bJnyfm4566S5t4AxnmIGlFY' // <-- Tırnak işareti eklendi
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+// Kullanıcı giriş fonksiyonu
+async function getAccessToken() {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: 'ftnakras01@gmail.com',       // Supabase’de kayıtlı test kullanıcı email <-- Tırnak işareti eklendi
+    password: 'Deneme'        // Kullanıcının şifresi <-- Tırnak işareti eklendi
+  })
+
+  if (error) {
+    // Hata durumunda daha detaylı bilgi için:
+    // console.log('Hata Kodu:', error.status); 
+    console.log('Hata:', error)
+  } else {
+    console.log('Oturum Açma Başarılı.')
+    // Access token'a ihtiyacınız varsa:
+    // console.log('Access Token:', data.session.access_token)
+    // Oturum (session) bilgisine ihtiyacınız varsa:
+    // console.log('Oturum:', data.session)
+  }
+}
+
+getAccessToken()

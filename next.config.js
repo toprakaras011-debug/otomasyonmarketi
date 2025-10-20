@@ -1,4 +1,3 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -8,6 +7,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.pexels.com',
       },
     ],
   },

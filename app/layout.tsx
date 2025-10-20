@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { CartProvider } from '@/components/cart-context';
+import { AuthProvider } from '@/components/auth-provider';
+import { createClient } from '@/lib/supabase/server';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -11,7 +13,7 @@ const inter = Inter({
 });
 
 const poppins = Poppins({
-  weight: ['400', '600', '700'],
+  weight: ['400', '600', '700', '900'],
   subsets: ['latin'],
   variable: '--font-poppins',
   display: 'swap',
@@ -101,11 +103,26 @@ export const metadata: Metadata = {
   category: 'technology',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let profile: any = null;
+  if (user) {
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+    profile = data ?? null;
+  }
+
   return (
     <html lang="tr" className="dark">
       <head>
@@ -115,8 +132,10 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
         <CartProvider>
-          {children}
-          <Toaster />
+          <AuthProvider initialUser={user ?? null} initialProfile={profile}>
+            {children}
+            <Toaster />
+          </AuthProvider>
         </CartProvider>
       </body>
     </html>

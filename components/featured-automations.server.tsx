@@ -39,7 +39,7 @@ export default async function FeaturedAutomationsServer() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {automations.map((automation) => (
+          {automations.map((automation, index) => (
             <div key={automation.id}>
               <Link href={`/automations/${automation.slug}`}>
                 <Card className="group h-full overflow-hidden border-border/50 bg-card/50 backdrop-blur transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20">
@@ -51,7 +51,7 @@ export default async function FeaturedAutomationsServer() {
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
-                        priority={false}
+                        priority={index < 2}
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">

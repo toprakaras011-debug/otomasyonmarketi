@@ -196,6 +196,8 @@ export default function AutomationDetailClient({
                   src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}`}
                   alt={automation.title}
                   fill
+                  sizes="(max-width: 1024px) 100vw, (max-width: 1440px) 66vw, 960px"
+                  priority
                   className="object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;

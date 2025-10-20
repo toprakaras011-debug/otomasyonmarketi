@@ -3,25 +3,18 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { loadStripe } from '@stripe/stripe-js';
 import { Navbar } from '@/components/navbar';
 import { useCart } from '@/components/cart-context';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
-import { Loader, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-type StripeCheckoutClient = {
-  redirectToCheckout: (options: { sessionId: string }) => Promise<{ error?: { message?: string } | undefined }>;
-};
 
 export default function CartPage() {
   const { items, remove, clear, total } = useCart();
   const [user, setUser] = useState<any>(null);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -30,50 +23,6 @@ export default function CartPage() {
     };
     load();
   }, []);
-
-  const redirectToCheckout = async (sessionId: string) => {
-    const stripe = (await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '')) as unknown as StripeCheckoutClient | null;
-    if (!stripe) {
-      throw new Error('Stripe yüklenemedi.');
-    }
-
-    const { error } = await stripe.redirectToCheckout({ sessionId });
-    if (error) {
-      toast.error(error.message || 'Stripe yönlendirmesi başarısız.');
-      setIsRedirecting(false);
-    }
-  };
-
-  const startCheckout = async (automationIds: string[]) => {
-    if (!user) {
-      toast.error('Ödeme için giriş yapın');
-      return;
-    }
-    setIsRedirecting(true);
-    setProcessingId(automationIds.join(',')); // Use a unique key for multi-item checkout
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-cart-checkout', {
-        body: { automationIds, userId: user.id },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (!data?.sessionId) {
-        throw new Error('Ödeme başlatılamadı (sessionId alınamadı).');
-      }
-
-      await redirectToCheckout(data.sessionId);
-
-    } catch (e: any) {
-      toast.error(e.message || 'Bir hata oluştu');
-      setIsRedirecting(false);
-    } finally {
-      setProcessingId(null);
-    }
-  };
 
   
   
@@ -124,12 +73,8 @@ export default function CartPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="outline" onClick={() => remove(item.id)}>Kaldır</Button>
-                      <Button
-                        onClick={() => startCheckout([item.id])}
-                        disabled={processingId === item.id}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                      >
-                        {processingId === item.id ? (<><Loader className="mr-2 h-4 w-4 animate-spin" /> Hazırlanıyor...</>) : 'Ödeme Yap'}
+                      <Button disabled variant="secondary">
+                        Ödeme devre dışı
                       </Button>
                     </div>
                   </CardContent>
@@ -149,15 +94,10 @@ export default function CartPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex items-center justify-between gap-3">
-                  <Button
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                    disabled={items.length === 0 || !!processingId}
-                    onClick={() => startCheckout(items.map(i => i.id))}
-                  >
-                    Tümünü Öde
+                  <Button className="flex-1" disabled>
+                    Ödeme sistemi devre dışı
                   </Button>
-                  <p className="text-sm text-muted-foreground">Stripe ile güvenli ödeme</p>
-                </CardFooter>
+                                  </CardFooter>
               </Card>
             </div>
           </div>
