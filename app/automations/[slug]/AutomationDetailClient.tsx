@@ -37,7 +37,7 @@ export default function AutomationDetailClient({
   const handleAddToCart = () => {
     if (!currentUser) {
       toast.info('Satın almak için giriş yapmanız gerekiyor.');
-      router.push('/login');
+      router.push('/auth/signin');
       return;
     }
 
