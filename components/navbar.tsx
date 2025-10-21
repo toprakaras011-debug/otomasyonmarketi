@@ -19,71 +19,30 @@ import { supabase } from '@/lib/supabase';
 import { signOut } from '@/lib/auth';
 import type { User } from '@supabase/supabase-js';
 import { useCart } from '@/components/cart-context';
-import { useAuthHydration } from '@/components/auth-provider';
+import { useAuth } from '@/components/auth-provider';
 
 export function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { initialUser, initialProfile } = useAuthHydration();
-  const [user, setUser] = useState<User | null>(initialUser ?? null);
-  const [profile, setProfile] = useState<any>(initialProfile ?? null);
+  const { user, profile } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const { count } = useCart();
 
   useEffect(() => {
-    let raf = 0;
-    const last = { val: false };
-    const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(() => {
-        raf = 0;
-        const next = window.scrollY > 10;
-        if (next !== last.val) {
-          last.val = next;
-          setScrolled(next);
-        }
-
-      });
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser((prev: User | null) => (prev?.id === user?.id ? prev : user));
-      if (user) {
-        const { data } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-        setProfile((prev: any) => (prev?.id === data?.id ? prev : data));
-      } else {
-        setProfile((prev: any) => (prev ? null : prev));
-      }
-    };
-
-    getUser();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      void getUser();
-    });
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Set initial state
 
     return () => {
-      listener?.subscription?.unsubscribe?.();
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
   const handleSignOut = async () => {
     await signOut();
-    setUser(null);
-    setProfile(null);
+    // The AuthProvider will handle state updates automatically
   };
 
   const navLinks = [

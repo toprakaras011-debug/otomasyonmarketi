@@ -12,6 +12,7 @@ import { Star, Download, ExternalLink, ShoppingCart } from 'lucide-react';
 import { supabase, type Automation, type Review } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useCart } from '@/components/cart-context';
+import { useAuth } from '@/components/auth-provider';
 import type { User } from '@supabase/supabase-js';
 
 interface AutomationDetailClientProps {
@@ -25,7 +26,7 @@ export default function AutomationDetailClient({
   automation, 
   initialReviews, 
   initialHasPurchased,
-  currentUser
+  currentUser: initialCurrentUser // This will be removed in a future step, but kept for now to avoid breaking the parent
 }: AutomationDetailClientProps) {
   const router = useRouter();
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
@@ -33,8 +34,13 @@ export default function AutomationDetailClient({
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const { add } = useCart();
+  const { user: currentUser, loading } = useAuth(); // Use the central auth state
 
   const handleAddToCart = () => {
+    if (loading) { 
+      toast.info('Lütfen bekleyin...');
+      return;
+    }
     if (!currentUser) {
       toast.info('Satın almak için giriş yapmanız gerekiyor.');
       router.push('/auth/signin');
