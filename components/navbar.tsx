@@ -150,16 +150,18 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex md:items-center md:space-x-3">
-            <Link href="/cart" className="relative group">
-              <Button variant="ghost" className="rounded-xl" size="icon" aria-label="Sepet">
-                <ShoppingCart className="h-5 w-5" />
-              </Button>
-              {count > 0 && (
-                <span className="absolute -top-1 -right-1 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 font-bold">
-                  {count}
-                </span>
-              )}
-            </Link>
+            {user && (
+              <Link href="/cart" className="relative group">
+                <Button variant="ghost" className="rounded-xl" size="icon" aria-label="Sepet">
+                  <ShoppingCart className="h-5 w-5" />
+                </Button>
+                {count > 0 && (
+                  <span className="absolute -top-1 -right-1 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 font-bold">
+                    {count}
+                  </span>
+                )}
+              </Link>
+            )}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -252,16 +254,18 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
-            <Link href="/cart" className="relative" aria-label="Sepet">
-              <Button variant="ghost" size="icon" className="rounded-xl">
-                <ShoppingCart className="h-5 w-5" />
-              </Button>
-              {count > 0 && (
-                <span className="absolute -top-1 -right-1 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 font-bold">
-                  {count}
-                </span>
-              )}
-            </Link>
+            {user && (
+              <Link href="/cart" className="relative" aria-label="Sepet">
+                <Button variant="ghost" size="icon" className="rounded-xl">
+                  <ShoppingCart className="h-5 w-5" />
+                </Button>
+                {count > 0 && (
+                  <span className="absolute -top-1 -right-1 rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 font-bold">
+                    {count}
+                  </span>
+                )}
+              </Link>
+            )}
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-lg p-2 text-foreground hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
@@ -300,21 +304,23 @@ export function Navbar() {
             })}
             <div className="border-t border-border/60 pt-6">
               <div className="space-y-4">
-                <Link
-                  href="/cart"
-                  className="flex items-center justify-between rounded-xl border border-border/60 bg-primary/5 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/10"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <div className="flex items-center gap-3">
-                    <ShoppingCart className="h-5 w-5" />
-                    <span>Sepetim</span>
-                  </div>
-                  {count > 0 && (
-                    <span className="rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs font-bold">
-                      {count}
-                    </span>
-                  )}
-                </Link>
+                {user && (
+                  <Link
+                    href="/cart"
+                    className="flex items-center justify-between rounded-xl border border-border/60 bg-primary/5 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/10"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ShoppingCart className="h-5 w-5" />
+                      <span>Sepetim</span>
+                    </div>
+                    {count > 0 && (
+                      <span className="rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs font-bold">
+                        {count}
+                      </span>
+                    )}
+                  </Link>
+                )}
                 {user ? (
                   <div className="rounded-2xl border border-border/60 bg-card/60 p-4">
                     <div className="flex items-center gap-3">
