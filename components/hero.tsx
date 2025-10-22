@@ -34,7 +34,7 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-8 text-5xl font-black leading-tight tracking-tight md:text-7xl lg:text-8xl"
+            className="mb-6 text-4xl font-black leading-tight tracking-tight sm:text-5xl md:text-7xl lg:text-8xl"
           >
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent animate-gradient">
               Gücünü Otomasyonla
@@ -47,10 +47,11 @@ export function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="mb-12 text-xl text-muted-foreground md:text-2xl max-w-3xl mx-auto leading-relaxed"
+            className="mb-10 text-lg text-muted-foreground md:text-xl max-w-3xl mx-auto leading-relaxed"
           >
             E-ticaret, sosyal medya ve veri analitiği için profesyonel otomasyon çözümlerini keşfedin.
             <br className="hidden md:block" />
+            {' '}
             <span className="font-semibold text-foreground">Zamandan tasarruf edin, işinizi büyütün.</span>
           </motion.p>
 

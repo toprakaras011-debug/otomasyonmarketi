@@ -317,6 +317,18 @@ export function Navbar() {
                           </Link>
                         </Button>
                       )}
+                      <Button variant="outline" className="w-full rounded-xl justify-start" asChild>
+                        <Link href="/dashboard/favorites" onClick={() => setMobileMenuOpen(false)}>
+                          <Heart className="mr-2 h-4 w-4" />
+                          Favorilerim
+                        </Link>
+                      </Button>
+                      <Button variant="outline" className="w-full rounded-xl justify-start" asChild>
+                        <Link href="/dashboard/settings" onClick={() => setMobileMenuOpen(false)}>
+                          <Settings className="mr-2 h-4 w-4" />
+                          Ayarlar
+                        </Link>
+                      </Button>
                       <Button
                         variant="outline"
                         className="w-full rounded-xl justify-start text-destructive hover:text-destructive"
