@@ -14,7 +14,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+<<<<<<< HEAD
 import { Menu, Sparkles, Package, Layers, Code2, BookOpen, ChevronDown, Shield, ShoppingCart, User, Heart, Settings, Zap } from 'lucide-react';
+=======
+import { Menu, X, Sparkles, Package, Layers, Code2, BookOpen, ChevronDown, Shield, ShoppingCart, User, Heart, Settings, Zap } from 'lucide-react';
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 import { signOut } from '@/lib/auth';
 import { useCart } from '@/components/cart-context';
 import { useAuth } from '@/components/auth-provider';
@@ -29,7 +33,12 @@ export function Navbar() {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const { scrollY } = useScroll();
+<<<<<<< HEAD
   const navOpacity = useTransform(scrollY, [0, 100], [0.85, 1]);
+=======
+  const navOpacity = useTransform(scrollY, [0, 100], [0.8, 1]);
+  const navBlur = useTransform(scrollY, [0, 100], [8, 20]);
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,7 +93,11 @@ export function Navbar() {
   return (
     <motion.nav 
       style={{ opacity: navOpacity }}
+<<<<<<< HEAD
       className={`fixed top-0 z-50 w-full transition-all duration-300 ${
+=======
+      className={`fixed top-0 z-50 w-full transition-all duration-500 ${
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
         scrolled
           ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
           : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
@@ -96,7 +109,11 @@ export function Navbar() {
         animate={{
           opacity: [0.3, 0.8, 0.3],
         }}
+<<<<<<< HEAD
         transition={{ duration: 1.6, repeat: Infinity }}
+=======
+        transition={{ duration: 3, repeat: Infinity }}
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
       />
 
       <div className="container mx-auto px-4">
@@ -114,7 +131,11 @@ export function Navbar() {
                 animate={{
                   rotate: [0, 360],
                 }}
+<<<<<<< HEAD
                 transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+=======
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
               />
               
               {/* Main logo container */}
@@ -128,7 +149,11 @@ export function Navbar() {
                     x: [-20, 20],
                     opacity: [0, 1, 0],
                   }}
+<<<<<<< HEAD
                   transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 0.4 }}
+=======
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                 />
               </div>
             </motion.div>
@@ -166,7 +191,11 @@ export function Navbar() {
                       <motion.div
                         layoutId="navbar-active"
                         className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl"
+<<<<<<< HEAD
                         transition={{ type: "spring", bounce: 0.2, duration: 0.35 }}
+=======
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                       />
                     )}
                     

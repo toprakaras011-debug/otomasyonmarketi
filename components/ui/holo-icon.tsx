@@ -8,7 +8,10 @@ interface HoloIconProps {
   gradientTo?: string;
   gradientClass?: string;
   className?: string;
+<<<<<<< HEAD
   iconColor?: string;
+=======
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 }
 
 const sizeMap = {
@@ -42,11 +45,17 @@ export function HoloIcon({
   gradientTo = defaultGradientTo,
   gradientClass,
   className = '',
+<<<<<<< HEAD
   iconColor,
 }: HoloIconProps) {
   const sizeStyles = sizeMap[size];
   const tailwindGradientClass = gradientClass ?? `from-[${gradientFrom}] to-[${gradientTo}]`;
   const resolvedIconColor = iconColor ?? '#ffffff';
+=======
+}: HoloIconProps) {
+  const sizeStyles = sizeMap[size];
+  const tailwindGradientClass = gradientClass ?? `from-[${gradientFrom}] to-[${gradientTo}]`;
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 
   return (
     <motion.div
@@ -80,10 +89,21 @@ export function HoloIcon({
         className={`relative flex ${sizeStyles.container} items-center justify-center rounded-[1.6rem] bg-gradient-to-br ${tailwindGradientClass} shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] border border-white/5`}
       >
         <div className="absolute inset-0 rounded-[1.6rem] bg-white/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+<<<<<<< HEAD
         <Icon
           className={`${sizeStyles.icon} relative z-10 drop-shadow-[0_10px_18px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-110`}
           strokeWidth={2.4}
           style={{ color: resolvedIconColor, stroke: resolvedIconColor }}
+=======
+        <motion.div
+          className="absolute inset-x-3 top-2 h-1 rounded-full bg-white/60 opacity-40"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <Icon
+          className={`${sizeStyles.icon} relative z-10 text-white drop-shadow-[0_10px_18px_rgba(0,0,0,0.4)] transition-transform duration-300 group-hover:scale-110`}
+          strokeWidth={2.4}
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
         />
       </div>
 

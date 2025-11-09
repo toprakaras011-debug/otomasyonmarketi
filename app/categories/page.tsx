@@ -103,7 +103,10 @@ const staticCategories = (
 
 export default function CategoriesPage() {
   const [categoriesWithStats, setCategoriesWithStats] = useState<any[]>([]);
+<<<<<<< HEAD
   const [totalAutomationCount, setTotalAutomationCount] = useState(0);
+=======
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -114,6 +117,7 @@ export default function CategoriesPage() {
         .order('name');
 
       if (data) {
+<<<<<<< HEAD
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         const oneWeekAgoIso = oneWeekAgo.toISOString();
@@ -122,10 +126,17 @@ export default function CategoriesPage() {
           const { data: automations } = await supabase
             .from('automations')
             .select('id, total_sales, rating_avg')
+=======
+        const statsPromises = data.map(async (category) => {
+          const { count } = await supabase
+            .from('automations')
+            .select('*', { count: 'exact', head: true })
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
             .eq('category_id', category.id)
             .eq('is_published', true)
             .eq('admin_approved', true);
 
+<<<<<<< HEAD
           const automationCount = automations?.length ?? 0;
           const automationIds = automations?.map((a) => a.id) ?? [];
 
@@ -139,6 +150,14 @@ export default function CategoriesPage() {
               .gte('purchased_at', oneWeekAgoIso);
             weeklySalesCount = weeklyCount || 0;
           }
+=======
+          const { data: automations } = await supabase
+            .from('automations')
+            .select('total_sales, rating_avg')
+            .eq('category_id', category.id)
+            .eq('is_published', true)
+            .eq('admin_approved', true);
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 
           const totalSales = automations?.reduce((sum, a) => sum + (a.total_sales || 0), 0) || 0;
           const avgRating = automations && automations.length > 0
@@ -147,10 +166,16 @@ export default function CategoriesPage() {
 
           return {
             ...category,
+<<<<<<< HEAD
             automationCount,
             totalSales,
             avgRating: avgRating.toFixed(1),
             weeklySalesCount,
+=======
+            automationCount: count || 0,
+            totalSales,
+            avgRating: avgRating.toFixed(1)
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
           };
         });
 
@@ -182,7 +207,10 @@ export default function CategoriesPage() {
             automationCount: 0,
             totalSales: 0,
             avgRating: '0.0',
+<<<<<<< HEAD
             weeklySalesCount: 0,
+=======
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
           };
         });
 
@@ -194,6 +222,7 @@ export default function CategoriesPage() {
             gradientFrom: category.gradientFrom ?? '#312e81',
             gradientTo: category.gradientTo ?? '#1e1b4b',
             icon: category.icon ?? 'trending',
+<<<<<<< HEAD
             weeklySalesCount: category.weeklySalesCount ?? 0,
           }));
 
@@ -214,6 +243,11 @@ export default function CategoriesPage() {
 
         setCategoriesWithStats(sortedByPerformance);
         setTotalAutomationCount(totalAutomations);
+=======
+          }));
+
+        setCategoriesWithStats([...merged, ...remaining]);
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
       }
       setLoading(false);
     };
@@ -267,6 +301,7 @@ export default function CategoriesPage() {
       <div className="container relative mx-auto px-4 py-16">
         {/* Header */}
         <div className="mb-16 mt-8 text-center">
+<<<<<<< HEAD
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -276,6 +311,8 @@ export default function CategoriesPage() {
             <Sparkles className="h-3.5 w-3.5" /> Popüler Kategoriler
           </motion.div>
 
+=======
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -283,7 +320,11 @@ export default function CategoriesPage() {
             className="mb-6 text-5xl font-black md:text-6xl lg:text-7xl"
           >
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+<<<<<<< HEAD
               İşletmenize En Uygun Otomasyonları Seçin
+=======
+              Otomasyon Kategorileri
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
             </span>
           </motion.h1>
           
@@ -293,9 +334,13 @@ export default function CategoriesPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mx-auto max-w-2xl text-xl text-foreground/70"
           >
+<<<<<<< HEAD
             Yapay zeka destekli otomasyon kütüphanemizle operasyonlarınızı ölçeklendirin, ekip verimliliğini artırın.
             <br className="hidden sm:block" />
             <span className="font-semibold text-purple-400">{totalAutomationCount.toLocaleString('tr-TR')}+</span> otomasyon çözümü bugün uygulanabilir durumda.
+=======
+            İhtiyacınıza uygun kategoriyi seçin ve binlerce otomasyon çözümü arasından size en uygun olanı bulun
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
           </motion.p>
         </div>
 
@@ -314,11 +359,14 @@ export default function CategoriesPage() {
               >
                 <Link href={`/automations?category=${category.slug}`} className="group block">
                   <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-[1px] shadow-xl backdrop-blur-sm transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:from-purple-500/20 hover:to-blue-500/20">
+<<<<<<< HEAD
                     {category.isTopPerformer && (
                       <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-3 py-1 text-xs font-semibold text-purple-100 backdrop-blur">
                         <Sparkles className="h-3 w-3" /> Bu haftanın yıldızı
                       </div>
                     )}
+=======
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                     {/* Glow Effect */}
                     <div
                       className="absolute inset-0 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-20"
@@ -335,7 +383,10 @@ export default function CategoriesPage() {
                         size="md"
                         gradientFrom={gradientFrom}
                         gradientTo={gradientTo}
+<<<<<<< HEAD
                         iconColor={gradientTo}
+=======
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                         className="mb-6"
                       />
 
@@ -350,6 +401,7 @@ export default function CategoriesPage() {
                       <div className="mb-6 flex flex-wrap items-center gap-3 border-t border-border/50 pt-4">
                         <Badge className="border-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-purple-300">
                           <Zap className="mr-1 h-3 w-3" />
+<<<<<<< HEAD
                           {category.automationCount?.toLocaleString('tr-TR')} Otomasyon
                         </Badge>
                         <div className="flex items-center gap-1 text-xs text-foreground/60">
@@ -364,6 +416,14 @@ export default function CategoriesPage() {
                           <div className="flex items-center gap-1 text-xs text-foreground/60">
                             <Sparkles className="h-3 w-3 text-purple-400" />
                             <span>{category.totalSales.toLocaleString('tr-TR')} toplam satış</span>
+=======
+                          {category.automationCount} Otomasyon
+                        </Badge>
+                        {category.totalSales > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-foreground/60">
+                            <TrendingUp className="h-3 w-3 text-purple-400" />
+                            <span>{category.totalSales} Satış</span>
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                           </div>
                         )}
                         {Number(category.avgRating) > 0 && (
@@ -377,7 +437,11 @@ export default function CategoriesPage() {
                       {/* CTA */}
                       <div className="flex items-center justify-between border-t border-border/50 pt-4">
                         <span className="text-sm font-semibold text-purple-400">Keşfet</span>
+<<<<<<< HEAD
                         <ArrowRight className="h-5 w-5 text-white transition-transform group-hover:translate-x-1" />
+=======
+                        <ArrowRight className="h-5 w-5 text-purple-400 transition-transform group-hover:translate-x-1" />
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                       </div>
                     </div>
                   </div>

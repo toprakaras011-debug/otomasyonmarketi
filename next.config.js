@@ -3,6 +3,10 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+<<<<<<< HEAD
+=======
+  swcMinify: true,
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
   output: 'standalone',
   productionBrowserSourceMaps: false,
   
@@ -57,17 +61,38 @@ const nextConfig = {
   
   // Experimental features for performance
   experimental: {
+<<<<<<< HEAD
     optimizePackageImports: ['lucide-react', '@radix-ui/react-select', '@radix-ui/react-dialog', '@radix-ui/react-tabs', '@radix-ui/react-popover'],
+=======
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-select', '@radix-ui/react-dialog', '@radix-ui/react-tabs', '@radix-ui/react-popover'],
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
     scrollRestoration: true,
     optimizeCss: true,
     serverActions: {
       bodySizeLimit: '2mb',
     },
+<<<<<<< HEAD
+=======
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
     webpackBuildWorker: true,
     parallelServerCompiles: true,
     parallelServerBuildTraces: true,
   },
   
+<<<<<<< HEAD
+=======
+  // Font optimization
+  optimizeFonts: true,
+  
+>>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
   // Headers for caching and performance
   async headers() {
     return [
