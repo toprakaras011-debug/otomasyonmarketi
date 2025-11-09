@@ -3,14 +3,9 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles, Zap, Shield, TrendingUp, Rocket, Globe, Code2, Users } from 'lucide-react';
-<<<<<<< HEAD
 import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-=======
-import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 
 type HeroStats = {
   automations: number;
@@ -21,7 +16,6 @@ type HeroStats = {
   efficiencyMultiplier: number;
 };
 
-<<<<<<< HEAD
 type StatDescriptor = {
   icon: LucideIcon;
   label: string;
@@ -37,8 +31,6 @@ type FeatureCard = {
   color: 'purple' | 'blue' | 'pink';
 };
 
-=======
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 type HeroProps = {
   initialStats: HeroStats;
 };
@@ -52,13 +44,8 @@ const PARTICLE_CONFIG = Array.from({ length: 12 }, (_, index) => {
   const seed = index + 1;
   const left = (pseudoRandom(seed) * 100).toFixed(6);
   const top = (pseudoRandom(seed * 1.37) * 100).toFixed(6);
-<<<<<<< HEAD
-  const duration = 1.2 + pseudoRandom(seed * 1.73) * 1.3;
-  const delay = pseudoRandom(seed * 2.11) * 1.1;
-=======
   const duration = 3 + pseudoRandom(seed * 1.73) * 2;
   const delay = pseudoRandom(seed * 2.11) * 2;
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 
   return {
     left,
@@ -80,13 +67,6 @@ export function Hero({ initialStats }: HeroProps) {
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const opacity = useTransform(scrollYProgress, [0, 1], [1, 0.3]);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  const stats = initialStats;
-=======
   const [stats, setStats] = useState({
     ...initialStats,
     loading: false,
@@ -96,7 +76,6 @@ export function Hero({ initialStats }: HeroProps) {
     setIsMounted(true);
     setStats({ ...initialStats, loading: false });
   }, [initialStats]);
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 
   const formatWithPlus = (value: number, suffix?: string) => {
     if (!value) {
@@ -110,42 +89,29 @@ export function Hero({ initialStats }: HeroProps) {
     return suffix ? `${formatted}+ ${suffix}` : `${formatted}+`;
   };
 
-<<<<<<< HEAD
-  const primaryStats: StatDescriptor[] = [
-    {
-      icon: Zap,
-      label: 'Verimlilik Artışı',
-      value: `${stats.efficiencyMultiplier}x`,
-=======
   const primaryStats = useMemo(() => ([
     {
       icon: Zap,
       label: 'Verimlilik Artışı',
       value: stats.loading ? '...' : `${stats.efficiencyMultiplier}x`,
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
       gradient: 'from-purple-600 to-purple-500',
       bg: 'from-purple-500/10 to-transparent',
     },
     {
       icon: Globe,
       label: 'Canlı Entegrasyon',
-<<<<<<< HEAD
-      value: formatWithPlus(stats.integrations),
-=======
       value: stats.loading ? '...' : formatWithPlus(stats.integrations),
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
       gradient: 'from-blue-600 to-cyan-500',
       bg: 'from-blue-500/10 to-transparent',
     },
     {
       icon: Code2,
       label: 'Tasarruf Edilen Saat',
-<<<<<<< HEAD
-      value: formatWithPlus(stats.estimatedHours, 'Saat'),
+      value: stats.loading ? '...' : formatWithPlus(stats.estimatedHours, 'Saat'),
       gradient: 'from-pink-600 to-rose-500',
       bg: 'from-pink-500/10 to-transparent',
     },
-  ];
+  ]), [stats]);
 
   const featureCards: FeatureCard[] = [
     { icon: Zap, title: 'Hızlı Entegrasyon', desc: 'Dakikalar içinde kurulum', color: 'purple' },
@@ -153,54 +119,29 @@ export function Hero({ initialStats }: HeroProps) {
     { icon: TrendingUp, title: '%85 Gelir', desc: 'Geliştiriciler için', color: 'pink' },
   ];
 
-  const secondaryStats: StatDescriptor[] = [
-    {
-      icon: Sparkles,
-      label: 'Hazır Otomasyon',
-      value: formatWithPlus(stats.automations),
-=======
-      value: stats.loading ? '...' : formatWithPlus(stats.estimatedHours, 'Saat'),
-      gradient: 'from-pink-600 to-rose-500',
-      bg: 'from-pink-500/10 to-transparent',
-    },
-  ]), [stats]);
-
   const secondaryStats = useMemo(() => ([
     {
       icon: Sparkles,
       label: 'Hazır Otomasyon',
       value: stats.loading ? '...' : formatWithPlus(stats.automations),
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
       gradient: 'from-purple-600 via-purple-500 to-pink-600',
       bg: 'from-purple-500/15 via-transparent to-pink-500/15',
     },
     {
       icon: Users,
       label: 'Profesyonel Geliştirici',
-<<<<<<< HEAD
-      value: formatWithPlus(stats.developers),
-=======
       value: stats.loading ? '...' : formatWithPlus(stats.developers),
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
       gradient: 'from-blue-600 via-cyan-500 to-blue-600',
       bg: 'from-blue-500/15 via-transparent to-cyan-500/15',
     },
     {
       icon: TrendingUp,
       label: 'Aktif Kullanıcı',
-<<<<<<< HEAD
-      value: formatWithPlus(stats.users),
-      gradient: 'from-pink-600 via-rose-500 to-orange-600',
-      bg: 'from-pink-500/15 via-transparent to-orange-500/15',
-    },
-  ];
-=======
       value: stats.loading ? '...' : formatWithPlus(stats.users),
       gradient: 'from-pink-600 via-rose-500 to-orange-600',
       bg: 'from-pink-500/15 via-transparent to-orange-500/15',
     },
   ]), [stats]);
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
 
   return (
     <section ref={containerRef} className="relative overflow-hidden pt-24 pb-16 sm:pt-32 sm:pb-20 md:pt-40 md:pb-32 lg:pt-48 lg:pb-40">
@@ -213,55 +154,30 @@ export function Hero({ initialStats }: HeroProps) {
         <motion.div 
           className="absolute -top-[40%] -right-[20%] h-[800px] w-[800px] rounded-full bg-purple-600/30 blur-[120px]"
           animate={{
-<<<<<<< HEAD
-            scale: [1, 1.15, 1],
-            opacity: [0.35, 0.55, 0.35],
-            x: [0, 60, 0],
-            y: [0, 40, 0],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-=======
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
             x: [0, 50, 0],
             y: [0, 30, 0],
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
         />
         <motion.div 
           className="absolute -bottom-[40%] -left-[20%] h-[800px] w-[800px] rounded-full bg-blue-600/30 blur-[120px]"
           animate={{
-<<<<<<< HEAD
-            scale: [1, 1.2, 1],
-            opacity: [0.35, 0.55, 0.35],
-            x: [0, -60, 0],
-            y: [0, -35, 0],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-=======
             scale: [1, 1.3, 1],
             opacity: [0.3, 0.5, 0.3],
             x: [0, -50, 0],
             y: [0, -30, 0],
           }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 1 }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
         />
         <motion.div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-pink-500/20 blur-[100px]"
           animate={{
-<<<<<<< HEAD
-            scale: [1, 1.08, 1],
-            rotate: [0, 200, 360],
-          }}
-          transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
-=======
             scale: [1, 1.1, 1],
             rotate: [0, 180, 360],
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
         />
         
         {/* Floating Particles */}
@@ -276,11 +192,7 @@ export function Hero({ initialStats }: HeroProps) {
                   top: `${particle.top}%`,
                 }}
                 animate={{
-<<<<<<< HEAD
-                  y: [0, -34, 0],
-=======
                   y: [0, -30, 0],
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                   opacity: [0, 1, 0],
                 }}
                 transition={{
@@ -300,11 +212,7 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
-            transition={{ duration: 0.35, delay: 0.06, ease: "easeOut" }}
-=======
             transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
             className="mb-6 text-4xl font-black leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl"
           >
             <span className="relative inline-block">
@@ -323,11 +231,7 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
-            transition={{ duration: 0.4, delay: 0.18 }}
-=======
             transition={{ duration: 0.6, delay: 0.2 }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
             className="mx-auto mb-4 max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl md:text-2xl"
           >
             <span className="block text-balance text-foreground/85">
@@ -357,11 +261,7 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
-            transition={{ duration: 0.45, delay: 0.28 }}
-=======
             transition={{ duration: 0.6, delay: 0.3 }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
             className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6"
           >
             <Button
@@ -394,11 +294,7 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.div
             initial={{ opacity: 0, scale: 0.9, rotateX: 20 }}
             animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-<<<<<<< HEAD
-            transition={{ duration: 0.55, delay: 0.35 }}
-=======
             transition={{ duration: 0.8, delay: 0.4 }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
             className="mb-20 perspective-[2000px]"
           >
             <div className="relative mx-auto max-w-5xl">
@@ -406,15 +302,6 @@ export function Hero({ initialStats }: HeroProps) {
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 p-1 shadow-2xl backdrop-blur-xl">
                 <div className="rounded-xl bg-transparent p-8 backdrop-blur-sm">
                   <div className="grid gap-4 md:grid-cols-3">
-<<<<<<< HEAD
-                    {primaryStats.map((stat, index) => (
-                      <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 + index * 0.07 }}
-                        className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${stat.bg} p-6 shadow-lg backdrop-blur-sm transition-all hover:scale-[1.04] hover:shadow-2xl`}
-=======
                     {primaryStats.map((stat, i) => (
                       <motion.div
                         key={i}
@@ -422,7 +309,6 @@ export function Hero({ initialStats }: HeroProps) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6 + i * 0.1 }}
                         className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${stat.bg} p-6 shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:shadow-2xl`}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                       >
                         <motion.div
                           className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
@@ -446,15 +332,6 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
-            transition={{ duration: 0.5, delay: 0.42 }}
-            className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-3"
-          >
-            {secondaryStats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                whileHover={{ scale: 1.04, y: -6 }}
-=======
             transition={{ duration: 0.7, delay: 0.5 }}
             className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-3"
           >
@@ -462,55 +339,33 @@ export function Hero({ initialStats }: HeroProps) {
               <motion.div
                 key={i}
                 whileHover={{ scale: 1.05, y: -5 }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                 className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.bg} p-8 shadow-xl backdrop-blur-sm transition-all hover:shadow-2xl`}
               >
                 <motion.div
                   className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
                 />
-<<<<<<< HEAD
-
-=======
                 
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                 {/* Animated glow orb */}
                 <motion.div
                   className={`absolute -right-12 -bottom-12 h-32 w-32 rounded-full bg-gradient-to-br ${stat.gradient} opacity-10 dark:opacity-20 blur-3xl`}
                   animate={{
-<<<<<<< HEAD
-                    scale: [1, 1.22, 1],
-                    opacity: [0.15, 0.25, 0.15],
-                  }}
-                  transition={{ duration: 2.8, repeat: Infinity }}
-                />
-
-=======
                     scale: [1, 1.2, 1],
                     opacity: [0.1, 0.2, 0.1],
                   }}
                   transition={{ duration: 4, repeat: Infinity }}
                 />
                 
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                 <div className="relative">
                   <div className="mb-4 flex items-center justify-between">
                     <div className={`inline-flex rounded-xl bg-gradient-to-br ${stat.gradient} p-2.5 shadow-lg`}>
                       <stat.icon className="h-5 w-5 text-white" />
                     </div>
                     <motion.div
-<<<<<<< HEAD
-                      animate={{
-                        scale: [1, 1.25, 1],
-                        opacity: [0.85, 1, 0.85],
-                      }}
-                      transition={{ duration: 1.6, repeat: Infinity }}
-=======
                       animate={{ 
                         scale: [1, 1.2, 1],
                         opacity: [0.8, 1, 0.8],
                       }}
                       transition={{ duration: 2, repeat: Infinity }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                       className="h-2 w-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50"
                     />
                   </div>
@@ -527,27 +382,13 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
-            transition={{ duration: 0.5, delay: 0.48 }}
-            className="grid grid-cols-1 gap-6 md:grid-cols-3"
-          >
-            {featureCards.map((feature) => (
-              <motion.div
-                key={feature.title}
-                whileHover={{ y: -7 }}
-=======
             transition={{ duration: 0.7, delay: 0.6 }}
             className="grid grid-cols-1 gap-6 md:grid-cols-3"
           >
-            {[
-              { icon: Zap, title: 'Hızlı Entegrasyon', desc: 'Dakikalar içinde kurulum', color: 'purple' },
-              { icon: Shield, title: 'Güvenli Ödeme', desc: 'SSL korumalı işlemler', color: 'blue' },
-              { icon: TrendingUp, title: '%85 Gelir', desc: 'Geliştiriciler için', color: 'pink' },
-            ].map((feature, i) => (
+            {featureCards.map((feature, i) => (
               <motion.div
                 key={i}
                 whileHover={{ y: -5 }}
->>>>>>> 4595d2f384ec8f56ba16da6cecb09b0f2a9e8a39
                 className="flex items-start gap-4 rounded-xl border border-white/5 bg-white/5 p-6 text-left backdrop-blur-sm transition-all hover:border-white/20"
               >
                 <div className={`flex-shrink-0 rounded-xl bg-gradient-to-br from-${feature.color}-500/20 to-${feature.color}-500/10 p-3`}>

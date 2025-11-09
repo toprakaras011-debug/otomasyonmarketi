@@ -2,8 +2,16 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 async function resolveAuthContext(request: Request, automationId: string) {
-  if (!automationId) {
+  if (!automationId || automationId === 'undefined' || automationId === 'null') {
+    console.error('Invalid automation ID received:', automationId);
     return NextResponse.json({ message: 'Geçersiz otomasyon kimliği' }, { status: 400 });
+  }
+
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(automationId)) {
+    console.error('Invalid UUID format for automation ID:', automationId);
+    return NextResponse.json({ message: 'Geçersiz otomasyon kimliği formatı' }, { status: 400 });
   }
 
   const supabase = await createClient();

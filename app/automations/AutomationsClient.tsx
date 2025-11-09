@@ -139,7 +139,7 @@ export default function AutomationsClient({ automations, categories }: Props) {
                     <SelectContent>
                       <SelectItem value="all">Tüm Kategoriler</SelectItem>
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.slug}>
+                        <SelectItem key={category.slug} value={category.slug}>
                           {category.name}
                         </SelectItem>
                       ))}

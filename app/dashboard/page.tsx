@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [purchases, setPurchases] = useState<any[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,33 +46,52 @@ export default function DashboardPage() {
         setProfile(profileData);
       }
 
-      const { data: purchasesData, error: purchasesError } = await supabase
-        .from('purchases')
-        .select(`
-          id,
-          user_id,
-          automation_id,
-          price_paid,
-          status,
-          purchased_at,
-          automation:automations(
+      // Try to fetch purchases with error handling
+      try {
+        // First check if purchases table exists and user has access
+        const { data: purchasesData, error: purchasesError } = await supabase
+          .from('purchases')
+          .select(`
             id,
-            title,
-            slug,
-            image_url,
-            is_published,
-            admin_approved
-          )
-        `)
-        .eq('user_id', currentUser.id)
-        .order('purchased_at', { ascending: false });
-      
-      if (purchasesError) {
-        console.error('Purchases fetch error:', purchasesError);
-      }
-
-      if (purchasesData) {
-        setPurchases(purchasesData as any);
+            user_id,
+            automation_id,
+            price_paid,
+            status,
+            purchased_at,
+            automation:automations!inner(
+              id,
+              title,
+              slug,
+              image_url,
+              is_published,
+              admin_approved
+            )
+          `)
+          .eq('user_id', currentUser.id)
+          .eq('status', 'completed')
+          .order('purchased_at', { ascending: false });
+        
+        if (purchasesError) {
+          console.error('Purchases fetch error details:', {
+            message: purchasesError.message,
+            details: purchasesError.details,
+            hint: purchasesError.hint,
+            code: purchasesError.code,
+            userId: currentUser.id
+          });
+          
+          // Check if it's a table access issue
+          if (purchasesError.code === 'PGRST116' || purchasesError.message?.includes('relation') || purchasesError.message?.includes('does not exist')) {
+            console.warn('Purchases table may not exist or user lacks access. This is normal for new users.');
+          }
+          
+          setPurchases([]);
+        } else {
+          setPurchases(purchasesData || []);
+        }
+      } catch (error) {
+        console.error('Purchases fetch exception:', error);
+        setPurchases([]);
       }
 
       const { data: favoritesData } = await supabase

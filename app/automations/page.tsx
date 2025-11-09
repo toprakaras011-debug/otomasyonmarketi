@@ -36,7 +36,7 @@ export default async function AutomationsPage() {
   const mergedCategories = CATEGORY_DEFINITIONS.map((definition) => {
     const existing = categoriesBySlug.get(definition.slug);
     return {
-      id: existing?.id ?? `static-${definition.slug}`,
+      id: existing?.id ?? null, // Don't use static IDs that look like UUIDs
       slug: definition.slug,
       name: definition.name,
     };

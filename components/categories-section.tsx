@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { ArrowRight, Sparkles, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Sparkles, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { getCategoriesWithStats } from '@/lib/queries/categories';
 import {
   CATEGORY_CONFIG,
   CATEGORY_ICON_MAP,
@@ -19,29 +19,6 @@ type CategoryStat = {
   icon: CategoryIconKey;
   automationCount: number;
   salesLast7Days: number;
-  featuredAutomation?: {
-    title: string;
-    slug?: string;
-  } | null;
-};
-
-type PurchaseRow = {
-  price_paid: number | null;
-  purchased_at: string;
-  automation: {
-    id: string | number | null;
-    title: string;
-    slug: string | null;
-    is_published: boolean;
-    admin_approved: boolean;
-    category_id: string | null;
-    category: {
-      id: string;
-      slug: string;
-      name: string;
-      description: string | null;
-    } | null;
-  } | null;
 };
 
 const formatAutomationLabel = (count: number) => {
@@ -55,41 +32,62 @@ const formatAutomationLabel = (count: number) => {
   return `${new Intl.NumberFormat('tr-TR').format(count)} Otomasyon`;
 };
 
-function CategoryCard({ category }: { category: CategoryStat }) {
+function CategoryCard({ category, index }: { category: CategoryStat; index: number }) {
   const config = CATEGORY_CONFIG.find((cfg) => cfg.slug === category.slug);
   const iconKey: CategoryIconKey = (config?.icon ?? category.icon ?? 'sparkles') as CategoryIconKey;
   const Icon = CATEGORY_ICON_MAP[iconKey];
   const descriptionText = config?.description || category.description || 'Kategori detayları yakında.';
 
   return (
-    <Link href={`/automations?category=${category.slug}`}>
-      <Card className="space-y-6 border border-border bg-background/95 p-6 transition-transform duration-200 hover:-translate-y-1">
-        <div className={`inline-flex rounded-xl bg-gradient-to-br ${category.gradient} p-3 text-white`}>
-          <Icon className="h-8 w-8" />
-        </div>
-
-        <div>
-          <h3 className="text-2xl font-bold text-foreground">{category.name}</h3>
-          <p className="mt-2 text-sm text-muted-foreground">{descriptionText}</p>
-        </div>
-
-        <div className="rounded-2xl border border-dashed border-purple-500/30 bg-purple-500/5 p-5 text-center text-sm font-semibold text-purple-600">
-          {formatAutomationLabel(category.automationCount)}
-        </div>
-
-        {category.featuredAutomation?.title && (
-          <div className="rounded-lg border border-border/40 bg-background/80 p-4 text-left">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-purple-500">Öne Çıkan</p>
-            <p className="mt-2 text-sm text-foreground">{category.featuredAutomation.title}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+    >
+      <Link href={`/automations?category=${category.slug}`} className="group block h-full">
+        <div className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 p-[1px] shadow-xl backdrop-blur-sm transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:from-purple-500/10 hover:to-blue-500/10">
+          {/* Animated glow effect */}
+          <div className="absolute inset-0 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-30">
+            <div className={`h-full w-full bg-gradient-to-br ${category.gradient}`} />
           </div>
-        )}
 
-        <div className="inline-flex items-center text-sm font-semibold text-purple-600">
-          Keşfet
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {/* Card content */}
+          <div className="relative h-full overflow-hidden rounded-3xl bg-background/80 p-8 backdrop-blur-sm">
+            {/* Icon with gradient background */}
+            <div className="mb-6">
+              <div className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${category.gradient} shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:shadow-xl`}>
+                <Icon className="h-8 w-8 text-white" />
+              </div>
+            </div>
+
+            {/* Category name */}
+            <h3 className="mb-3 text-2xl font-bold text-foreground transition-colors group-hover:text-purple-400">
+              {category.name}
+            </h3>
+
+            {/* Description */}
+            <p className="mb-6 text-sm text-muted-foreground/80">{descriptionText}</p>
+
+            {/* Automation count badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-500/20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 px-4 py-2 backdrop-blur-sm">
+              <Zap className="h-4 w-4 text-purple-400" />
+              <span className="text-sm font-semibold text-purple-400">
+                {formatAutomationLabel(category.automationCount)}
+              </span>
+            </div>
+
+            {/* CTA */}
+            <div className="flex items-center justify-between pt-4">
+              <span className="text-sm font-semibold text-purple-400 transition-colors group-hover:text-purple-300">Keşfet</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 transition-all duration-300 group-hover:from-purple-500/30 group-hover:to-blue-500/30">
+                <ArrowRight className="h-5 w-5 text-purple-400 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+          </div>
         </div>
-      </Card>
-    </Link>
+      </Link>
+    </motion.div>
   );
 }
 
@@ -101,240 +99,40 @@ export function CategoriesSection() {
     let isMounted = true;
 
     const fetchCategoryStats = async () => {
+      setIsLoading(true);
       try {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-        const { data: purchaseRowsRaw, error: purchasesError } = await supabase
-          .from('purchases')
-          .select(
-            `price_paid,
-             purchased_at,
-             automation:automations(
-               id,
-               title,
-               slug,
-               is_published,
-               admin_approved,
-               category_id,
-               category:categories(
-                 id,
-                 slug,
-                 name,
-                 description
-               )
-             )`
-          )
-          .eq('status', 'completed')
-          .gte('purchased_at', sevenDaysAgo.toISOString());
-
-        if (purchasesError) {
-          throw purchasesError;
-        }
-
-        const purchaseRows = ((purchaseRowsRaw ?? []) as any[]).map((row) => {
-          const raw = row as any;
-          const automation = raw?.automation;
+        // Use centralized query utility for better performance
+        const stats = await getCategoriesWithStats();
+        
+        // Merge with static config for gradients and icons
+        const mergedCategories = CATEGORY_CONFIG.map((config) => {
+          const stat = stats.find((s: any) => s.slug === config.slug);
           return {
-            price_paid: raw?.price_paid ?? null,
-            purchased_at: raw?.purchased_at ?? '',
-            automation: automation
-              ? {
-                  id: automation.id ?? null,
-                  title: automation.title ?? 'İsimsiz Otomasyon',
-                  slug: automation.slug ?? null,
-                  is_published: Boolean(automation.is_published),
-                  admin_approved: Boolean(automation.admin_approved),
-                  category_id: automation.category_id ?? null,
-                  category: automation.category
-                    ? {
-                        id: automation.category.id,
-                        slug: automation.category.slug,
-                        name: automation.category.name,
-                        description: automation.category.description ?? null,
-                      }
-                    : null,
-                }
-              : null,
-          } satisfies PurchaseRow;
-        }) as PurchaseRow[];
-
-        const categoryMap = new Map<
-          string,
-          {
-            stat: CategoryStat;
-            automationSales: Map<
-              string,
-              {
-                total: number;
-                count: number;
-                title: string;
-                slug?: string;
-              }
-            >;
-            automationIds: Set<string>;
-            categoryId?: string | null;
-          }
-        >();
-
-        (purchaseRows ?? []).forEach((row) => {
-          const automation = row?.automation;
-          if (!automation || !automation.is_published || !automation.admin_approved) return;
-
-          const category = automation.category;
-          if (!category?.slug) return;
-
-          const automationIdSource = automation.id ?? automation.slug ?? automation.title;
-          if (!automationIdSource) return;
-          const automationId = String(automationIdSource);
-
-          const config = CATEGORY_CONFIG.find((cfg) => cfg.slug === category.slug);
-          const gradient = config?.gradient ?? 'from-purple-600 via-pink-500 to-blue-600';
-          const icon = config?.icon ?? 'trending';
-          const name = config?.name ?? category.name ?? 'Popüler Kategori';
-          const description = config?.description ?? '';
-
-          let entry = categoryMap.get(category.slug);
-          if (!entry) {
-            entry = {
-              stat: {
-                slug: category.slug,
-                name,
-                description,
-                gradient,
-                icon,
-                automationCount: 0,
-                salesLast7Days: 0,
-                featuredAutomation: null,
-              },
-              automationSales: new Map(),
-              automationIds: new Set(),
-              categoryId: category.id,
-            };
-            categoryMap.set(category.slug, entry);
-          } else if (!entry.categoryId && category.id) {
-            entry.categoryId = category.id;
-          }
-
-          const pricePaid = Number(row.price_paid ?? 0);
-          entry.stat.salesLast7Days += pricePaid;
-          entry.automationIds.add(automationId);
-
-          const currentAutomation = entry.automationSales.get(automationId) ?? {
-            total: 0,
-            count: 0,
-            title: automation.title,
-            slug: automation.slug ?? undefined,
+            slug: config.slug,
+            name: config.name,
+            description: config.description || stat?.description || '',
+            gradient: config.gradient,
+            icon: config.icon,
+            automationCount: stat?.automationCount || 0,
+            salesLast7Days: stat?.weeklySalesCount || 0,
           };
-
-          currentAutomation.total += pricePaid;
-          currentAutomation.count += 1;
-          entry.automationSales.set(automationId, currentAutomation);
         });
-
-        let derivedCategories: CategoryStat[] = await Promise.all(
-          Array.from(categoryMap.values()).map(async ({ stat, automationSales, automationIds, categoryId }) => {
-            const topAutomation = Array.from(automationSales.values()).sort((a, b) => {
-              if (b.total !== a.total) return b.total - a.total;
-              return b.count - a.count;
-            })[0];
-
-            let automationCount = automationIds.size;
-            if (categoryId) {
-              const { count, error: countError } = await supabase
-                .from('automations')
-                .select('id', { count: 'exact', head: true })
-                .eq('category_id', categoryId)
-                .eq('is_published', true)
-                .eq('admin_approved', true);
-
-              if (!countError && typeof count === 'number') {
-                automationCount = count;
-              }
-            }
-
-            return {
-              ...stat,
-              automationCount,
-              featuredAutomation: topAutomation
-                ? {
-                    title: topAutomation.title,
-                    slug: topAutomation.slug,
-                  }
-                : null,
-            };
-          })
-        );
-
-        if (derivedCategories.length === 0) {
-          const { data: categoriesTable, error: categoriesError } = await supabase
-            .from('categories')
-            .select('id, slug, name, description');
-
-          if (categoriesError) {
-            throw categoriesError;
-          }
-
-          const results = await Promise.all(
-            CATEGORY_CONFIG.map(async (config) => {
-              const match = (categoriesTable ?? []).find((category) => category.slug === config.slug);
-              if (!match) {
-                return null;
-              }
-
-              const { count, error: countError } = await supabase
-                .from('automations')
-                .select('id', { count: 'exact', head: true })
-                .eq('category_id', match.id)
-                .eq('is_published', true)
-                .eq('admin_approved', true);
-
-              if (countError) {
-                return null;
-              }
-
-              return {
-                slug: config.slug,
-                name: config.name,
-                description: config.description ?? '',
-                gradient: config.gradient,
-                icon: config.icon,
-                automationCount: typeof count === 'number' ? count : 0,
-                salesLast7Days: 0,
-                featuredAutomation: null,
-              } satisfies CategoryStat;
-            })
-          );
-
-          derivedCategories = results.filter(Boolean) as CategoryStat[];
-        }
-
-        derivedCategories.sort((a, b) => {
+        
+        // Sort by performance
+        mergedCategories.sort((a, b) => {
           if (b.salesLast7Days !== a.salesLast7Days) {
             return b.salesLast7Days - a.salesLast7Days;
           }
           return b.automationCount - a.automationCount;
         });
 
-        const limitedCategories = derivedCategories.slice(0, CATEGORY_CONFIG.length);
-
         if (isMounted) {
-          setCategories(limitedCategories);
+          setCategories(mergedCategories);
         }
       } catch (error) {
+        console.error('Error fetching categories:', error);
         if (isMounted) {
-          setCategories(
-            CATEGORY_CONFIG.map((config) => ({
-              slug: config.slug,
-              name: config.name,
-              description: config.description,
-              gradient: config.gradient,
-              icon: config.icon,
-              automationCount: config.baselineCount,
-              salesLast7Days: 0,
-              featuredAutomation: null,
-            }))
-          );
+          setCategories([]);
         }
       } finally {
         if (isMounted) {
@@ -356,39 +154,81 @@ export function CategoriesSection() {
     : 'Bu hafta popüler kategoriler oluşturuluyor...';
 
   return (
-    <section className="py-16 sm:py-20 lg:py-24">
-      <div className="container mx-auto px-4">
-        <div className="mx-auto mb-12 max-w-2xl text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-500/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-purple-500">
-            <Sparkles className="h-4 w-4" />
+    <section className="relative py-20 sm:py-24 lg:py-32 overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f12_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f12_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        <motion.div 
+          className="absolute top-0 left-1/4 h-96 w-96 rounded-full bg-purple-500/20 blur-[120px]"
+          animate={{ opacity: [0.3, 0.5, 0.3], scale: [1, 1.1, 1] }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
+        <motion.div 
+          className="absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-blue-500/20 blur-[120px]"
+          animate={{ opacity: [0.3, 0.5, 0.3], scale: [1, 1.1, 1] }}
+          transition={{ duration: 8, repeat: Infinity, delay: 2 }}
+        />
+      </div>
+
+      <div className="container relative mx-auto px-4">
+        {/* Header */}
+        <motion.div 
+          className="mx-auto mb-16 max-w-3xl text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div 
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-400/30 bg-gradient-to-r from-purple-500/10 via-pink-500/5 to-blue-500/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.35em] text-purple-400 backdrop-blur-sm"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400 }}
+          >
+            <Sparkles className="h-4 w-4 animate-pulse" />
             Popüler Kategoriler
-          </div>
-          <h2 className="text-balance text-3xl font-black text-foreground sm:text-4xl">
-            İhtiyacınıza Uygun Çözümleri Keşfedin
+          </motion.div>
+          
+          <h2 className="mb-6 text-4xl font-black text-foreground sm:text-5xl lg:text-6xl">
+            <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+              İhtiyacınıza Uygun Çözümleri Keşfedin
+            </span>
           </h2>
-          <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+          
+          <p className="text-lg text-muted-foreground sm:text-xl">
             AI destekli otomasyon çözümleriyle işlerinizi hızlandırın ve verimliliğinizi artırın.{' '}
-            <span className="font-semibold text-purple-500">
+            <span className="font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
               {isLoading ? 'Veriler yükleniyor...' : totalAutomationLabel}
             </span>
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {categories.slice(0, 6).map((category) => (
-            <CategoryCard key={category.slug} category={category} />
+        {/* Categories Grid */}
+        <div className="mb-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {categories.slice(0, 6).map((category, index) => (
+            <CategoryCard key={category.slug} category={category} index={index} />
           ))}
         </div>
 
-        <div className="mt-12 text-center">
+        {/* View All Button */}
+        <motion.div 
+          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
           <Link
             href="/categories"
-            className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:border-purple-500/50"
+            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 p-[2px] shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/25"
           >
-            Tüm Kategorileri Görüntüle
-            <ArrowRight className="h-5 w-5" />
+            <span className="relative inline-flex items-center gap-3 rounded-full bg-background px-8 py-4 font-semibold text-foreground transition-all group-hover:bg-background/80">
+              <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text transition-all group-hover:text-transparent">Tüm Kategorileri Görüntüle</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 transition-all group-hover:from-purple-500/30 group-hover:to-blue-500/30">
+                <ArrowRight className="h-4 w-4 text-purple-400 transition-transform group-hover:translate-x-1" />
+              </div>
+            </span>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

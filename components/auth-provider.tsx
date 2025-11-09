@@ -32,17 +32,33 @@ export function AuthProvider({
 
   useEffect(() => {
     const fetchUserProfile = async (user: User) => {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      setProfile(data ?? null);
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Profile fetch error:', error);
+          setProfile(null);
+        } else {
+          setProfile(data);
+        }
+      } catch (error) {
+        console.error('Profile fetch exception:', error);
+        setProfile(null);
+      }
     };
 
     // Set initial user and profile
     setUser(initialUser);
     setProfile(initialProfile);
+
+    // If we have initial user but no profile, fetch it
+    if (initialUser && !initialProfile) {
+      fetchUserProfile(initialUser);
+    }
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setLoading(true);

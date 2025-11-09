@@ -95,7 +95,7 @@ export default function DeveloperDashboardPage() {
     }));
 
     const staticCategories = CATEGORY_DEFINITIONS.map((definition) => ({
-      id: `static-${definition.slug}`,
+      id: null, // Don't use static IDs that look like UUIDs
       slug: definition.slug,
       name: definition.name,
     }));
@@ -223,6 +223,35 @@ export default function DeveloperDashboardPage() {
       return;
     }
 
+    // Find the actual category ID for static categories
+    let categoryId = formData.category_id;
+    if (categoryId && !categoryId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      // This is a slug, find the actual category ID
+      const category = categories?.find(c => c.slug === categoryId);
+      if (category) {
+        categoryId = category.id;
+      } else {
+        // Create category if it doesn't exist
+        const { data: newCategory, error: categoryError } = await supabase
+          .from('categories')
+          .insert({
+            name: derivedCategories.find(c => c.slug === categoryId)?.name || categoryId,
+            slug: categoryId,
+            description: '',
+            color: '#8b5cf6'
+          })
+          .select()
+          .single();
+        
+        if (categoryError) {
+          toast.error('Kategori oluşturulamadı: ' + categoryError.message);
+          setFormSubmitting(false);
+          return;
+        }
+        categoryId = newCategory.id;
+      }
+    }
+
     const automationData = {
       developer_id: user.id,
       title: formData.title,
@@ -230,7 +259,7 @@ export default function DeveloperDashboardPage() {
       description: formData.description,
       long_description: formData.long_description || null,
       price: priceAsNumber,
-      category_id: formData.category_id || null,
+      category_id: categoryId || null,
       image_path: formData.image_path || null,
       file_path: formData.file_path || null,
       demo_url: formData.demo_url || null,
@@ -246,15 +275,21 @@ export default function DeveloperDashboardPage() {
           .update(automationData)
           .eq('id', editingAutomation.id);
 
-        if (error) throw error;
-        toast.success('Otomasyon güncellendi!');
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
+        toast.success('Otomasyon başarıyla güncellendi!');
       } else {
         const { error } = await supabase
           .from('automations')
           .insert(automationData);
 
-        if (error) throw error;
-        toast.success('Otomasyon eklendi!');
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+        toast.success('Otomasyon başarıyla eklendi!');
       }
 
       setDialogOpen(false);
@@ -274,8 +309,22 @@ export default function DeveloperDashboardPage() {
         setAutomations(automationsData as any);
       }
     } catch (error: any) {
-      console.error('Submission Error:', error);
-toast.error(`İşlem başarısız: ${error.details || error.message}`);
+      console.error('Error:', error);
+      let errorMessage = 'Bilinmeyen hata';
+      
+      if (error.message) {
+        if (error.message.includes('duplicate key')) {
+          errorMessage = 'Bu başlıkta bir otomasyon zaten mevcut';
+        } else if (error.message.includes('foreign key')) {
+          errorMessage = 'Seçilen kategori geçersiz';
+        } else if (error.message.includes('uuid')) {
+          errorMessage = 'Kategori seçimi hatası';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error('İşlem başarısız: ' + errorMessage);
     } finally {
       setFormSubmitting(false);
     }
@@ -463,17 +512,17 @@ toast.error(`İşlem başarısız: ${error.details || error.message}`);
                             <SelectContent>
                               <SelectGroup>
                                 <SelectLabel>Sabit Kategoriler</SelectLabel>
-                                {derivedCategories.filter(c => c.id.startsWith('static-')).map((cat) => (
-                                  <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                {derivedCategories.filter(c => c.id === null).map((cat) => (
+                                  <SelectItem key={cat.slug} value={cat.slug}>{cat.name}</SelectItem>
                                 ))}
                               </SelectGroup>
-                              {derivedCategories.filter(c => !c.id.startsWith('static-')).length > 0 && (
+                              {derivedCategories.filter(c => c.id !== null).length > 0 && (
                                 <>
                                   <SelectSeparator />
                                   <SelectGroup>
                                     <SelectLabel>Özel Kategoriler</SelectLabel>
-                                    {derivedCategories.filter(c => !c.id.startsWith('static-')).map((cat) => (
-                                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                                    {derivedCategories.filter(c => c.id !== null).map((cat) => (
+                                      <SelectItem key={cat.slug} value={cat.id!}>{cat.name}</SelectItem>
                                     ))}
                                   </SelectGroup>
                                 </>

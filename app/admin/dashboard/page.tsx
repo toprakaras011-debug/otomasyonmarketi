@@ -57,7 +57,13 @@ export default function AdminDashboardPage() {
         supabase
           .from('admin_dashboard')
           .select('*')
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false })
+          .then(result => {
+            if (result.data) {
+              console.log('Admin dashboard automations:', result.data.map(a => ({ id: a.id, title: a.title, type: typeof a.id })));
+            }
+            return result;
+          }),
         supabase
           .from('automations')
           .select('id', { count: 'exact', head: true }),
