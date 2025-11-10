@@ -44,7 +44,7 @@ const timeBasedThemeInitScript = `
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  display: 'swap', // Prevents invisible text during font load
+  display: 'optional', // Prevent layout shift - use fallback immediately
   preload: true, // Preload critical font
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
   adjustFontFallback: true,
@@ -55,7 +55,7 @@ const poppins = Poppins({
   weight: ['600', '700', '900'],
   subsets: ['latin'],
   variable: '--font-poppins',
-  display: 'swap', // Prevents invisible text during font load
+  display: 'optional', // Prevent layout shift - use fallback immediately
   preload: false, // Defer non-critical font
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
   adjustFontFallback: true,

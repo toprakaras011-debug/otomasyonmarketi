@@ -54,6 +54,36 @@
     @apply border-border;
   }
 
+  /* Prevent layout shift from images */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Prevent layout shift from loading states */
+  [data-loading] {
+    min-height: 1px;
+    visibility: hidden;
+  }
+
+  [data-loading="false"] {
+    visibility: visible;
+  }
+
+  /* Prevent layout shift from main container */
+  main {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Prevent layout shift from navbar */
+  nav, header {
+    position: relative;
+    width: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-inter), system-ui, sans-serif;
@@ -64,6 +94,11 @@
     font-kerning: normal;
     /* Performance optimizations */
     contain: layout style paint;
+    /* Prevent layout shift */
+    scrollbar-gutter: stable;
+    overflow-x: hidden;
+    min-height: 100vh;
+    position: relative;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -298,28 +333,55 @@
   }
 }
 
-/* Smooth scrolling */
+/* Smooth scrolling - Prevent layout shift */
 html {
   scroll-behavior: smooth;
+  /* Prevent layout shift from scrollbar */
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  /* Prevent content flash */
+  visibility: visible;
 }
 
-/* Custom scrollbar */
+/* Body - Prevent layout shift */
+body {
+  /* Reserve space for scrollbar */
+  scrollbar-gutter: stable;
+  /* Prevent horizontal overflow */
+  overflow-x: hidden;
+  /* Prevent layout shift during load */
+  min-height: 100vh;
+  /* Prevent content shift */
+  position: relative;
+}
+
+/* Custom scrollbar - Prevent layout shift */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
+  /* Always show scrollbar to prevent layout shift */
+  -webkit-appearance: none;
 }
 
 ::-webkit-scrollbar-track {
   background: hsl(var(--background));
+  /* Reserve space to prevent shift */
+  border-left: 1px solid transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #8B5CF6, #3B82F6);
   border-radius: 10px;
+  /* Prevent thumb from causing layout shift */
+  border: 2px solid hsl(var(--background));
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #7C3AED, #2563EB);
+  background-clip: padding-box;
 }
 
 /* Selection */

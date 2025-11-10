@@ -23,7 +23,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 export function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const { count } = useCart();
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -99,7 +99,7 @@ export function Navbar() {
   return (
     <motion.nav 
       style={{ opacity: mounted ? navOpacity : 0.8 }}
-      className={`fixed top-0 z-50 w-full transition-all duration-300 gpu-accelerated ${
+      className={`fixed top-0 z-50 w-full h-16 transition-all duration-300 gpu-accelerated ${
         scrolled
           ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
           : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
@@ -229,15 +229,15 @@ export function Navbar() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="group relative h-11 gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20">
+                  <Button variant="ghost" className="group relative h-11 gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20 min-w-[140px]">
                     <Avatar className="h-8 w-8 ring-2 ring-purple-500/30 group-hover:ring-purple-500/60 transition-all">
                       <AvatarImage src={profile?.avatar_url} />
                       <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-sm font-semibold">
                         {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium max-w-[100px] truncate">
-                      {profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}
+                    <span className="text-sm font-medium max-w-[100px] truncate min-w-[60px]">
+                      {authLoading ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Button>
