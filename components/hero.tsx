@@ -211,8 +211,8 @@ export function Hero({ initialStats }: HeroProps) {
         )}
       </div>
 
-      <motion.div style={{ y, opacity }} className="container relative mx-auto px-4 gpu-accelerated">
-        <div className="mx-auto max-w-6xl text-center">
+      <motion.div style={{ y, opacity }} className="container relative mx-auto px-2 sm:px-3 md:px-4 gpu-accelerated max-w-full overflow-x-hidden">
+        <div className="mx-auto max-w-6xl text-center w-full">
           {/* Main Heading with Advanced Typography */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -237,31 +237,31 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="mx-auto mb-6 max-w-4xl"
+            className="mx-auto mb-6 max-w-4xl w-full px-2 sm:px-3 md:px-0"
           >
-            <p className="mb-4 text-base leading-relaxed text-foreground/80 sm:text-lg md:text-xl lg:text-2xl md:leading-relaxed">
-              <span className="block text-balance mb-3">
+            <p className="mb-4 text-base leading-relaxed text-foreground/80 sm:text-lg md:text-xl lg:text-2xl md:leading-relaxed break-words">
+              <span className="block text-balance mb-3 break-words">
                 <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text font-semibold text-transparent">
                   Workflow automation ve yapay zeka destekli otomasyon çözümleri
                 </span>{' '}
                 ile e-ticaret, sosyal medya ve veri analitiği workflow'larınızı tek panelden yönetin.
               </span>
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
               <motion.span 
-                className="inline-flex items-center gap-2.5 rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-blue-500/15 backdrop-blur-sm px-5 py-2.5 text-sm font-semibold uppercase tracking-wider text-purple-700 shadow-lg shadow-purple-500/20 dark:text-purple-200 dark:border-purple-400/40"
+                className="inline-flex items-center gap-1.5 sm:gap-2 md:gap-2.5 rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-blue-500/15 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 text-xs sm:text-sm font-semibold uppercase tracking-wider text-purple-700 shadow-lg shadow-purple-500/20 dark:text-purple-200 dark:border-purple-400/40"
                 whileHover={{ scale: 1.05, borderColor: 'rgba(168, 85, 247, 0.6)' }}
                 transition={{ duration: 0.2 }}
               >
-                <Zap className="h-4 w-4 text-purple-500" />
+                <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-purple-500" />
                 AI Optimizasyonu
               </motion.span>
               <motion.span 
-                className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-emerald-500/10 backdrop-blur-sm px-5 py-2.5 text-sm font-semibold text-foreground/90 shadow-lg shadow-blue-500/10"
+                className="inline-flex items-center gap-1.5 sm:gap-2 md:gap-2.5 rounded-full bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-emerald-500/10 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 text-xs sm:text-sm font-semibold text-foreground/90 shadow-lg shadow-blue-500/10"
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
               >
-                <TrendingUp className="h-4 w-4 text-cyan-500" />
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-cyan-500" />
                 <span>
                   Verimliliği{' '}
                   <span className="bg-gradient-to-r from-blue-500 via-cyan-500 to-emerald-500 bg-clip-text font-bold text-transparent">
@@ -278,11 +278,11 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.15 }}
-            className="mb-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 md:mb-12 lg:mb-16"
+            className="mb-10 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3 md:mb-12 lg:mb-16 w-full max-w-full px-2"
           >
             <Button
               size="lg"
-              className="group relative h-12 overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 px-6 text-base font-bold shadow-2xl shadow-purple-500/50 transition-all hover:scale-105 hover:shadow-purple-500/70 sm:h-14 sm:px-8 sm:text-lg"
+              className="group relative h-11 w-full sm:w-auto overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 px-4 text-sm font-bold shadow-2xl shadow-purple-500/50 transition-all hover:scale-105 hover:shadow-purple-500/70 sm:h-12 sm:px-6 sm:text-base md:h-14 md:px-8 md:text-lg"
               asChild
             >
               <Link href="/automations">
@@ -296,7 +296,7 @@ export function Hero({ initialStats }: HeroProps) {
             <Button
               size="lg"
               variant="outline"
-              className="h-12 border-2 border-purple-500/50 bg-background/50 px-6 text-base font-bold backdrop-blur-sm transition-all hover:scale-105 hover:border-purple-500 hover:bg-purple-500/10 sm:h-14 sm:px-8 sm:text-lg"
+              className="h-11 w-full sm:w-auto border-2 border-purple-500/50 bg-background/50 px-4 text-sm font-bold backdrop-blur-sm transition-all hover:scale-105 hover:border-purple-500 hover:bg-purple-500/10 sm:h-12 sm:px-6 sm:text-base md:h-14 md:px-8 md:text-lg"
               asChild
             >
               <Link href="/developer/register">
@@ -313,11 +313,11 @@ export function Hero({ initialStats }: HeroProps) {
             transition={{ duration: 0.4, delay: 0.2 }}
             className="mb-12 perspective-[2000px] md:mb-16 lg:mb-20"
           >
-            <div className="relative mx-auto max-w-5xl">
+            <div className="relative mx-auto max-w-5xl w-full px-2 sm:px-3 md:px-0">
               <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 opacity-20 blur-3xl" />
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 p-1 shadow-2xl backdrop-blur-xl">
                 <div className="rounded-xl bg-transparent p-4 backdrop-blur-sm sm:p-6 md:p-8">
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-2 sm:gap-3 md:gap-4 md:grid-cols-3">
                     {primaryStats.map((stat, i) => (
                       <motion.div
                         key={i}
@@ -349,7 +349,7 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.25 }}
-            className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6 md:mb-12 lg:mb-16"
+            className="mb-10 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:gap-6 md:mb-12 lg:mb-16 w-full max-w-full"
           >
             {secondaryStats.map((stat, i) => (
               <motion.div
@@ -399,7 +399,7 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.6 }}
-            className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 md:gap-6 w-full max-w-full"
           >
             {featureCards.map((feature, i) => (
               <motion.div
