@@ -6,13 +6,16 @@ import AutomationDetailClient from './AutomationDetailClient';
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
-export default async function AutomationDetailPage({ params }: { params: { slug: string } }) {
+export default async function AutomationDetailPage({ params }: { params: Promise<{ slug: string }> | { slug: string } }) {
   const supabase = await createClient();
+  
+  // Handle both sync and async params (Next.js 15 compatibility)
+  const resolvedParams = params instanceof Promise ? await params : params;
 
   const { data: automation } = await supabase
     .from('automations')
     .select('*, category:categories(*), developer:user_profiles(*)')
-    .eq('slug', params.slug)
+    .eq('slug', resolvedParams.slug)
     .maybeSingle();
 
   if (!automation) {
