@@ -60,7 +60,7 @@ export default function AdminDashboardPage() {
           .order('created_at', { ascending: false })
           .then(result => {
             if (result.data) {
-              console.log('Admin dashboard automations:', result.data.map(a => ({ id: a.id, title: a.title, type: typeof a.id })));
+              // Admin dashboard automations loaded
             }
             return result;
           }),

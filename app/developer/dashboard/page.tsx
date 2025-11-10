@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IconBox } from '@/components/ui/icon-box';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -71,6 +71,8 @@ export default function DeveloperDashboardPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
   const [formUploading, setFormUploading] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormState>(() => createInitialFormState());
   const [activeTab, setActiveTab] = useState<'overview' | 'assets' | 'metadata'>('overview');
@@ -593,29 +595,74 @@ export default function DeveloperDashboardPage() {
                   <Sparkles className="h-5 w-5 text-purple-500" />
                   {editingAutomation ? 'Otomasyonu Düzenle' : 'Yeni Otomasyon Ekle'}
                 </DialogTitle>
-                {slugPreview && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    URL Önizleme: <span className="font-mono text-purple-500">/automations/{slugPreview}</span>
-                  </p>
-                )}
+                <DialogDescription>
+                  {editingAutomation 
+                    ? 'Otomasyon bilgilerinizi güncelleyin ve yayınlayın.'
+                    : 'Yeni bir otomasyon ekleyin ve marketplace\'te paylaşın.'}
+                  {slugPreview && (
+                    <span className="block mt-1">
+                      URL Önizleme: <span className="font-mono text-purple-500">/automations/{slugPreview}</span>
+                    </span>
+                  )}
+                </DialogDescription>
               </DialogHeader>
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col overflow-hidden">
+              <Tabs value={activeTab} onValueChange={(v) => {
+                  // Prevent tab change if uploading
+                  if (imageUploading || fileUploading) {
+                    toast.warning('Dosya yüklenirken sekme değiştirilemez. Lütfen yükleme işleminin tamamlanmasını bekleyin.');
+                    return;
+                  }
+                  setActiveTab(v as any);
+                }} className="flex-1 flex flex-col overflow-hidden">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <TabsTrigger value="overview" className="flex items-center gap-2" disabled={imageUploading || fileUploading}>
                     <FileText className="h-4 w-4" />
                     Genel
                   </TabsTrigger>
-                  <TabsTrigger value="assets" className="flex items-center gap-2">
+                  <TabsTrigger value="assets" className="flex items-center gap-2" disabled={imageUploading || fileUploading}>
                     <Layers className="h-4 w-4" />
                     Dosyalar
+                    {(imageUploading || fileUploading) && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
                   </TabsTrigger>
-                  <TabsTrigger value="metadata" className="flex items-center gap-2">
+                  <TabsTrigger value="metadata" className="flex items-center gap-2" disabled={imageUploading || fileUploading}>
                     <Tags className="h-4 w-4" />
                     Etiketler
                   </TabsTrigger>
                 </TabsList>
                 <ScrollArea className="flex-1 pr-4">
                   <form onSubmit={handleSubmit} className="space-y-6 py-4">
+                    {/* Form validation summary */}
+                    {(imageUploading || fileUploading) && (
+                      <div className="mb-4 rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                        <p className="text-sm text-blue-600 dark:text-blue-400">
+                          {imageUploading && fileUploading 
+                            ? 'Görsel ve dosya yükleniyor... Lütfen bekleyin. Sekme değiştirmeyin.'
+                            : imageUploading 
+                            ? 'Görsel yükleniyor... Lütfen bekleyin. Sekme değiştirmeyin.'
+                            : 'Dosya yükleniyor... Lütfen bekleyin. Sekme değiştirmeyin.'}
+                        </p>
+                      </div>
+                    )}
+                    {!(imageUploading || fileUploading) && (
+                      <div className="mb-4 space-y-1">
+                        {(!formData.title?.trim() || !formData.description?.trim() || !formData.price || !formData.category_id || !formData.image_path || !formData.file_path) && (
+                          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
+                            <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mb-2">
+                              ⚠️ Eksik Bilgiler
+                            </p>
+                            <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                              {!formData.title?.trim() && <li>• Başlık gereklidir</li>}
+                              {!formData.description?.trim() && <li>• Kısa açıklama gereklidir</li>}
+                              {!formData.price && <li>• Fiyat gereklidir</li>}
+                              {!formData.category_id && <li>• Kategori seçimi gereklidir</li>}
+                              {!formData.image_path && <li>• Otomasyon görseli yüklenmelidir</li>}
+                              {!formData.file_path && <li>• Otomasyon dosyası yüklenmelidir</li>}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <TabsContent value="overview" className="space-y-4 mt-0">
                       <div>
                         <Label htmlFor="title" className="flex items-center gap-2">
@@ -712,36 +759,38 @@ export default function DeveloperDashboardPage() {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="assets" className="space-y-4 mt-0">
+                    <TabsContent value="assets" className="space-y-4 mt-0" forceMount>
+                      <div className={activeTab !== 'assets' ? 'hidden' : ''}>
+                        <FileUpload
+                          label="Otomasyon Görseli *"
+                          bucketName="automation-images"
+                          accept="image/*"
+                          maxSizeMB={5}
+                          fileType="image"
+                          userId={user?.id || ''}
+                          currentFile={formData.image_path}
+                          onUploadComplete={(path) => setFormData({ ...formData, image_path: path })}
+                          onUploadingChange={setImageUploading}
+                        />
 
-                      <FileUpload
-                        label="Otomasyon Görseli *"
-                        bucketName="automation-images"
-                        accept="image/*"
-                        maxSizeMB={5}
-                        fileType="image"
-                        userId={user?.id || ''}
-                        currentFile={formData.image_path}
-                        onUploadComplete={(path) => setFormData({ ...formData, image_path: path })}
-                        onUploadingChange={setFormUploading}
-                      />
-
-                      <FileUpload
-                        label="Otomasyon Dosyası *"
-                        bucketName="automation-files"
-                        accept=".zip,.rar,.7z,.json,.js,.py,.php,.txt,.md"
-                        maxSizeMB={50}
-                        fileType="file"
-                        userId={user?.id || ''}
-                        currentFile={formData.file_path}
-                        onUploadComplete={(path) => setFormData({ ...formData, file_path: path })}
-                        onUploadingChange={setFormUploading}
-                      />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        ⚠️ <strong>Önemli:</strong> Otomasyon dosyası için arşiv dosyası (.zip, .rar, .7z) veya kod dosyası (.json, .js, .py, .php) yüklemelisiniz. 
-                        Görsel dosyası için yukarıdaki "Otomasyon Görseli" alanını kullanın.
-                      </p>
-
+                        <FileUpload
+                          label="Otomasyon Dosyası *"
+                          bucketName="automation-files"
+                          accept=".zip,.rar,.7z,.json,.js,.py,.php,.txt,.md"
+                          maxSizeMB={100}
+                          fileType="file"
+                          userId={user?.id || ''}
+                          currentFile={formData.file_path}
+                          onUploadComplete={(path) => setFormData({ ...formData, file_path: path })}
+                          onUploadingChange={setFileUploading}
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">
+                          ⚠️ <strong>Önemli:</strong> Otomasyon dosyası için arşiv dosyası (.zip, .rar, .7z) veya kod dosyası (.json, .js, .py, .php) yüklemelisiniz. 
+                          Görsel dosyası için yukarıdaki "Otomasyon Görseli" alanını kullanın.
+                          <br />
+                          📦 <strong>Maksimum dosya boyutu:</strong> 100 MB
+                        </p>
+                      </div>
                     </TabsContent>
 
 
@@ -841,7 +890,17 @@ export default function DeveloperDashboardPage() {
                       <Button
                         type="submit"
                         className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600"
-                        disabled={formUploading || formSubmitting || !formData.title || !formData.description || !formData.price}
+                        disabled={
+                          imageUploading || 
+                          fileUploading || 
+                          formSubmitting || 
+                          !formData.title?.trim() || 
+                          !formData.description?.trim() || 
+                          !formData.price || 
+                          !formData.category_id ||
+                          !formData.image_path ||
+                          !formData.file_path
+                        }
                       >
                         {formSubmitting ? (
                           <>
@@ -1007,9 +1066,9 @@ export default function DeveloperDashboardPage() {
               <CreditCard className="h-5 w-5 text-purple-500" />
               Ödeme Bilgileri
             </DialogTitle>
-            <p className="text-sm text-muted-foreground mt-2">
+            <DialogDescription>
               Ödeme alabilmek için aşağıdaki bilgileri eksiksiz doldurmanız gerekmektedir.
-            </p>
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 mt-4">

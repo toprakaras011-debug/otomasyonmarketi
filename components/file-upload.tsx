@@ -3,9 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, File, Image } from 'lucide-react';
+import { Upload, X, File, Image, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+
+// Global upload tracking to prevent cancellation on unmount
+const activeUploads = new Map<string, { promise: Promise<any>; abort: () => void }>();
 
 interface FileUploadProps {
   label: string;
@@ -31,15 +34,40 @@ export function FileUpload({
   onUploadingChange,
 }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [preview, setPreview] = useState<string | null>(currentFile || null);
+  const uploadAbortRef = useRef<(() => void) | null>(null);
+  const uploadIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (currentFile) {
-      setPreview(currentFile);
+      // If it's a full URL or path, use it directly
+      if (currentFile.startsWith('http') || currentFile.startsWith('/')) {
+        setPreview(currentFile);
+      } else if (fileType === 'image') {
+        // For images, construct the Supabase URL
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        if (supabaseUrl && bucketName === 'automation-images') {
+          setPreview(`${supabaseUrl}/storage/v1/object/public/${bucketName}/${currentFile}`);
+        } else {
+          setPreview(currentFile);
+        }
+      } else {
+        setPreview(currentFile);
+      }
     } else {
       setPreview(null);
     }
-  }, [currentFile]);
+  }, [currentFile, fileType, bucketName]);
+
+  // Cleanup on unmount - but don't cancel upload
+  useEffect(() => {
+    return () => {
+      // Don't cancel upload on unmount - let it continue
+      // The upload will complete and call onUploadComplete
+    };
+  }, []);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,63 +112,200 @@ export function FileUpload({
     setUploading(true);
     onUploadingChange?.(true);
 
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+    const uploadId = `${userId}-${Date.now()}-${fileName}`;
+    uploadIdRef.current = uploadId;
+
     try {
+      // Ensure bucket exists before upload
       if (bucketName === 'profile-avatars') {
         try {
           await fetch('/api/storage/profile-avatars', { method: 'POST' });
         } catch (error) {
           console.error('Failed to ensure profile-avatars bucket', error);
         }
+      } else if (bucketName === 'automation-files') {
+        try {
+          await fetch('/api/storage/automation-files', { method: 'POST' });
+        } catch (error) {
+          console.error('Failed to ensure automation-files bucket', error);
+        }
       }
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      // Create upload with timeout and progress tracking
+      const uploadWithTimeout = async (timeoutMs: number = 300000) => { // 5 minutes timeout
+        let progressInterval: NodeJS.Timeout | null = null;
+        let timeoutId: NodeJS.Timeout | null = null;
+        let isAborted = false;
 
-      const tryUpload = async () => {
-        const { error: uploadError } = await supabase.storage
-          .from(bucketName)
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+        const abort = () => {
+          isAborted = true;
+          if (progressInterval) clearInterval(progressInterval);
+          if (timeoutId) clearTimeout(timeoutId);
+        };
 
-        if (uploadError) {
-          if (bucketName === 'profile-avatars' && uploadError.message?.toLowerCase().includes('bucket was not found')) {
-            try {
-              await fetch('/api/storage/profile-avatars', { method: 'POST' });
-            } catch (error) {
-              console.error('Failed to ensure profile-avatars bucket', error);
-              throw uploadError;
+        uploadAbortRef.current = abort;
+        activeUploads.set(uploadId, { promise: Promise.resolve(), abort });
+
+        return Promise.race([
+          new Promise<{ data: any; error: any }>((resolve, reject) => {
+            if (isAborted) {
+              reject(new Error('Upload cancelled'));
+              return;
             }
-            return false;
-          }
-          throw uploadError;
-        }
 
-        return true;
+            const uploadPromise = supabase.storage
+              .from(bucketName)
+              .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false,
+                contentType: file.type || undefined,
+              });
+
+            // Track upload progress (Supabase doesn't support progress callback, so we simulate)
+            const startTime = Date.now();
+            const totalSize = file.size;
+            
+            progressInterval = setInterval(() => {
+              if (isAborted) {
+                if (progressInterval) clearInterval(progressInterval);
+                return;
+              }
+              const elapsed = Date.now() - startTime;
+              // Estimate progress based on time (rough estimate)
+              const estimatedProgress = Math.min(95, (elapsed / timeoutMs) * 100);
+              setUploadProgress(estimatedProgress);
+            }, 500);
+
+            uploadPromise.then((result) => {
+              if (isAborted) {
+                reject(new Error('Upload cancelled'));
+                return;
+              }
+              if (progressInterval) clearInterval(progressInterval);
+              setUploadProgress(100);
+              resolve(result);
+            }).catch((error) => {
+              if (progressInterval) clearInterval(progressInterval);
+              if (!isAborted) {
+                reject(error);
+              }
+            });
+          }),
+          new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              if (!isAborted) {
+                reject(new Error(`Dosya yükleme zaman aşımına uğradı (${timeoutMs / 1000} saniye)`));
+              }
+            }, timeoutMs);
+          })
+        ]);
       };
 
-      let uploaded = await tryUpload();
-      if (!uploaded) {
-        uploaded = await tryUpload();
-      }
+      const tryUpload = async (retryCount = 0): Promise<boolean> => {
+        try {
+          setUploadProgress(10);
+          const { data, error: uploadError } = await uploadWithTimeout(300000); // 5 minutes
 
+          if (uploadError) {
+            // Check for bucket not found error
+            if (uploadError.message?.toLowerCase().includes('bucket was not found') || 
+                uploadError.message?.toLowerCase().includes('not found')) {
+              // Bucket not found, attempting to create
+              try {
+                if (bucketName === 'profile-avatars') {
+                  await fetch('/api/storage/profile-avatars', { method: 'POST' });
+                } else if (bucketName === 'automation-files') {
+                  await fetch('/api/storage/automation-files', { method: 'POST' });
+                }
+                // Wait a bit for bucket to be ready
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Retry upload once
+                if (retryCount < 1) {
+                  return await tryUpload(retryCount + 1);
+                }
+              } catch (bucketError) {
+                console.error('Failed to ensure bucket:', bucketError);
+              }
+            }
+            
+            // More detailed error messages
+            let errorMessage = 'Dosya yüklenemedi';
+            if (uploadError.message?.includes('File size exceeds')) {
+              errorMessage = `Dosya boyutu çok büyük. Maksimum: ${maxSizeMB}MB`;
+            } else if (uploadError.message?.includes('duplicate')) {
+              errorMessage = 'Bu dosya zaten yüklenmiş. Lütfen farklı bir dosya seçin.';
+            } else if (uploadError.message?.includes('permission') || uploadError.message?.includes('unauthorized')) {
+              errorMessage = 'Yükleme izni yok. Lütfen giriş yaptığınızdan emin olun.';
+            } else {
+              errorMessage = uploadError.message || 'Dosya yüklenirken bir hata oluştu';
+            }
+            
+            throw new Error(errorMessage);
+          }
+
+          if (!data) {
+            throw new Error('Dosya yükleme yanıtı alınamadı');
+          }
+
+          setUploadProgress(100);
+          return true;
+        } catch (error: any) {
+          console.error('Upload attempt failed:', error);
+          if (retryCount < 1 && !error.message?.includes('zaman aşımı')) {
+            // Retry once for non-timeout errors
+            // Retrying upload
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+            return await tryUpload(retryCount + 1);
+          }
+          throw error;
+        }
+      };
+
+      const uploaded = await tryUpload();
+      
       if (!uploaded) {
         throw new Error('Dosya yüklenemedi. Lütfen tekrar deneyin.');
       }
 
-      onUploadComplete(fileName);
-      if (fileType === 'file') {
-        setPreview(fileName);
+      // Only complete if this is still the active upload
+      if (uploadIdRef.current === uploadId) {
+        onUploadComplete(fileName);
+        if (fileType === 'file') {
+          setPreview(fileName);
+        }
+        toast.success('Dosya başarıyla yüklendi');
       }
-      toast.success('Dosya başarıyla yüklendi');
     } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Dosya yüklenirken bir hata oluştu');
-      setPreview(currentFile || null);
+      // Only show error if this is still the active upload
+      if (uploadIdRef.current === uploadId && !error?.message?.includes('cancelled')) {
+        console.error('Upload error:', error);
+        const errorMessage = error?.message || error?.error?.message || 'Dosya yüklenirken bir hata oluştu';
+        toast.error(errorMessage, {
+          duration: 5000,
+          description: 'Lütfen dosya boyutunu ve formatını kontrol edip tekrar deneyin.',
+        });
+        setPreview(currentFile || null);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
     } finally {
-      setUploading(false);
-      onUploadingChange?.(false);
+      // Only update state if this is still the active upload
+      if (uploadIdRef.current === uploadId) {
+        setUploading(false);
+        setUploadProgress(0);
+        onUploadingChange?.(false);
+      }
+      // Cleanup
+      activeUploads.delete(uploadId);
+      uploadAbortRef.current = null;
+      if (uploadIdRef.current === uploadId) {
+        uploadIdRef.current = null;
+      }
     }
   };
 
@@ -190,26 +355,39 @@ export function FileUpload({
             </Button>
           </div>
         ) : (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="w-full"
-          >
-            {uploading ? (
-              'Yükleniyor...'
-            ) : (
-              <>
-                {fileType === 'image' ? (
-                  <Image className="mr-2 h-4 w-4" />
-                ) : (
-                  <Upload className="mr-2 h-4 w-4" />
-                )}
-                {label} Seç
-              </>
+          <div className="w-full space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="w-full"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Yükleniyor... {uploadProgress > 0 && `${Math.round(uploadProgress)}%`}
+                </>
+              ) : (
+                <>
+                  {fileType === 'image' ? (
+                    <Image className="mr-2 h-4 w-4" />
+                  ) : (
+                    <Upload className="mr-2 h-4 w-4" />
+                  )}
+                  {label} Seç
+                </>
+              )}
+            </Button>
+            {uploading && uploadProgress > 0 && (
+              <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
             )}
-          </Button>
+          </div>
         )}
       </div>
       <input

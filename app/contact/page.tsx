@@ -28,7 +28,7 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form gönderiliyor:', formData);
+    // Submitting form
     
     // Tüm alanların dolu olduğundan emin ol
     if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
@@ -46,7 +46,7 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      console.log('E-posta gönderimi başlatılıyor...');
+      // Starting email send
       
       // E-posta içeriği
       const emailContent = {

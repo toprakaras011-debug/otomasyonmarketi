@@ -3,14 +3,14 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log('Request body:', body);
+    // Processing request
 
     const { items } = body ?? {};
     if (!items) {
       throw new Error('Items missing!');
     }
 
-    console.log('Items processed:', items);
+    // Items processed
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Function error:', error);

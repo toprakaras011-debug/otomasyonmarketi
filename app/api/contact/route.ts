@@ -8,40 +8,27 @@ const limiter = rateLimit({
   uniqueTokenPerInterval: 500, // Max users per minute
 });
 
-// SMTP ayarları
-const envVars = {
-  EMAIL_HOST: 'mail.otomasyonmagazasi.com.tr',
-  EMAIL_PORT: '465',  // 587 yerine 465 kullanıyoruz
-  EMAIL_USER: 'info@otomasyonmagazasi.com.tr',
-  EMAIL_PASSWORD: 'Qwerty667334',
-  EMAIL_FROM: 'info@otomasyonmagazasi.com.tr',
-  EMAIL_SECURE: 'true'  // 465 portu için secure true olmalı
-};
-
-// Ortam değişkenlerini manuel olarak ayarla
-for (const [key, value] of Object.entries(envVars)) {
-  process.env[key] = value;
-}
+// SMTP ayarları - Environment variables'dan alınmalı
+// Production'da bu değerler .env dosyasından gelecek
 
 // Basit bir ping testi yapalım
-console.log('SMTP sunucusu kontrol ediliyor...');
-console.log(`Hedef: ${envVars.EMAIL_HOST}:${envVars.EMAIL_PORT}`);
+// SMTP configuration check
 
 export async function POST(req: Request) {
-  console.log('İstek alındı, başlıklar:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+  // Request received
   
   try {
     // İstek gövdesini oku
     const body = await req.text();
-    console.log('Ham istek gövdesi:', body);
+      // Raw request body
     
     // JSON'a çevirmeye çalış
     let jsonData;
     try {
       jsonData = JSON.parse(body);
-      console.log('Ayrıştırılmış JSON verisi:', jsonData);
+      // Parsed JSON data
     } catch (parseError) {
-      console.error('JSON ayrıştırma hatası:', parseError);
+      // JSON parse error
       return NextResponse.json(
         { success: false, error: 'Geçersiz JSON verisi' },
         { status: 400 }
@@ -81,55 +68,46 @@ export async function POST(req: Request) {
       EMAIL_SECURE: process.env.EMAIL_SECURE
     };
     
-    console.log('Ortam değişkenleri:', JSON.stringify(envVars, null, 2));
-    
-    // Tüm ortam değişkenlerini kontrol et
-    for (const [key, value] of Object.entries(envVars)) {
-      if (!value && key !== 'EMAIL_PASSWORD') { // EMAIL_PASSWORD dışındaki boş değerleri kontrol et
-        console.error(`Hata: ${key} ortam değişkeni tanımlı değil veya boş`);
-      }
-    }
+    // Environment variables check - already validated above
 
     // E-posta gönderim ayarları
+    const emailPort = parseInt(process.env.EMAIL_PORT || '465', 10);
+    const isSecure = emailPort === 465 || process.env.EMAIL_SECURE === 'true';
+    
     const transporterConfig = {
-      host: process.env.EMAIL_HOST,
-      port: 465,  // Doğrudan 465 portunu kullan
-      secure: true,  // 465 portu için secure true olmalı
+      host: process.env.EMAIL_HOST!,
+      port: emailPort,
+      secure: isSecure,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
+        user: process.env.EMAIL_USER!,
+        pass: process.env.EMAIL_PASSWORD!,
       },
       tls: {
         rejectUnauthorized: false,  // Kendi imzalı sertifikalar için
-        minVersion: 'TLSv1.2'      // Minimum TLS sürümü
+        minVersion: 'TLSv1.2' as const      // Minimum TLS sürümü
       },
       // Zaman aşımlarını ayarla
       connectionTimeout: 10000, // 10 saniye
       greetingTimeout: 10000,   // 10 saniye
       socketTimeout: 30000,     // 30 saniye
-      // Hata ayıklama için
-      debug: true,
-      logger: true
-    } as const;  // Tip güvenliği için
-    
-    console.log('Transporter ayarları:', JSON.stringify({
-      ...transporterConfig,
-      auth: { ...transporterConfig.auth, pass: '***' } // Şifreyi güvenli şekilde logla
-    }, null, 2));
+      // Production'da debug kapalı
+      debug: process.env.NODE_ENV === 'development',
+      logger: process.env.NODE_ENV === 'development'
+    };
     
     try {
-      console.log('Transporter oluşturuluyor...');
+      // Creating transporter
       const transporter = nodemailer.createTransport(transporterConfig);
       
       // Bağlantıyı test et
-      console.log('SMTP bağlantısı test ediliyor...');
+      // Testing SMTP connection
       await new Promise((resolve, reject) => {
         transporter.verify(function(error, success) {
           if (error) {
-            console.error('SMTP bağlantı testi başarısız:', error);
+            // SMTP connection test failed
             reject(error);
           } else {
-            console.log('SMTP bağlantı testi başarılı!');
+            // SMTP connection test successful
             resolve(success);
           }
         });
@@ -166,9 +144,9 @@ export async function POST(req: Request) {
     };
 
       // E-postayı gönder
-      console.log('E-posta gönderiliyor...');
+      // Sending email
       const info = await transporter.sendMail(mailOptions);
-      console.log('E-posta gönderildi:', info.messageId);
+      // Email sent successfully
 
       return NextResponse.json({ 
         success: true, 
@@ -177,14 +155,7 @@ export async function POST(req: Request) {
       });
     } catch (error: unknown) {
       const smtpError = error as Error & { code?: string; command?: string; response?: string };
-      console.error('SMTP işlemi sırasında hata oluştu:', {
-        name: smtpError.name,
-        message: smtpError.message,
-        code: smtpError.code,
-        command: smtpError.command,
-        stack: smtpError.stack,
-        response: smtpError.response
-      });
+      // SMTP operation error
       
       let errorMessage = 'E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.';
       
@@ -210,12 +181,7 @@ export async function POST(req: Request) {
       );
     }
   } catch (error: any) {
-    console.error('Beklenmeyen hata:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-      code: error.code
-    });
+    // Unexpected error
     
     return NextResponse.json(
       { 

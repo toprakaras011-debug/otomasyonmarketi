@@ -31,29 +31,64 @@ export const signUp = async (
 
 export const signIn = async (email: string, password: string) => {
   try {
+    // Validate inputs
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !password) {
+      throw new Error('E-posta ve şifre gereklidir.');
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      throw new Error('Geçerli bir e-posta adresi giriniz.');
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
+      email: trimmedEmail,
+      password: password, // Don't trim password - spaces might be intentional
     });
 
     if (error) {
       console.error('Sign in error:', error);
+      
       // Provide more user-friendly error messages
-      if (error.message.includes('Invalid login credentials')) {
-        throw new Error('E-posta veya şifre hatalı. Lütfen tekrar deneyin.');
-      } else if (error.message.includes('Email not confirmed')) {
-        throw new Error('E-posta adresiniz henüz doğrulanmamış. Lütfen e-posta kutunuzu kontrol edin.');
-      } else if (error.status === 400) {
-        throw new Error('Geçersiz e-posta veya şifre formatı.');
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials') ||
+          error.status === 400) {
+        throw new Error('E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.');
+      } else if (error.message?.includes('Email not confirmed') || 
+                 error.message?.includes('email_not_confirmed')) {
+        throw new Error('E-posta adresiniz henüz doğrulanmamış. Lütfen e-posta kutunuzu kontrol edin ve doğrulama linkine tıklayın.');
+      } else if (error.message?.includes('User not found') || 
+                 error.message?.includes('user_not_found')) {
+        throw new Error('Bu e-posta adresi ile kayıtlı bir hesap bulunamadı. Lütfen kayıt olun.');
+      } else if (error.message?.includes('Too many requests') || 
+                 error.status === 429) {
+        throw new Error('Çok fazla deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.');
       } else if (error.status === 403) {
         throw new Error('Giriş yapma izniniz yok. Lütfen destek ekibiyle iletişime geçin.');
+      } else if (error.message?.includes('network') || 
+                 error.message?.includes('fetch')) {
+        throw new Error('Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.');
       }
-      throw error;
+      
+      // Generic error with original message
+      throw new Error(error.message || 'Giriş yapılamadı. Lütfen tekrar deneyin.');
     }
+
+    if (!data || !data.user) {
+      throw new Error('Giriş başarısız. Lütfen tekrar deneyin.');
+    }
+
     return data;
   } catch (error: any) {
     console.error('Sign in exception:', error);
-    throw error;
+    // If it's already a user-friendly error, re-throw it
+    if (error.message && !error.message.includes('AuthApiError')) {
+      throw error;
+    }
+    // Otherwise, provide a generic error
+    throw new Error(error?.message || 'Giriş yapılamadı. Lütfen tekrar deneyin.');
   }
 };
 

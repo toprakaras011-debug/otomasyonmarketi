@@ -47,9 +47,14 @@ async function resolveAuthContext(request: Request, automationId: string) {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  const automationId = params.id;
+  const resolvedParams = await Promise.resolve(params);
+  const automationId = resolvedParams.id;
+
+  if (!automationId) {
+    return NextResponse.json({ message: 'Otomasyon kimliği bulunamadı' }, { status: 400 });
+  }
 
   const context = await resolveAuthContext(request, automationId);
   if ('json' in context) {
@@ -85,9 +90,14 @@ export async function POST(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  const automationId = params.id;
+  const resolvedParams = await Promise.resolve(params);
+  const automationId = resolvedParams.id;
+
+  if (!automationId) {
+    return NextResponse.json({ message: 'Otomasyon kimliği bulunamadı' }, { status: 400 });
+  }
 
   const context = await resolveAuthContext(request, automationId);
   if ('json' in context) {

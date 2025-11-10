@@ -78,6 +78,12 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4 mb-16">
           {/* Brand section */}
           <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <Zap className="h-6 w-6 text-purple-500" />
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+                Workflow Automation
+              </span>
+            </div>
             <div className="group flex items-center space-x-3">
               <motion.div
                 className="relative"
@@ -113,7 +119,7 @@ export function Footer() {
             </div>
             
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Türkiye'nin en kapsamlı otomasyon marketplace platformu. AI destekli çözümlerle işlerinizi otomatikleştirin.
+              Türkiye'nin en kapsamlı workflow automation ve otomasyon marketplace platformu. AI destekli workflow çözümleriyle işlerinizi otomatikleştirin.
             </p>
 
             {/* Social links */}

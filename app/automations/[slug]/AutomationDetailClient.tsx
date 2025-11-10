@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import { useCart } from '@/components/cart-context';
 import { useAuth } from '@/components/auth-provider';
 import type { User } from '@supabase/supabase-js';
-import { maskUsername } from '@/lib/utils/username-mask';
 
 interface AutomationDetailClientProps {
   automation: Automation;
@@ -620,7 +619,7 @@ export default function AutomationDetailClient({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold">{maskUsername(developer?.username)}</p>
+                          <p className="font-semibold">{developer?.username || 'Geliştirici'}</p>
                           <p className="text-xs text-foreground/50">
                             Geliştirici
                           </p>

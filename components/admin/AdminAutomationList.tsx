@@ -29,7 +29,7 @@ export default function AdminAutomationList({ automations }: Props) {
   const [activeAction, setActiveAction] = useState<'approve' | 'reject' | 'delete' | null>(null);
 
   const handleAction = (automationId: string, approved: boolean) => {
-    console.log('Admin action triggered:', { automationId, approved, type: typeof automationId });
+    // Admin action triggered
     
     if (!automationId || automationId === 'undefined' || automationId === 'null') {
       toast.error('Geçersiz otomasyon kimliği');
@@ -75,7 +75,7 @@ export default function AdminAutomationList({ automations }: Props) {
   };
 
   const handleDelete = (automationId: string) => {
-    console.log('Admin delete triggered:', { automationId, type: typeof automationId });
+    // Admin delete triggered
     
     if (!automationId || automationId === 'undefined' || automationId === 'null') {
       toast.error('Geçersiz otomasyon kimliği');

@@ -39,7 +39,16 @@ export default function SignInPage() {
         router.push(redirectTo);
       }, 500);
     } catch (error: any) {
-      toast.error(error.message || 'Giriş yapılamadı');
+      const errorMessage = error?.message || 'Giriş yapılamadı';
+      toast.error(errorMessage, {
+        duration: 5000,
+        description: errorMessage.includes('şifre') || errorMessage.includes('e-posta') 
+          ? 'Şifrenizi unuttuysanız "Şifremi Unuttum" linkine tıklayın.'
+          : undefined,
+      });
+      
+      // Clear password field on error for security
+      setFormData(prev => ({ ...prev, password: '' }));
     } finally {
       setLoading(false);
     }
@@ -174,8 +183,10 @@ export default function SignInPage() {
                   type="email"
                   placeholder="ornek@email.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value.trim() })}
+                  onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                   required
+                  autoComplete="email"
                   className="h-11"
                 />
               </div>
@@ -189,6 +200,7 @@ export default function SignInPage() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
+                  autoComplete="current-password"
                   className="h-11"
                 />
                 <div className="flex justify-end">

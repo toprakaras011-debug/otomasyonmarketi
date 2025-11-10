@@ -72,7 +72,7 @@ const nextConfig = {
     ppr: false, // Can enable if needed
     // Optimize server components
     serverActions: {
-      bodySizeLimit: '2mb',
+      bodySizeLimit: '100mb', // Increased for automation file uploads
     },
     // Optimize client chunks
     optimizeServerReact: true,
@@ -83,6 +83,7 @@ const nextConfig = {
   turbopack: {
     // Turbopack automatically optimizes bundle splitting
     // Framework, UI libraries, and vendor code are automatically separated
+    root: process.cwd(), // Set root to silence workspace warning
   },
   // Enable route prefetching
   onDemandEntries: {

@@ -64,7 +64,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL('https://otomasyonmagazasi.com'),
   title: {
-    default: 'Otomasyon Mağazası - İş Süreçlerinizi Otomatikleştirin | Türkiye\'nin En Büyük Otomasyon Platformu',
+    default: 'Otomasyon Mağazası - Workflow Automation & İş Süreçlerinizi Otomatikleştirin | Türkiye\'nin En Büyük Workflow Platformu',
     template: '%s | Otomasyon Mağazası'
   },
   icons: {

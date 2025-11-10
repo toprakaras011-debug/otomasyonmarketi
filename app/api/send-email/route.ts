@@ -3,15 +3,22 @@ import nodemailer from 'nodemailer';
 
 import type { Transporter } from 'nodemailer';
 
-// E-posta gönderim ayarları
+// E-posta gönderim ayarları - Environment variables'dan alınmalı
 const createTransporter = (): Transporter => {
+  const emailPort = parseInt(process.env.EMAIL_PORT || '465', 10);
+  const isSecure = emailPort === 465 || process.env.EMAIL_SECURE === 'true';
+  
+  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    throw new Error('E-posta yapılandırması eksik. EMAIL_HOST, EMAIL_USER ve EMAIL_PASSWORD ortam değişkenlerini ayarlayın.');
+  }
+  
   return nodemailer.createTransport({
-    host: 'mail.otomasyonmagazasi.com.tr',
-    port: 465,
-    secure: true,
+    host: process.env.EMAIL_HOST,
+    port: emailPort,
+    secure: isSecure,
     auth: {
-      user: 'info@otomasyonmagazasi.com.tr',
-      pass: 'Qwerty667334',
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
     },
     tls: {
       rejectUnauthorized: false,
@@ -28,9 +35,10 @@ export async function POST(req: Request) {
     const transporter = createTransporter();
 
     // E-posta gönder
+    const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'info@otomasyonmagazasi.com.tr';
     const info = await transporter.sendMail({
-      from: `"${from}" <info@otomasyonmagazasi.com.tr>`,
-      to: to || 'info@otomasyonmagazasi.com.tr',
+      from: `"${from}" <${emailFrom}>`,
+      to: to || emailFrom,
       replyTo: from,
       subject: subject || 'İletişim Formu',
       text: text || '',

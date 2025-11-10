@@ -52,23 +52,24 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
   const estimatedHours = automationsCount * 60;
   const efficiencyMultiplier = Math.max(8, Math.round(8 + automationsCount / 150));
 
+    // Ensure minimum values for display (even if database is empty)
     return {
-      automations: automationsCount,
-      developers: developersCount,
-      users: usersCount,
-      integrations: integrationsCount,
-      estimatedHours,
-      efficiencyMultiplier,
+      automations: Math.max(automationsCount, 1),
+      developers: Math.max(developersCount, 3),
+      users: Math.max(usersCount, 1),
+      integrations: Math.max(integrationsCount, 1),
+      estimatedHours: Math.max(estimatedHours, 60),
+      efficiencyMultiplier: Math.max(efficiencyMultiplier, 8),
     };
   } catch (error) {
     console.error('Error fetching hero stats:', error);
-    // Return fallback values
+    // Return fallback values with minimums
     return {
-      automations: 0,
-      developers: 0,
-      users: 0,
-      integrations: 0,
-      estimatedHours: 0,
+      automations: 1,
+      developers: 3,
+      users: 1,
+      integrations: 1,
+      estimatedHours: 60,
       efficiencyMultiplier: 8,
     };
   }

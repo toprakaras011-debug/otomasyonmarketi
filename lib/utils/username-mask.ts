@@ -1,9 +1,10 @@
 /**
  * Masks a username to protect privacy while still showing identity
+ * Light masking for featured/new automations (shows 2-3 chars)
  * Examples:
- * - "johndoe" -> "joh***doe"
- * - "developer123" -> "dev***123"
- * - "ab" -> "a***b"
+ * - "johndoe" -> "jo***"
+ * - "developer123" -> "de***"
+ * - "ab" -> "a***"
  * - "a" -> "a***"
  */
 export function maskUsername(username: string | null | undefined): string {
@@ -24,6 +25,31 @@ export function maskUsername(username: string | null | undefined): string {
   const firstPart = trimmed.substring(0, 3);
   const lastPart = trimmed.substring(trimmed.length - 3);
   return `${firstPart}***${lastPart}`;
+}
+
+/**
+ * Light mask for featured/new automations - shows only 2-3 characters
+ * Examples:
+ * - "johndoe" -> "jo***"
+ * - "developer123" -> "de***"
+ * - "ab" -> "a***"
+ */
+export function lightMaskUsername(username: string | null | undefined): string {
+  if (!username) return 'Kullanıcı';
+  
+  const trimmed = username.trim();
+  if (trimmed.length <= 1) {
+    return `${trimmed}***`;
+  }
+  
+  if (trimmed.length <= 3) {
+    return `${trimmed.charAt(0)}***`;
+  }
+  
+  // Show first 2-3 characters only
+  const showChars = trimmed.length > 6 ? 3 : 2;
+  const firstPart = trimmed.substring(0, showChars);
+  return `${firstPart}***`;
 }
 
 /**

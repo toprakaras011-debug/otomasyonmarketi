@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { supabase, type Automation } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Star, TrendingUp, Sparkles, ArrowRight, Zap } from 'lucide-react';
 
 export const revalidate = 60;
@@ -14,7 +15,7 @@ async function getFeaturedAutomations(): Promise<Automation[]> {
     .select(`
       *,
       category:categories(*),
-      developer:user_profiles(*)
+      developer:user_profiles(id,username,avatar_url)
     `)
     .eq('is_published', true)
     .eq('admin_approved', true)
@@ -142,6 +143,24 @@ export default async function FeaturedAutomationsServer() {
                         <span>{automation.total_sales} satış</span>
                       </div>
                     </div>
+
+                    {/* Developer Info */}
+                    {(automation as any).developer && (
+                      <div className="mb-4 flex items-center gap-2 pb-4 border-b border-border/50">
+                        <Avatar className="h-8 w-8 border border-purple-500/20">
+                          <AvatarImage src={(automation as any).developer?.avatar_url} />
+                          <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-xs">
+                            {(automation as any).developer?.username?.charAt(0).toUpperCase() || 'G'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-foreground/60">Geliştirici</p>
+                          <p className="text-sm font-semibold truncate">
+                            {(automation as any).developer?.username || 'Geliştirici'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Price & CTA */}
                     <div className="flex items-center justify-between border-t border-border/50 pt-4">

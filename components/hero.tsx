@@ -134,7 +134,7 @@ export function Hero({ initialStats }: HeroProps) {
   const secondaryStats = useMemo(() => ([
     {
       icon: Sparkles,
-      label: 'Hazır Otomasyon',
+      label: 'Workflow & Otomasyon',
       value: stats.loading ? '...' : formatWithPlus(stats.automations),
       gradient: 'from-purple-600 via-purple-500 to-pink-600',
       bg: 'from-purple-500/15 via-transparent to-pink-500/15',
@@ -233,34 +233,45 @@ export function Hero({ initialStats }: HeroProps) {
           </motion.h1>
 
           {/* Subtitle */}
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.1 }}
-            className="mx-auto mb-4 max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl md:text-2xl"
+            transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="mx-auto mb-8 max-w-4xl"
           >
-            <span className="block text-balance text-foreground/85">
-              <span className="bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 bg-clip-text font-semibold text-transparent">
-                Yapay zeka destekli otomasyon çözümleri
-              </span>{' '}
-              ile e-ticaret, sosyal medya ve veri analitiği süreçlerinizi tek panelden yönetin.
-            </span>
-            <span className="mt-4 flex flex-wrap items-center justify-center gap-3 text-balance text-[clamp(1.05rem,2vw,1.3rem)] font-semibold text-foreground">
-              <span className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 px-4 py-1 text-xs uppercase tracking-[0.35em] text-purple-600 dark:text-purple-200">
-                ai optimizasyonu
+            <p className="mb-6 text-lg leading-relaxed text-foreground/80 sm:text-xl md:text-2xl md:leading-relaxed">
+              <span className="block text-balance mb-3">
+                <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text font-semibold text-transparent">
+                  Workflow automation ve yapay zeka destekli otomasyon çözümleri
+                </span>{' '}
+                ile e-ticaret, sosyal medya ve veri analitiği workflow'larınızı tek panelden yönetin.
               </span>
-              <span className="inline-flex items-center gap-2">
-                <Zap className="h-5 w-5 text-purple-500" />
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <motion.span 
+                className="inline-flex items-center gap-2.5 rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-500/15 via-pink-500/15 to-blue-500/15 backdrop-blur-sm px-5 py-2.5 text-sm font-semibold uppercase tracking-wider text-purple-700 shadow-lg shadow-purple-500/20 dark:text-purple-200 dark:border-purple-400/40"
+                whileHover={{ scale: 1.05, borderColor: 'rgba(168, 85, 247, 0.6)' }}
+                transition={{ duration: 0.2 }}
+              >
+                <Zap className="h-4 w-4 text-purple-500" />
+                AI Optimizasyonu
+              </motion.span>
+              <motion.span 
+                className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-emerald-500/10 backdrop-blur-sm px-5 py-2.5 text-sm font-semibold text-foreground/90 shadow-lg shadow-blue-500/10"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <TrendingUp className="h-4 w-4 text-cyan-500" />
                 <span>
-                  Zamandan tasarruf edin, verimliliği{' '}
-                  <span className="bg-gradient-to-r from-blue-500 via-cyan-500 to-emerald-500 bg-clip-text text-transparent">
+                  Verimliliği{' '}
+                  <span className="bg-gradient-to-r from-blue-500 via-cyan-500 to-emerald-500 bg-clip-text font-bold text-transparent">
                     10x
                   </span>{' '}
-                  artırın.
+                  artırın
                 </span>
-              </span>
-            </span>
-          </motion.p>
+              </motion.span>
+            </div>
+          </motion.div>
 
           {/* CTA Buttons */}
           <motion.div
