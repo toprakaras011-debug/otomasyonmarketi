@@ -8,7 +8,12 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { createClient } from '@/lib/supabase/server';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { CookieConsent } from '@/components/cookie-consent';
+import dynamic from 'next/dynamic';
+
+// Lazy load cookie consent for better initial page load performance
+const CookieConsent = dynamic(() => import('@/components/cookie-consent').then(mod => ({ default: mod.CookieConsent })), {
+  ssr: false, // Client-side only
+});
 
 const timeBasedThemeInitScript = `
 (function() {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Cookie, ShieldCheck, Sparkles } from 'lucide-react'
+import { Cookie, Sparkles } from 'lucide-react'
 
 const STORAGE_KEY = 'cookie-consent'
 
@@ -13,14 +13,21 @@ type ConsentStatus = 'accepted'
 export function CookieConsent() {
   const [visible, setVisible] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     setMounted(true)
+    setIsMobile(window.innerWidth < 768)
 
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY) as ConsentStatus | null
       if (!stored) {
-        setVisible(true)
+        // Delay showing on mobile for better initial load performance
+        if (window.innerWidth < 768) {
+          setTimeout(() => setVisible(true), 1000)
+        } else {
+          setVisible(true)
+        }
       }
     } catch (error) {
       console.warn('Cookie consent kontrolü yapılamadı:', error)
@@ -39,30 +46,42 @@ export function CookieConsent() {
 
   if (!mounted || !visible) return null
 
+  // Use simple div on mobile for better performance, motion on desktop
+  const Container = isMobile ? 'div' : motion.div
+  const InnerContainer = isMobile ? 'div' : motion.div
+
   return (
-    <motion.div
+    <Container
       className="fixed inset-x-0 bottom-0 z-[60] px-4 pb-4 sm:px-6 sm:pb-6"
-      initial={{ opacity: 0, y: 36 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
+      {...(isMobile ? {} : {
+        initial: { opacity: 0, y: 36 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.3, ease: 'easeOut' }
+      })}
     >
-      <motion.div
-        layout
-        className="relative mx-auto w-full max-w-[1920px] overflow-hidden rounded-2xl border border-white/15 bg-slate-950/95 text-white shadow-[0_35px_80px_-30px_rgba(79,70,229,0.6)] backdrop-blur-2xl"
-        transition={{ type: 'spring', stiffness: 140, damping: 18 }}
+      <InnerContainer
+        className={`relative mx-auto w-full max-w-[1920px] overflow-hidden rounded-2xl border border-white/15 bg-slate-950/95 text-white shadow-[0_35px_80px_-30px_rgba(79,70,229,0.6)] ${isMobile ? 'backdrop-blur-sm' : 'backdrop-blur-2xl'}`}
+        {...(isMobile ? {} : {
+          transition: { type: 'spring', stiffness: 140, damping: 18 }
+        })}
       >
-        <div className="pointer-events-none absolute -left-8 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-purple-500/30 blur-3xl" />
-        <div className="pointer-events-none absolute -right-10 top-0 h-56 w-56 rounded-full bg-blue-500/25 blur-[100px]" />
-        <motion.div
-          className="absolute inset-0 bg-[linear-gradient(120deg,rgba(168,85,247,0.28),rgba(236,72,153,0.18),rgba(59,130,246,0.28))] opacity-60"
-          animate={{ opacity: [0.45, 0.8, 0.45] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute inset-0 translate-x-[-100%] bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.35),transparent)]"
-          animate={{ translateX: ['-100%', '120%'] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        {/* Disable heavy effects on mobile */}
+        {!isMobile && (
+          <>
+            <div className="pointer-events-none absolute -left-8 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-purple-500/30 blur-3xl" />
+            <div className="pointer-events-none absolute -right-10 top-0 h-56 w-56 rounded-full bg-blue-500/25 blur-[100px]" />
+            <motion.div
+              className="absolute inset-0 bg-[linear-gradient(120deg,rgba(168,85,247,0.28),rgba(236,72,153,0.18),rgba(59,130,246,0.28))] opacity-60"
+              animate={{ opacity: [0.45, 0.8, 0.45] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute inset-0 translate-x-[-100%] bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.35),transparent)]"
+              animate={{ translateX: ['-100%', '120%'] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          </>
+        )}
 
         <div className="relative z-10 flex flex-row items-center justify-between gap-6 px-6 py-5 sm:px-8 sm:py-6">
           <div className="flex flex-1 items-center gap-4 text-left">
@@ -111,7 +130,7 @@ export function CookieConsent() {
             </Button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </InnerContainer>
+    </Container>
   )
 }
