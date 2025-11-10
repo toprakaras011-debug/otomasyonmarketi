@@ -31,8 +31,13 @@ export default function SignInPage() {
 
     try {
       await signIn(formData.email, formData.password);
-      toast.success('Giriş başarılı!');
-      router.push(redirectTo);
+      toast.success('Giriş başarılı!', {
+        duration: 3000,
+      });
+      // Toast'ın görünmesi için kısa bir gecikme
+      setTimeout(() => {
+        router.push(redirectTo);
+      }, 500);
     } catch (error: any) {
       toast.error(error.message || 'Giriş yapılamadı');
     } finally {

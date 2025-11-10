@@ -74,6 +74,10 @@ export default function DeveloperRegisterPage() {
       if (error) throw error;
 
       toast.success('Geliştirici hesabınız oluşturuldu!');
+      // Yeni geliştirici için ödeme dialog'unu göstermek üzere localStorage'ı temizle
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('payment_dialog_shown');
+      }
       router.push('/developer/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'İşlem başarısız');

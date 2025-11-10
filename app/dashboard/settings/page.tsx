@@ -27,10 +27,14 @@ import {
   Activity,
   ShoppingBag,
   Smartphone,
+  CreditCard,
+  Info,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getBankNameFromIban, validateIban } from '@/lib/utils/iban-bank';
 
 type ProfileFormData = {
   username: string;
@@ -39,7 +43,6 @@ type ProfileFormData = {
   company_name: string;
   phone: string;
   tax_number: string;
-  iban: string;
   billing_address: string;
 };
 
@@ -102,7 +105,7 @@ const NOTIFICATION_OPTIONS: {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'payment'>('profile');
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -113,7 +116,6 @@ export default function SettingsPage() {
     company_name: '',
     phone: '',
     tax_number: '',
-    iban: '',
     billing_address: '',
   });
   const [passwordData, setPasswordData] = useState<PasswordFormData>({
@@ -125,6 +127,129 @@ export default function SettingsPage() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
   const [notificationSaving, setNotificationSaving] = useState(false);
+  const [paymentData, setPaymentData] = useState({
+    full_name: '',
+    tc_no: '',
+    tax_office: '',
+    iban: '',
+    bank_name: '',
+  });
+  const [savingPayment, setSavingPayment] = useState(false);
+  
+  const handleIbanChange = (iban: string) => {
+    const cleanIban = iban.replace(/[\s\-_.,]/g, '').toUpperCase();
+    setPaymentData({ ...paymentData, iban: cleanIban });
+    
+    if (cleanIban.length >= 4) {
+      const bankName = getBankNameFromIban(cleanIban);
+      if (bankName) {
+        setPaymentData(prev => ({ ...prev, bank_name: bankName }));
+      } else {
+        setPaymentData(prev => ({ ...prev, bank_name: '' }));
+      }
+    }
+  };
+  
+  const handleSavePayment = async () => {
+    if (!user?.id) {
+      toast.error('Kullanıcı bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+      return;
+    }
+
+    if (!paymentData.full_name.trim()) {
+      toast.error('Ad soyad zorunludur');
+      return;
+    }
+    if (!paymentData.tc_no.trim()) {
+      toast.error('TC Kimlik No zorunludur');
+      return;
+    }
+    if (!paymentData.tax_office.trim()) {
+      toast.error('Vergi dairesi zorunludur');
+      return;
+    }
+    if (!paymentData.iban.trim()) {
+      toast.error('IBAN zorunludur');
+      return;
+    }
+    if (!validateIban(paymentData.iban)) {
+      toast.error('Geçerli bir IBAN giriniz');
+      return;
+    }
+
+    const bankName = getBankNameFromIban(paymentData.iban);
+    if (!bankName) {
+      toast.error('IBAN\'dan banka adı tespit edilemedi');
+      return;
+    }
+
+    setSavingPayment(true);
+    
+    // Timeout koruması (10 saniye)
+    let timeoutCleared = false;
+    const timeoutId = setTimeout(() => {
+      if (!timeoutCleared) {
+        setSavingPayment(false);
+        toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
+      }
+    }, 10000);
+    
+    try {
+      const cleanIban = paymentData.iban.replace(/[\s\-_.,]/g, '').toUpperCase();
+      
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({
+          full_name: paymentData.full_name.trim(),
+          tc_no: paymentData.tc_no.trim(),
+          tax_office: paymentData.tax_office.trim(),
+          iban: cleanIban,
+          bank_name: bankName,
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      clearTimeout(timeoutId);
+      timeoutCleared = true;
+
+      if (error) {
+        console.error('Payment save error:', error);
+        // Kolon yoksa daha açıklayıcı hata mesajı
+        if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
+          toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.');
+        } else {
+          toast.error(error.message || 'Kayıt başarısız. Lütfen tekrar deneyin.');
+        }
+        setSavingPayment(false);
+        return;
+      }
+
+      if (data) {
+        setProfile((prev: any) => ({
+          ...prev,
+          full_name: paymentData.full_name.trim(),
+          tc_no: paymentData.tc_no.trim(),
+          tax_office: paymentData.tax_office.trim(),
+          iban: cleanIban,
+          bank_name: bankName,
+        }));
+
+        toast.success('Ödeme bilgileri kaydedildi!', {
+          duration: 3000,
+        });
+      } else {
+        toast.error('Kayıt başarısız. Veri döndürülmedi.');
+      }
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      timeoutCleared = true;
+      console.error('Payment save exception:', error);
+      toast.error(error?.message || 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setSavingPayment(false);
+    }
+  };
 
   const displayName =
     profileData.full_name?.trim() ||
@@ -160,7 +285,6 @@ export default function SettingsPage() {
     profileData.company_name,
     profileData.phone,
     profileData.tax_number,
-    profileData.iban,
     profileData.billing_address,
   ];
 
@@ -240,8 +364,15 @@ export default function SettingsPage() {
           company_name: profileRecord.company_name || '',
           phone: profileRecord.phone || '',
           tax_number: profileRecord.tax_number || '',
-          iban: profileRecord.iban || '',
           billing_address: profileRecord.billing_address || '',
+        });
+        
+        setPaymentData({
+          full_name: profileRecord.full_name || '',
+          tc_no: profileRecord.tc_no || '',
+          tax_office: profileRecord.tax_office || '',
+          iban: profileRecord.iban || '',
+          bank_name: profileRecord.bank_name || '',
         });
       }
 
@@ -265,14 +396,15 @@ export default function SettingsPage() {
           company_name: profileData.company_name,
           phone: profileData.phone,
           tax_number: profileData.tax_number,
-          iban: profileData.iban,
           billing_address: profileData.billing_address,
         })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      toast.success('Profil bilgileriniz güncellendi');
+      toast.success('Profil bilgileriniz güncellendi', {
+        duration: 3000,
+      });
       setProfile({ ...profile, ...profileData });
     } catch (error: any) {
       toast.error(error.message || 'Güncelleme başarısız');
@@ -282,10 +414,23 @@ export default function SettingsPage() {
   };
 
   const handleNotificationToggle = (key: keyof NotificationPrefs) => {
+    const newValue = !notificationPrefs[key];
     setNotificationPrefs((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [key]: newValue,
     }));
+    
+    // Bildirim göster
+    const option = NOTIFICATION_OPTIONS.find(opt => opt.key === key);
+    if (option) {
+      const message = `${option.title} ${newValue ? 'açıldı' : 'kapatıldı'}`;
+      // Toast'ı göstermek için setTimeout kullan (React state güncellemesinden sonra)
+      setTimeout(() => {
+        toast.success(message, {
+          duration: 3000,
+        });
+      }, 0);
+    }
   };
 
   const handleSaveNotifications = async () => {
@@ -296,16 +441,26 @@ export default function SettingsPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(notificationPrefs),
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+          router.push('/auth/signin');
+          setNotificationSaving(false);
+          return;
+        }
         const errorBody = await response.json().catch(() => null);
         throw new Error(errorBody?.message || 'Tercihler kaydedilemedi');
       }
 
-      toast.success('Bildirim tercihleri güncellendi');
+      toast.success('Bildirim tercihleri güncellendi', {
+        duration: 3000,
+      });
     } catch (error: any) {
+      console.error('Notification save error:', error);
       toast.error(error?.message || 'Tercihler kaydedilemedi');
     } finally {
       setNotificationSaving(false);
@@ -332,16 +487,24 @@ export default function SettingsPage() {
         password: passwordData.newPassword
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Password update error:', error);
+        toast.error(error.message || 'Şifre güncellenemedi');
+        setSaving(false);
+        return;
+      }
 
-      toast.success('Şifreniz güncellendi');
+      toast.success('Şifreniz güncellendi', {
+        duration: 3000,
+      });
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
     } catch (error: any) {
-      toast.error(error.message || 'Şifre güncellenemedi');
+      console.error('Password update exception:', error);
+      toast.error(error?.message || 'Şifre güncellenemedi');
     } finally {
       setSaving(false);
     }
@@ -451,12 +614,13 @@ export default function SettingsPage() {
 
         <div className="mx-auto max-w-5xl">
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-8">
-            <TabsList className="relative grid w-full grid-cols-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-white/80 p-1 text-slate-600 shadow-lg backdrop-blur-lg dark:border-white/15 dark:bg-white/5 dark:text-white/80">
+            <TabsList className="relative grid w-full grid-cols-4 overflow-hidden rounded-2xl border border-slate-200/70 bg-white/80 p-1 text-slate-600 shadow-lg backdrop-blur-lg dark:border-white/15 dark:bg-white/5 dark:text-white/80">
               <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(168,85,247,0.12),rgba(59,130,246,0.12))] dark:bg-[linear-gradient(120deg,rgba(168,85,247,0.15),rgba(59,130,246,0.15))]" />
               {[
                 { key: 'profile', label: 'Profil', icon: User },
                 { key: 'security', label: 'Güvenlik', icon: Lock },
                 { key: 'notifications', label: 'Bildirimler', icon: Bell },
+                { key: 'payment', label: 'Ödeme', icon: CreditCard },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.key;
@@ -596,17 +760,6 @@ export default function SettingsPage() {
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="iban" className="text-slate-700 dark:text-white/80">IBAN / Banka Hesabı</Label>
-                          <Input
-                            id="iban"
-                            value={profileData.iban}
-                            onChange={(e) => setProfileData({ ...profileData, iban: e.target.value })}
-                            placeholder="TRxx xxxx xxxx xxxx xxxx xxxx xx"
-                            required
-                            className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
-                          />
-                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -652,7 +805,6 @@ export default function SettingsPage() {
                               company_name: profile?.company_name || '',
                               phone: profile?.phone || '',
                               tax_number: profile?.tax_number || '',
-                              iban: profile?.iban || '',
                               billing_address: profile?.billing_address || '',
                             });
                           }}
@@ -871,6 +1023,152 @@ export default function SettingsPage() {
                       >
                         <span className="absolute inset-0 translate-y-[120%] bg-gradient-to-r from-white/40 via-white/10 to-transparent opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100" />
                         <span className="relative">{notificationSaving ? 'Kaydediliyor...' : 'Tercihleri Kaydet'}</span>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="payment" className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card className="overflow-hidden border border-slate-200 bg-white/95 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                  <CardHeader className="relative border-b border-slate-200/80 pb-6 dark:border-white/10">
+                    <motion.div
+                      className="absolute inset-0 bg-[linear-gradient(140deg,rgba(236,72,153,0.15),rgba(59,130,246,0.12))]"
+                      animate={{ opacity: [0.6, 0.8, 0.6] }}
+                      transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                    <div className="relative z-10">
+                      <CardTitle className="flex items-center gap-3 text-xl text-slate-900 dark:text-white">
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-900/5 text-slate-900 dark:bg-white/10 dark:text-white">
+                          <CreditCard className="h-5 w-5" />
+                        </span>
+                        Ödeme Bilgileri
+                      </CardTitle>
+                      <CardDescription className="text-slate-600 dark:text-white/70">
+                        Ödeme alabilmek için kişisel ve banka bilgilerinizi tamamlayın.
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="relative z-10 space-y-6 p-8 text-slate-800 dark:text-white">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="payment_full_name">
+                          Ad Soyad *
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-muted-foreground inline ml-2" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Banka hesabınızda kayıtlı ad soyad</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </Label>
+                        <Input
+                          id="payment_full_name"
+                          value={paymentData.full_name}
+                          onChange={(e) => setPaymentData({ ...paymentData, full_name: e.target.value })}
+                          placeholder="Ad Soyad"
+                          required
+                          className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                        />
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                          <Label htmlFor="payment_tc_no">
+                            TC Kimlik No *
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="h-3 w-3 text-muted-foreground inline ml-2" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>11 haneli TC Kimlik Numarası</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </Label>
+                          <Input
+                            id="payment_tc_no"
+                            value={paymentData.tc_no}
+                            onChange={(e) => setPaymentData({ ...paymentData, tc_no: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+                            placeholder="12345678901"
+                            maxLength={11}
+                            required
+                            className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="payment_tax_office">Vergi Dairesi *</Label>
+                          <Input
+                            id="payment_tax_office"
+                            value={paymentData.tax_office}
+                            onChange={(e) => setPaymentData({ ...paymentData, tax_office: e.target.value })}
+                            placeholder="Örn: Kadıköy Vergi Dairesi"
+                            required
+                            className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="payment_iban">
+                          IBAN *
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-muted-foreground inline ml-2" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>TR ile başlayan 26 haneli IBAN numarası</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </Label>
+                        <Input
+                          id="payment_iban"
+                          value={paymentData.iban}
+                          onChange={(e) => handleIbanChange(e.target.value)}
+                          placeholder="TR33 0006 1005 1978 6457 8413 26 (boşluklu girebilirsiniz)"
+                          required
+                          className="font-mono border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                        />
+                        {paymentData.bank_name && (
+                          <p className="text-sm text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Banka: {paymentData.bank_name}
+                          </p>
+                        )}
+                        {paymentData.iban && !validateIban(paymentData.iban) && paymentData.iban.length >= 6 && (
+                          <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                            Geçersiz IBAN formatı (TR ile başlamalı, 26 karakter olmalı)
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+                        <p className="text-xs text-foreground/80">
+                          <strong className="text-blue-600 dark:text-blue-400">Bilgi:</strong> Tüm bilgileriniz güvenli bir şekilde saklanır ve sadece ödeme işlemleri için kullanılır.
+                        </p>
+                      </div>
+
+                      <Button
+                        onClick={handleSavePayment}
+                        disabled={savingPayment}
+                        className="group relative overflow-hidden bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(147,197,253,0.35)] hover:opacity-90"
+                      >
+                        <span className="absolute inset-0 translate-y-[120%] bg-gradient-to-r from-white/40 via-white/10 to-transparent opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100" />
+                        <span className="relative">{savingPayment ? 'Kaydediliyor...' : 'Ödeme Bilgilerini Kaydet'}</span>
                       </Button>
                     </div>
                   </CardContent>

@@ -12,7 +12,7 @@ export default async function AutomationsPage() {
     error: automationsError,
   } = await supabase
     .from('automations')
-    .select('id,title,slug,description,price,image_url,total_sales,rating_avg,created_at,is_published,admin_approved, category:categories(id,name,slug), developer:user_profiles(id,username,avatar_url)')
+    .select('id,title,slug,description,price,image_url,image_path,total_sales,rating_avg,created_at,is_published,admin_approved, category:categories(id,name,slug), developer:user_profiles(id,username,avatar_url)')
     .eq('is_published', true)
     .eq('admin_approved', true)
     .order('created_at', { ascending: false })
@@ -55,7 +55,7 @@ export default async function AutomationsPage() {
 
   return (
     <AutomationsClient
-      automations={automations || []}
+      automations={(automations || []) as any}
       categories={[...mergedCategories, ...remainingCategories]}
     />
   );

@@ -58,7 +58,10 @@ export default function AutomationsClient({ automations, categories }: Props) {
       );
     }
     if (selectedCategory !== 'all') {
-      list = list.filter((a) => (a as any).category?.slug === selectedCategory);
+      list = list.filter((a) => {
+        const category = Array.isArray((a as any).category) ? (a as any).category[0] : (a as any).category;
+        return category?.slug === selectedCategory;
+      });
     }
     if (selectedTag !== 'all') {
       list = list.filter((a) => Array.isArray((a as any).tags) && (a as any).tags.includes(selectedTag));
@@ -209,20 +212,29 @@ export default function AutomationsClient({ automations, categories }: Props) {
                     <div className="relative h-full overflow-hidden rounded-2xl bg-background/80 backdrop-blur-sm">
                       {/* Image Section */}
                       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-600/20 to-blue-600/20">
-                        {(automation as any).image_path ? (
+                        {((automation as any).image_path || automation.image_url) ? (
                           <Image
-                            src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}`}
+                            src={
+                              (automation as any).image_path 
+                                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}`
+                                : automation.image_url || ''
+                            }
                             alt={automation.title}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover transition-transform duration-300 group-hover:scale-110"
                             priority={false}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.parentElement?.querySelector('.image-fallback');
+                              if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                            }}
                           />
-                        ) : (
-                          <div className="flex h-full items-center justify-center">
-                            <TrendingUp className="h-16 w-16 text-purple-400/50" />
-                          </div>
-                        )}
+                        ) : null}
+                        <div className="image-fallback flex h-full items-center justify-center" style={{ display: (automation as any).image_path || automation.image_url ? 'none' : 'flex' }}>
+                          <TrendingUp className="h-16 w-16 text-purple-400/50" />
+                        </div>
                         
                         {/* Overlay Gradient */}
                         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
@@ -245,11 +257,14 @@ export default function AutomationsClient({ automations, categories }: Props) {
                           <h3 className="mb-2 text-xl font-bold line-clamp-2 transition-colors group-hover:text-purple-400">
                             {automation.title}
                           </h3>
-                          {(automation as any).category && (
-                            <Badge variant="outline" className="border-purple-500/30 text-purple-400">
-                              {(automation as any).category.name}
-                            </Badge>
-                          )}
+                          {(() => {
+                            const category = Array.isArray((automation as any).category) ? (automation as any).category[0] : (automation as any).category;
+                            return category && (
+                              <Badge variant="outline" className="border-purple-500/30 text-purple-400">
+                                {category.name}
+                              </Badge>
+                            );
+                          })()}
                         </div>
 
                         {/* Description */}
@@ -274,6 +289,7 @@ export default function AutomationsClient({ automations, categories }: Props) {
                         <div className="flex items-center justify-between border-t border-border/50 pt-4">
                           <div className="text-2xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                             {automation.price.toLocaleString('tr-TR')} ₺
+                            <span className="text-xs text-foreground/60 block mt-1">KDV Dahil</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm font-semibold text-purple-400 transition-all group-hover:gap-3">
                             İncele

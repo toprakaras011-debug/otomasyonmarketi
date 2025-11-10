@@ -228,7 +228,16 @@ export default async function RootLayout({
               <AuthProvider initialUser={user ?? null} initialProfile={profile}>
                 {children}
                 <CookieConsent />
-                <Toaster position="bottom-right" richColors closeButton />
+                <Toaster 
+                  position="bottom-right" 
+                  richColors 
+                  closeButton
+                  expand={false}
+                  visibleToasts={3}
+                  toastOptions={{
+                    duration: 3000,
+                  }}
+                />
                 <SpeedInsights />
               </AuthProvider>
             </CartProvider>

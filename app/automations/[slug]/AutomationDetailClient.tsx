@@ -50,7 +50,7 @@ export default function AutomationDetailClient({
       slug: automation.slug,
       title: automation.title,
       price: automation.price,
-      image_path: (automation as any).image_path || null,
+      image_path: (automation as any).image_path || automation.image_url || null,
     });
     
     toast.success('Sepete eklendi');
@@ -159,8 +159,10 @@ export default function AutomationDetailClient({
     description: automation.description,
     sku: automation.id,
     mpn: automation.slug,
-    category: automation.category?.name,
-    image: (automation as any).image_path ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}` : 'https://otomasyonmagazasi.com.tr/placeholder.jpg',
+    category: (Array.isArray(automation.category) ? automation.category[0] : automation.category)?.name,
+    image: (automation as any).image_path 
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}`
+      : automation.image_url || 'https://otomasyonmagazasi.com.tr/placeholder.jpg',
     brand: {
       '@type': 'Brand',
       name: (automation as any).developer?.username || 'Otomasyon Mağazası'
@@ -234,9 +236,13 @@ export default function AutomationDetailClient({
             >
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 opacity-0 blur-xl transition-opacity group-hover:opacity-20" />
               <div className="relative h-96 overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600/20 to-blue-600/20">
-                {(automation as any).image_path ? (
+                {((automation as any).image_path || automation.image_url) ? (
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}`}
+                    src={
+                      (automation as any).image_path 
+                        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}`
+                        : automation.image_url || ''
+                    }
                     alt={automation.title}
                     fill
                     sizes="(max-width: 1024px) 100vw, (max-width: 1440px) 66vw, 960px"
@@ -246,11 +252,12 @@ export default function AutomationDetailClient({
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
-                      target.parentElement?.nextElementSibling?.classList.remove('hidden');
+                      const fallback = target.parentElement?.querySelector('.image-fallback');
+                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
                     }}
                   />
                 ) : null}
-                <div className={`flex h-full items-center justify-center ${(automation as any).image_path ? 'hidden' : ''}`}>
+                <div className="image-fallback flex h-full items-center justify-center" style={{ display: (automation as any).image_path || automation.image_url ? 'none' : 'flex' }}>
                   <Sparkles className="h-32 w-32 text-purple-400/50" />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
@@ -270,11 +277,14 @@ export default function AutomationDetailClient({
                     {automation.title}
                   </span>
                 </h1>
-                {automation.category && (
-                  <Badge className="border-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-                    {automation.category.name}
-                  </Badge>
-                )}
+                {(() => {
+                  const category = Array.isArray(automation.category) ? automation.category[0] : automation.category;
+                  return category && (
+                    <Badge className="border-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                      {category.name}
+                    </Badge>
+                  );
+                })()}
               </div>
 
               <div className="mb-6 flex flex-wrap items-center gap-6">
@@ -383,21 +393,24 @@ export default function AutomationDetailClient({
                     <p className="text-foreground/60">Henüz değerlendirme yapılmamış</p>
                   </div>
                 ) : (
-                  reviews.map((review) => (
-                    <div
-                      key={review.id}
-                      className="rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-6 shadow-xl backdrop-blur-sm"
-                    >
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-12 w-12 border-2 border-purple-500/20">
-                          <AvatarImage src={review.user?.avatar_url} />
-                          <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
-                            {review.user?.username?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="mb-2 flex items-center gap-2">
-                            <span className="font-semibold">{review.user?.username}</span>
+                  reviews.map((review) => {
+                    const user = Array.isArray((review as any).user) ? (review as any).user[0] : (review as any).user;
+                    return (
+                      <div
+                        key={review.id}
+                        className="rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-6 shadow-xl backdrop-blur-sm"
+                      >
+                        <div className="flex items-start gap-4">
+                          <Avatar className="h-12 w-12 border-2 border-purple-500/20">
+                            <AvatarImage src={user?.avatar_url} />
+                            <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
+                              {user?.username?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="mb-2 flex items-center gap-2">
+                              <span className="font-semibold">{user?.username}</span>
+                            </div>
                             <div className="flex">
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
@@ -410,15 +423,15 @@ export default function AutomationDetailClient({
                                 />
                               ))}
                             </div>
+                            <p className="mt-2 text-foreground/70">{review.comment}</p>
+                            <p className="mt-2 text-xs text-foreground/50">
+                              {new Date(review.created_at).toLocaleDateString('tr-TR')}
+                            </p>
                           </div>
-                          <p className="text-foreground/70">{review.comment}</p>
-                          <p className="mt-2 text-xs text-foreground/50">
-                            {new Date(review.created_at).toLocaleDateString('tr-TR')}
-                          </p>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </motion.div>
@@ -438,6 +451,11 @@ export default function AutomationDetailClient({
                   <div className="mb-2 text-sm font-medium text-foreground/60">Fiyat</div>
                   <div className="text-4xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                     {automation.price.toLocaleString('tr-TR')} ₺
+                  </div>
+                  <div className="mt-2 rounded-lg bg-blue-500/10 border border-blue-500/20 p-2">
+                    <p className="text-xs text-foreground/70">
+                      <strong className="text-blue-600 dark:text-blue-400">KDV Dahil:</strong> Fiyat KDV dahil olarak gösterilmiştir.
+                    </p>
                   </div>
                 </div>
 
@@ -486,22 +504,27 @@ export default function AutomationDetailClient({
                 {/* Developer Info */}
                 <div className="mt-6 border-t border-border/50 pt-6">
                   <h3 className="mb-3 text-sm font-semibold text-foreground/70">Geliştirici</h3>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 border-2 border-purple-500/20">
-                      <AvatarImage src={automation.developer?.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
-                        {automation.developer?.username?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{automation.developer?.username}</p>
-                      {automation.developer?.full_name && (
-                        <p className="text-sm text-foreground/60">
-                          {automation.developer.full_name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  {(() => {
+                    const developer = Array.isArray((automation as any).developer) ? (automation as any).developer[0] : (automation as any).developer;
+                    return developer ? (
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12 border-2 border-purple-500/20">
+                          <AvatarImage src={developer?.avatar_url} />
+                          <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white">
+                            {developer?.username?.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold">{developer?.username}</p>
+                          {developer?.full_name && (
+                            <p className="text-sm text-foreground/60">
+                              {developer.full_name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* Tags */}

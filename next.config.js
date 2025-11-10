@@ -78,15 +78,11 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   // Compress responses
   compress: true,
-  // Enable SWC minification
-  swcMinify: true,
   // Optimize for production
   poweredByHeader: false,
   reactStrictMode: true,
   // Output optimization
   output: 'standalone',
-  // Optimize fonts
-  optimizeFonts: true,
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
