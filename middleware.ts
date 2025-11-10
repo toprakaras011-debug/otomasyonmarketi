@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// Note: In Next.js 16+, middleware is still supported but proxy is recommended for future
+// This middleware adds security headers and is safe to use
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
