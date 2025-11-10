@@ -223,6 +223,7 @@ export default async function RootLayout({
         {/* Icons */}
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
         <ErrorBoundary>
