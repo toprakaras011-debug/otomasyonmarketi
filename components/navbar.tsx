@@ -358,7 +358,7 @@ export function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background/98 backdrop-blur-xl"
+            className="md:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background"
           >
             {navLinks.map((link) => {
               const Icon = link.icon;
@@ -371,7 +371,7 @@ export function Navbar() {
                   className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
                     isActive
                       ? 'text-white bg-gradient-to-r from-purple-600 to-blue-600'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-purple-500/10'
+                      : 'text-foreground hover:bg-purple-500/10'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -384,7 +384,7 @@ export function Navbar() {
             
             <div className="border-t border-purple-500/20 pt-6 space-y-4">
               {user ? (
-                <div className="rounded-2xl border border-purple-500/20 bg-background/95 backdrop-blur-xl p-4 shadow-lg">
+                <div className="rounded-2xl border border-purple-500/20 bg-background p-4 shadow-lg">
                   <div className="flex items-center gap-3 mb-4">
                     <Avatar className="h-10 w-10 ring-2 ring-purple-500/30">
                       <AvatarImage src={profile?.avatar_url} />
@@ -393,8 +393,8 @@ export function Navbar() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <p className="font-semibold text-foreground">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
+                      <p className="text-xs text-foreground/70">{user.email}</p>
                     </div>
                   </div>
                   <div className="space-y-2">
