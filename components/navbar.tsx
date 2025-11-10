@@ -114,8 +114,8 @@ export function Navbar() {
         transition={{ duration: 3, repeat: Infinity }}
       />
 
-      <div className="container mx-auto px-2 sm:px-3 md:px-4 max-w-full overflow-x-hidden">
-        <div className="flex h-20 items-center justify-between gap-2">
+      <div className="container mx-auto px-4">
+        <div className="flex h-20 items-center justify-between">
           {/* Logo - Ultra Futuristic */}
           <Link href="/" prefetch={true} className="group relative flex items-center space-x-3">
             <motion.div 
@@ -133,8 +133,8 @@ export function Navbar() {
               />
               
               {/* Main logo container */}
-              <div className="relative flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 shadow-lg shadow-purple-500/50">
-                <Zap className="h-5 w-5 md:h-7 md:w-7 text-white" />
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 shadow-lg shadow-purple-500/50">
+                <Zap className="h-7 w-7 text-white" />
                 
                 {/* Inner shine effect */}
                 <motion.div
@@ -149,17 +149,17 @@ export function Navbar() {
             </motion.div>
             
             <div className="flex flex-col">
-              <span className="text-base md:text-xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+              <span className="text-xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
                 Otomasyon
               </span>
-              <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] text-purple-400/80 -mt-1">
+              <span className="text-[10px] font-bold tracking-[0.2em] text-purple-400/80 -mt-1">
                 MARKETPLACE
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-0.5 lg:space-x-1 flex-shrink-0">
+          <div className="hidden md:flex md:items-center md:space-x-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
@@ -171,7 +171,7 @@ export function Navbar() {
                   className="group relative"
                 >
                   <motion.div
-                    className={`relative px-2 py-2 text-xs font-semibold transition-all rounded-xl overflow-hidden md:px-3 md:text-sm lg:px-4 ${
+                    className={`relative px-4 py-2 text-sm font-semibold transition-all rounded-xl overflow-hidden ${
                       isActive ? 'text-white' : 'text-muted-foreground'
                     }`}
                     whileHover={{ scale: 1.05 }}
@@ -191,11 +191,11 @@ export function Navbar() {
                       <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600/0 to-blue-600/0 opacity-0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 group-hover:opacity-100 transition-all duration-200" />
                     )}
                     
-                    <div className="relative flex items-center gap-1 md:gap-2 z-10 whitespace-nowrap">
-                      <Icon className={`h-3.5 w-3.5 md:h-4 md:w-4 transition-transform group-hover:scale-110 ${
+                    <div className="relative flex items-center gap-2 z-10">
+                      <Icon className={`h-4 w-4 transition-transform group-hover:scale-110 ${
                         isActive ? 'text-white' : 'text-purple-400'
                       }`} />
-                      <span className="text-[11px] md:text-sm">{link.label}</span>
+                      {link.label}
                     </div>
                   </motion.div>
                 </Link>
@@ -204,7 +204,7 @@ export function Navbar() {
           </div>
 
           {/* Right Side Actions */}
-          <div className="hidden md:flex md:items-center md:space-x-1.5 lg:space-x-3 flex-shrink-0">
+          <div className="hidden md:flex md:items-center md:space-x-3">
             <ThemeToggle />
             
             {user && (
