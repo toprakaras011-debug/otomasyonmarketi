@@ -40,7 +40,8 @@ const pseudoRandom = (seed: number) => {
   return x - Math.floor(x);
 };
 
-const PARTICLE_CONFIG = Array.from({ length: 12 }, (_, index) => {
+// Reduced particles for better performance
+const PARTICLE_CONFIG = Array.from({ length: 6 }, (_, index) => {
   const seed = index + 1;
   const left = (pseudoRandom(seed) * 100).toFixed(6);
   const top = (pseudoRandom(seed * 1.37) * 100).toFixed(6);
@@ -58,14 +59,15 @@ const PARTICLE_CONFIG = Array.from({ length: 12 }, (_, index) => {
 export function Hero({ initialStats }: HeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end start"]
+    offset: ["start start", "end start"],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const opacity = useTransform(scrollYProgress, [0, 1], [1, 0.3]);
+  const y = useTransform(scrollYProgress, [0, 1], isMobile ? ["0%", "0%"] : ["0%", "30%"]);
+  const opacity = useTransform(scrollYProgress, [0, 1], isMobile ? [1, 1] : [1, 0.3]);
 
   const [stats, setStats] = useState({
     ...initialStats,
@@ -75,6 +77,12 @@ export function Hero({ initialStats }: HeroProps) {
   useEffect(() => {
     setIsMounted(true);
     setStats({ ...initialStats, loading: false });
+    // Detect mobile for performance optimization
+    setIsMobile(window.innerWidth < 768);
+    // Ensure container has explicit position for framer-motion scroll tracking
+    if (containerRef.current) {
+      containerRef.current.style.position = 'relative';
+    }
   }, [initialStats]);
 
   const formatWithPlus = (value: number, suffix?: string) => {
@@ -150,39 +158,28 @@ export function Hero({ initialStats }: HeroProps) {
         {/* Animated Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f12_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f12_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
         
-        {/* Gradient Orbs with Advanced Animations */}
+        {/* Gradient Orbs - Optimized animations for performance */}
         <motion.div 
           className="absolute -top-[40%] -right-[20%] h-[800px] w-[800px] rounded-full bg-purple-600/30 blur-[120px]"
           animate={{
-            scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
-            x: [0, 50, 0],
-            y: [0, 30, 0],
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          style={{ willChange: 'opacity' }}
         />
         <motion.div 
           className="absolute -bottom-[40%] -left-[20%] h-[800px] w-[800px] rounded-full bg-blue-600/30 blur-[120px]"
           animate={{
-            scale: [1, 1.3, 1],
             opacity: [0.3, 0.5, 0.3],
-            x: [0, -50, 0],
-            y: [0, -30, 0],
           }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          style={{ willChange: 'opacity' }}
         />
-        <motion.div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-pink-500/20 blur-[100px]"
-          animate={{
-            scale: [1, 1.1, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-pink-500/20 blur-[100px]" />
         
-        {/* Floating Particles */}
-        {isMounted && (
-          <div className="pointer-events-none absolute inset-0">
+        {/* Floating Particles - Reduced for mobile performance */}
+        {isMounted && typeof window !== 'undefined' && window.innerWidth >= 768 && (
+          <div className="pointer-events-none absolute inset-0 hidden md:block">
             {PARTICLE_CONFIG.map((particle, index) => (
               <motion.div
                 key={index}

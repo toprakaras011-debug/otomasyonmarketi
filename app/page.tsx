@@ -77,13 +77,16 @@ export default async function Home() {
 
   return (
     <>
+      {/* Defer structured data to avoid blocking render */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        defer
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        defer
       />
       <main className="min-h-screen pt-0">
         <Navbar />

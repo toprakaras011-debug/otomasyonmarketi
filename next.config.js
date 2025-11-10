@@ -60,7 +60,8 @@ const nextConfig = {
   },
   // Enable experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion'],
+    optimizeCss: true,
   },
   // Compress responses
   compress: true,
@@ -69,6 +70,12 @@ const nextConfig = {
   // Optimize for production
   poweredByHeader: false,
   reactStrictMode: true,
+  // Performance optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
   // Bundle analyzer (uncomment for analysis)
   // bundleAnalyzer: {
   //   enabled: process.env.ANALYZE === 'true',

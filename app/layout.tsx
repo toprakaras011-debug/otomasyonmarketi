@@ -48,14 +48,16 @@ const inter = Inter({
   preload: true,
   fallback: ['system-ui', 'arial'],
   adjustFontFallback: true,
+  // Only load weights we actually use
+  weight: ['400', '500', '600', '700'],
 });
 
 const poppins = Poppins({
-  weight: ['400', '600', '700', '900'],
+  weight: ['600', '700', '900'],
   subsets: ['latin'],
   variable: '--font-poppins',
   display: 'swap',
-  preload: true,
+  preload: false, // Defer Poppins - not critical for LCP
   fallback: ['system-ui', 'arial'],
   adjustFontFallback: true,
 });
@@ -159,24 +161,33 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Optimize: Only fetch essential profile fields for initial render
   let profile: any = null;
   if (user) {
     const { data } = await supabase
       .from('user_profiles')
-      .select('*')
+      .select('id,username,avatar_url,role,is_admin,is_developer')
       .eq('id', user.id)
       .maybeSingle();
     profile = data ?? null;
   }
 
   return (
-    <html lang="tr" suppressHydrationWarning>
+    <html lang="tr" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-        {/* Resource Hints for Performance */}
-        <link rel="preconnect" href="https://www.google.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://www.google.com" />
-        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+        {/* Resource Hints for Performance - Optimized */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <>
+            <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+            <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+          </>
+        )}
+        {/* Preconnect to Google Fonts - Optimized */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Prefetch critical resources */}
+        <link rel="prefetch" href="/automations" as="document" />
+        <link rel="prefetch" href="/categories" as="document" />
         
         {/* Critical inline script - must run before render */}
         <script
@@ -185,7 +196,7 @@ export default async function RootLayout({
           }}
         />
         
-        {/* Structured Data */}
+        {/* Structured Data - Defer to avoid blocking render */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -198,26 +209,10 @@ export default async function RootLayout({
                 "@type": "SearchAction",
                 "target": "https://www.otomasyonmagazasi.com.tr/arama?q={search_term_string}",
                 "query-input": "required name=search_term_string"
-              },
-              "hasPart": [
-                {
-                  "@type": "WebPage",
-                  "name": "Otomasyonlar",
-                  "url": "https://www.otomasyonmagazasi.com.tr/automations"
-                },
-                {
-                  "@type": "WebPage",
-                  "name": "Kategoriler",
-                  "url": "https://www.otomasyonmagazasi.com.tr/categories"
-                },
-                {
-                  "@type": "WebPage",
-                  "name": "Geliştirici Ol",
-                  "url": "https://www.otomasyonmagazasi.com.tr/developer/register"
-                }
-              ]
+              }
             }),
           }}
+          defer
         />
         
         {/* Icons */}

@@ -64,7 +64,6 @@
     font-kerning: normal;
     /* Performance optimizations */
     contain: layout style paint;
-    content-visibility: auto;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -85,6 +84,15 @@
     /* Better touch targets */
     button, a, input, select, textarea {
       touch-action: manipulation;
+    }
+    
+    /* Reduce animations on mobile for better performance */
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 }
