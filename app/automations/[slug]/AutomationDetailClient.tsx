@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Star, Download, ExternalLink, ShoppingCart, Sparkles, TrendingUp, Zap, CheckCircle2, FileText, BookOpen } from 'lucide-react';
+import Link from 'next/link';
 import { supabase, type Automation, type Review } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useCart } from '@/components/cart-context';
@@ -42,12 +43,8 @@ export default function AutomationDetailClient({
       toast.info('Lütfen bekleyin...');
       return;
     }
-    if (!currentUser) {
-      toast.info('Satın almak için giriş yapmanız gerekiyor.');
-      router.push('/auth/signin');
-      return;
-    }
-
+    
+    // Add to cart first
     add({
       id: automation.id,
       slug: automation.slug,
@@ -55,7 +52,13 @@ export default function AutomationDetailClient({
       price: automation.price,
       image_path: (automation as any).image_path || null,
     });
+    
     toast.success('Sepete eklendi');
+    
+    // If user is not logged in, redirect to signin page
+    if (!currentUser) {
+      router.push('/auth/signin?redirect=/cart');
+    }
   };
 
   const handleDownload = async () => {

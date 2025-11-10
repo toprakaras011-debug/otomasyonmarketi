@@ -187,15 +187,33 @@ export default function CartPage() {
                     </div>
                   </div>
                   <div className="border-t border-border/50 p-6">
-                    <Button 
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" 
-                      disabled
-                    >
-                      Ödeme Sistemi Yakında
-                    </Button>
-                    <p className="mt-3 text-center text-xs text-muted-foreground">
-                      Güvenli ödeme ile korunuyorsunuz
-                    </p>
+                    {user ? (
+                      <>
+                        <Button 
+                          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" 
+                          disabled
+                        >
+                          Ödeme Sistemi Yakında
+                        </Button>
+                        <p className="mt-3 text-center text-xs text-muted-foreground">
+                          Güvenli ödeme ile korunuyorsunuz
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Button 
+                          asChild
+                          className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                        >
+                          <Link href="/auth/signin?redirect=/cart">
+                            Giriş Yap ve Devam Et
+                          </Link>
+                        </Button>
+                        <p className="mt-3 text-center text-xs text-muted-foreground">
+                          Güvenli ödeme ile korunuyorsunuz
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

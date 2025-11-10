@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,15 @@ import { Zap, Github, Mail, ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +32,7 @@ export default function SignInPage() {
     try {
       await signIn(formData.email, formData.password);
       toast.success('Giriş başarılı!');
-      router.push('/dashboard');
+      router.push(redirectTo);
     } catch (error: any) {
       toast.error(error.message || 'Giriş yapılamadı');
     } finally {
@@ -218,6 +221,18 @@ export default function SignInPage() {
                   Kayıt Ol
                 </Link>
               </p>
+              
+              {/* Guest Checkout Option */}
+              <Button
+                asChild
+                variant="outline"
+                className="w-full border-purple-500/50 hover:bg-purple-500/10 hover:border-purple-500"
+              >
+                <Link href="/checkout/guest">
+                  Üye Olmadan Devam Et
+                </Link>
+              </Button>
+              
               <Link
                 href="/"
                 className="flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors"
