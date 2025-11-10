@@ -53,8 +53,8 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     name: 'Yapay Zeka Entegrasyonları',
     description: '',
     icon: 'Sparkles',
-    gradientFrom: '#a855f7',
-    gradientTo: '#7c3aed',
+    gradientFrom: '#ec4899',
+    gradientTo: '#be185d',
   },
   {
     slug: 'bildirim-email',
@@ -69,7 +69,15 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     name: 'Kişisel Verimlilik & Takvim',
     description: '',
     icon: 'CalendarDays',
-    gradientFrom: '#6366f1',
-    gradientTo: '#4338ca',
+    gradientFrom: '#14b8a6',
+    gradientTo: '#0d9488',
+  },
+  {
+    slug: 'insan-kaynaklari',
+    name: 'İnsan Kaynakları',
+    description: '',
+    icon: 'Users',
+    gradientFrom: '#f97316',
+    gradientTo: '#ea580c',
   },
 ];

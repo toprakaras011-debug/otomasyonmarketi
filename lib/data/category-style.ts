@@ -54,8 +54,8 @@ export const CATEGORY_STYLES: CategoryStyleDefinition[] = [
     slug: 'yapay-zeka-entegrasyonlari',
     name: 'Yapay Zeka Entegrasyonları',
     iconKey: 'sparkles',
-    gradientFrom: '#a855f7',
-    gradientTo: '#7c3aed',
+    gradientFrom: '#ec4899',
+    gradientTo: '#be185d',
   },
   {
     slug: 'bildirim-email',
@@ -68,8 +68,15 @@ export const CATEGORY_STYLES: CategoryStyleDefinition[] = [
     slug: 'kisisel-verimlilik-takvim',
     name: 'Kişisel Verimlilik & Takvim',
     iconKey: 'users',
-    gradientFrom: '#6366f1',
-    gradientTo: '#4338ca',
+    gradientFrom: '#14b8a6',
+    gradientTo: '#0d9488',
+  },
+  {
+    slug: 'insan-kaynaklari',
+    name: 'İnsan Kaynakları',
+    iconKey: 'users',
+    gradientFrom: '#f97316',
+    gradientTo: '#ea580c',
   },
 ];
 

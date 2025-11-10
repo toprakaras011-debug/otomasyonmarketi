@@ -14,6 +14,7 @@ import {
   Sparkles,
   TrendingUp,
   Users,
+  UserCheck,
   Zap,
   Star,
 } from 'lucide-react';
@@ -57,8 +58,8 @@ const categoryStyleMap = {
   },
   'yapay-zeka-entegrasyonlari': {
     icon: Sparkles,
-    gradientFrom: '#a855f7',
-    gradientTo: '#7c3aed',
+    gradientFrom: '#ec4899',
+    gradientTo: '#be185d',
     baselineCount: 90,
   },
   'bildirim-email': {
@@ -69,9 +70,15 @@ const categoryStyleMap = {
   },
   'kisisel-verimlilik-takvim': {
     icon: Users,
-    gradientFrom: '#6366f1',
-    gradientTo: '#4338ca',
+    gradientFrom: '#14b8a6',
+    gradientTo: '#0d9488',
     baselineCount: 95,
+  },
+  'insan-kaynaklari': {
+    icon: UserCheck,
+    gradientFrom: '#f97316',
+    gradientTo: '#ea580c',
+    baselineCount: 85,
   },
 } as const;
 
