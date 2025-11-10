@@ -44,9 +44,9 @@ const timeBasedThemeInitScript = `
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  display: 'swap',
-  preload: true,
-  fallback: ['system-ui', 'arial'],
+  display: 'swap', // Prevents invisible text during font load
+  preload: true, // Preload critical font
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
   adjustFontFallback: true,
   weight: ['400', '500', '600', '700'],
 });
@@ -55,9 +55,9 @@ const poppins = Poppins({
   weight: ['600', '700', '900'],
   subsets: ['latin'],
   variable: '--font-poppins',
-  display: 'swap',
-  preload: false,
-  fallback: ['system-ui', 'arial'],
+  display: 'swap', // Prevents invisible text during font load
+  preload: false, // Defer non-critical font
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
   adjustFontFallback: true,
 });
 
@@ -66,6 +66,15 @@ export const metadata: Metadata = {
   title: {
     default: 'Otomasyon Mağazası - İş Süreçlerinizi Otomatikleştirin | Türkiye\'nin En Büyük Otomasyon Platformu',
     template: '%s | Otomasyon Mağazası'
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png' },
+    ],
   },
   other: {
     'revisit-after': '1 days',
@@ -174,22 +183,27 @@ export default async function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-        {/* Resource Hints for Performance - Optimized */}
+        {/* Resource Hints for Performance - Critical */}
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <>
             <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
             <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+            {/* Preconnect to Supabase storage for faster image loading */}
+            <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} />
           </>
         )}
-        {/* Preconnect to Google Fonts - Optimized */}
+        {/* Preconnect to Google Fonts - Early connection */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preconnect to Vercel Analytics */}
+        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         
-        {/* Critical inline script - must run before render */}
+        {/* Critical inline script - must run before render (non-blocking) */}
         <script
           dangerouslySetInnerHTML={{
             __html: timeBasedThemeInitScript,
           }}
+          suppressHydrationWarning
         />
         
         {/* Structured Data - Defer to avoid blocking render */}
@@ -209,12 +223,10 @@ export default async function RootLayout({
             }),
           }}
           defer
+          suppressHydrationWarning
         />
         
-        {/* Icons */}
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.webmanifest" />
+        {/* Icons and manifest - Managed by metadata API */}
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
         <ErrorBoundary>

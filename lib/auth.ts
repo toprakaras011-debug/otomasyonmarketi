@@ -30,13 +30,31 @@ export const signUp = async (
 };
 
 export const signIn = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      console.error('Sign in error:', error);
+      // Provide more user-friendly error messages
+      if (error.message.includes('Invalid login credentials')) {
+        throw new Error('E-posta veya şifre hatalı. Lütfen tekrar deneyin.');
+      } else if (error.message.includes('Email not confirmed')) {
+        throw new Error('E-posta adresiniz henüz doğrulanmamış. Lütfen e-posta kutunuzu kontrol edin.');
+      } else if (error.status === 400) {
+        throw new Error('Geçersiz e-posta veya şifre formatı.');
+      } else if (error.status === 403) {
+        throw new Error('Giriş yapma izniniz yok. Lütfen destek ekibiyle iletişime geçin.');
+      }
+      throw error;
+    }
+    return data;
+  } catch (error: any) {
+    console.error('Sign in exception:', error);
+    throw error;
+  }
 };
 
 export const signOut = async () => {
@@ -45,9 +63,25 @@ export const signOut = async () => {
 };
 
 export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return user;
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      // 403 errors are common when user is not authenticated - don't throw, just return null
+      if (error.status === 403 || error.message.includes('JWT')) {
+        return null;
+      }
+      console.error('Get current user error:', error);
+      throw error;
+    }
+    return user;
+  } catch (error: any) {
+    // Silently fail for auth errors - user might not be logged in
+    if (error?.status === 403 || error?.message?.includes('JWT')) {
+      return null;
+    }
+    console.error('Get current user exception:', error);
+    throw error;
+  }
 };
 
 export const getUserProfile = async (userId: string) => {

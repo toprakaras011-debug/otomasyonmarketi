@@ -41,14 +41,14 @@ export function CookieConsent() {
 
   return (
     <motion.div
-      className="fixed inset-x-4 bottom-6 z-[60]"
+      className="fixed inset-x-0 bottom-0 z-[60] px-4 pb-4 sm:px-6 sm:pb-6"
       initial={{ opacity: 0, y: 36 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: 'easeOut' }}
     >
       <motion.div
         layout
-        className="relative mx-auto w-full max-w-4xl overflow-hidden rounded-3xl border border-white/15 bg-slate-950/80 text-white shadow-[0_35px_80px_-30px_rgba(79,70,229,0.6)] backdrop-blur-2xl"
+        className="relative mx-auto w-full max-w-[1920px] overflow-hidden rounded-2xl border border-white/15 bg-slate-950/95 text-white shadow-[0_35px_80px_-30px_rgba(79,70,229,0.6)] backdrop-blur-2xl"
         transition={{ type: 'spring', stiffness: 140, damping: 18 }}
       >
         <div className="pointer-events-none absolute -left-8 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-purple-500/30 blur-3xl" />
@@ -64,60 +64,47 @@ export function CookieConsent() {
           transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
         />
 
-        <div className="relative z-10 flex flex-col gap-6 px-6 py-7 sm:px-8 sm:py-8 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-1 items-start gap-5 text-left">
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 shadow-[0_10px_30px_rgba(168,85,247,0.45)]">
-              <span className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 opacity-70 blur-sm" />
-              <span className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950/80">
-                <Cookie className="h-5 w-5 text-purple-100" />
+        <div className="relative z-10 flex flex-row items-center justify-between gap-6 px-6 py-5 sm:px-8 sm:py-6">
+          <div className="flex flex-1 items-center gap-4 text-left">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 shadow-[0_10px_30px_rgba(168,85,247,0.45)] sm:h-12 sm:w-12 sm:rounded-2xl">
+              <span className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 opacity-70 blur-sm sm:rounded-2xl" />
+              <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-slate-950/80 sm:h-10 sm:w-10 sm:rounded-2xl">
+                <Cookie className="h-4 w-4 text-purple-100 sm:h-5 sm:w-5" />
               </span>
             </div>
 
-            <div className="space-y-4 text-sm leading-relaxed sm:text-base">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-white/80">
-                <Sparkles className="h-3.5 w-3.5" />
-                Gizliliğinize değer veriyoruz
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-3">
+                <p className="text-base font-semibold text-white sm:text-lg">Çerezleri kullanıyoruz</p>
+                <div className="hidden items-center gap-2 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-white/80 sm:inline-flex">
+                  <Sparkles className="h-3 w-3" />
+                  Gizliliğinize değer veriyoruz
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-lg font-semibold text-white sm:text-xl">Çerezleri kullanıyoruz</p>
-                <p className="text-sm text-white/85 sm:text-base">
-                  Deneyiminizi iyileştirmek, kullanım verilerini analiz etmek ve kişiselleştirilmiş içerikler göstermek için çerezlerden yararlanıyoruz. Detaylar için{' '}
-                  <Link href="/privacy" className="font-semibold text-white underline decoration-white/60 underline-offset-4 transition-colors hover:text-purple-200">
-                    Gizlilik Politikası
-                  </Link>{' '}
-                  sayfamızı inceleyebilirsiniz.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-3 text-xs text-white/75 sm:text-sm">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1">
-                  <ShieldCheck className="h-4 w-4 text-purple-200" />
-                  Güvenli veri saklama
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1">
-                  <ShieldCheck className="h-4 w-4 text-blue-200" />
-                  Performans analizi
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1">
-                  <ShieldCheck className="h-4 w-4 text-pink-200" />
-                  Kişiselleştirilmiş içerik
-                </span>
-              </div>
+              <p className="text-xs text-white/85 sm:text-sm">
+                Deneyiminizi iyileştirmek için çerezlerden yararlanıyoruz.{' '}
+                <Link href="/privacy" className="font-semibold text-white underline decoration-white/60 underline-offset-2 transition-colors hover:text-purple-200">
+                  Gizlilik Politikası
+                </Link>
+              </p>
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+          <div className="flex shrink-0 items-center gap-3">
             <Button
               variant="outline"
-              className="group relative overflow-hidden border-white/30 bg-white/10 px-5 py-2 text-sm font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] transition hover:border-white/50 hover:bg-white/20"
+              size="sm"
+              className="group relative overflow-hidden border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] transition hover:border-white/50 hover:bg-white/20 sm:px-5 sm:text-sm"
               asChild
             >
               <Link href="/privacy">
-                <span className="relative">Ayrıntıları Gör</span>
+                <span className="relative">Ayrıntılar</span>
               </Link>
             </Button>
             <Button
               onClick={acceptCookies}
-              className="group relative overflow-hidden bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 px-6 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(147,197,253,0.35)] transition hover:opacity-90"
+              size="sm"
+              className="group relative overflow-hidden bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 px-5 py-2 text-xs font-semibold text-white shadow-[0_10px_30px_rgba(147,197,253,0.35)] transition hover:opacity-90 sm:px-6 sm:text-sm"
             >
               <span className="absolute inset-0 translate-y-[120%] bg-gradient-to-r from-white/40 via-white/20 to-transparent opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100" />
               <span className="relative">Kabul Ediyorum</span>

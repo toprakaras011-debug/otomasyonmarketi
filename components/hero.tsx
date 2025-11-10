@@ -81,7 +81,11 @@ export function Hero({ initialStats }: HeroProps) {
     setIsMobile(window.innerWidth < 768);
     // Ensure container has explicit position for framer-motion scroll tracking
     if (containerRef.current) {
-      containerRef.current.style.position = 'relative';
+      const element = containerRef.current;
+      // Force position relative if not already set
+      if (getComputedStyle(element).position === 'static') {
+        element.style.position = 'relative';
+      }
     }
   }, [initialStats]);
 
@@ -152,7 +156,11 @@ export function Hero({ initialStats }: HeroProps) {
   ]), [stats]);
 
   return (
-    <section ref={containerRef} className="relative overflow-hidden pt-24 pb-16 sm:pt-32 sm:pb-20 md:pt-40 md:pb-32 lg:pt-48 lg:pb-40">
+    <section 
+      ref={containerRef} 
+      className="relative overflow-hidden pt-24 pb-16 sm:pt-32 sm:pb-20 md:pt-40 md:pb-32 lg:pt-48 lg:pb-40"
+      style={{ position: 'relative' }}
+    >
       {/* Advanced Background Effects */}
       <div className="absolute inset-0">
         {/* Animated Grid */}

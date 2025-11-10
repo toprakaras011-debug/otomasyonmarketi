@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://otomasyonmagazasi.com.tr';
+  const supabase = await createClient();
 
   const { data: automations } = await supabase
     .from('automations')
