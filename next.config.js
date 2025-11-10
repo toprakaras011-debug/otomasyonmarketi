@@ -60,9 +60,22 @@ const nextConfig = {
   },
   // Enable experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion', 'sonner'],
     optimizeCss: true,
+    // Enable partial prerendering for faster navigation
+    ppr: false, // Can enable if needed
+    // Optimize server components
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
+  // Enable route prefetching
+  onDemandEntries: {
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
+  },
+  // Production optimizations
+  productionBrowserSourceMaps: false,
   // Compress responses
   compress: true,
   // Enable SWC minification
@@ -70,6 +83,10 @@ const nextConfig = {
   // Optimize for production
   poweredByHeader: false,
   reactStrictMode: true,
+  // Output optimization
+  output: 'standalone',
+  // Optimize fonts
+  optimizeFonts: true,
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {

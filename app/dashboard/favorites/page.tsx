@@ -44,10 +44,10 @@ export default function FavoritesPage() {
       const { data: favoritesData } = await supabase
         .from('favorites')
         .select(`
-          *,
+          id,created_at,
           automation:automations(
-            *,
-            category:categories(*)
+            id,title,slug,description,price,image_url,total_sales,rating_avg,
+            category:categories(id,name,slug)
           )
         `)
         .eq('user_id', currentUser.id)
@@ -231,7 +231,7 @@ export default function FavoritesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.08, duration: 0.4 }}
               >
-                <Card className="group relative overflow-hidden rounded-3xl border border-purple-500/20 bg-background/80 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1 hover:border-purple-500/40">
+                <Card className="group relative overflow-hidden rounded-3xl border border-purple-500/20 bg-background/80 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-purple-500/40">
                   <button
                     onClick={() => handleRemoveFavorite(favorite.id)}
                     className="absolute top-4 right-4 z-20 rounded-full bg-background/70 p-2 opacity-0 shadow-lg transition-all duration-300 hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100"
@@ -250,7 +250,7 @@ export default function FavoritesPage() {
                             alt={favorite.automation.title ?? 'Automation cover'}
                             fill
                             sizes="(min-width: 1280px) 33vw, (min-width: 1024px) 45vw, 100vw"
-                            className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
                           />
                         ) : (
                           <div className="flex h-full items-center justify-center">

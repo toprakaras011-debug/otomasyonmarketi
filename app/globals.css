@@ -102,9 +102,25 @@
     text-wrap: balance;
   }
 
-  /* Performance optimizations */
+  /* Performance optimizations - GPU Acceleration */
   .gpu-accelerated {
     transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+  
+  /* Optimize all motion elements */
+  [data-framer-motion],
+  .motion-element {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  /* Optimize images */
+  img {
+    content-visibility: auto;
     will-change: transform;
   }
   
@@ -117,6 +133,18 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+  }
+  
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Reduce animations on mobile */
+    [data-framer-motion] {
+      will-change: auto;
     }
   }
   
@@ -192,6 +220,8 @@
     -webkit-mask-composite: xor;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
+    will-change: transform;
+    transform: translateZ(0);
   }
 
   .perspective-1000 {

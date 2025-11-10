@@ -134,7 +134,7 @@ export default function AutomationDetailClient({
 
       const { data: reviewsData } = await supabase
         .from('reviews')
-        .select('*, user:user_profiles(*)')
+        .select('id,rating,comment,created_at, user:user_profiles(id,username,avatar_url)')
         .eq('automation_id', automation.id)
         .order('created_at', { ascending: false });
 
@@ -242,7 +242,7 @@ export default function AutomationDetailClient({
                     sizes="(max-width: 1024px) 100vw, (max-width: 1440px) 66vw, 960px"
                     priority
                     quality={80}
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';

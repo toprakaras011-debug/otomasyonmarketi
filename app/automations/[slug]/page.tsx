@@ -14,8 +14,9 @@ export default async function AutomationDetailPage({ params }: { params: Promise
 
   const { data: automation } = await supabase
     .from('automations')
-    .select('*, category:categories(*), developer:user_profiles(*)')
+    .select('id,title,slug,description,long_description,price,image_url,file_path,total_sales,rating_avg,created_at,is_published,admin_approved, category:categories(id,name,slug), developer:user_profiles(id,username,avatar_url)')
     .eq('slug', resolvedParams.slug)
+    .eq('is_published', true)
     .maybeSingle();
 
   if (!automation) {
@@ -24,9 +25,10 @@ export default async function AutomationDetailPage({ params }: { params: Promise
 
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('*, user:user_profiles(*)')
+    .select('id,rating,comment,created_at, user:user_profiles(id,username,avatar_url)')
     .eq('automation_id', automation.id)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(20);
 
   const { data: { user } } = await supabase.auth.getUser();
 

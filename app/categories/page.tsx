@@ -34,8 +34,8 @@ const categoryStyleMap = {
   },
   'e-ticaret-pazaryeri': {
     icon: TrendingUp,
-    gradientFrom: '#9333ea',
-    gradientTo: '#6d28d9',
+    gradientFrom: '#3b82f6',
+    gradientTo: '#2563eb',
     baselineCount: 250,
   },
   'crm-musteri-yonetimi': {
@@ -70,8 +70,8 @@ const categoryStyleMap = {
   },
   'kisisel-verimlilik-takvim': {
     icon: Users,
-    gradientFrom: '#14b8a6',
-    gradientTo: '#0d9488',
+    gradientFrom: '#06b6d4',
+    gradientTo: '#0891b2',
     baselineCount: 95,
   },
   'insan-kaynaklari': {
@@ -116,7 +116,7 @@ export default function CategoriesPage() {
     const fetchCategories = async () => {
       const { data } = await supabase
         .from('categories')
-        .select('*')
+        .select('id,name,slug,description')
         .order('name');
 
       if (data) {
@@ -139,7 +139,7 @@ export default function CategoriesPage() {
           if (automationIds.length > 0) {
             const { count: weeklyCount } = await supabase
               .from('purchases')
-              .select('*', { count: 'exact', head: true })
+              .select('id', { count: 'exact', head: true })
               .in('automation_id', automationIds)
               .eq('status', 'completed')
               .gte('purchased_at', oneWeekAgoIso);
@@ -194,14 +194,17 @@ export default function CategoriesPage() {
 
         const remaining = stats
           .filter((category) => !staticCategories.some((staticCat) => staticCat.slug === category.slug))
-          .map((category) => ({
-            ...category,
-            description: category.description ?? '',
-            gradientFrom: category.gradientFrom ?? '#312e81',
-            gradientTo: category.gradientTo ?? '#1e1b4b',
-            icon: category.icon ?? 'trending',
-            weeklySalesCount: category.weeklySalesCount ?? 0,
-          }));
+          .map((category) => {
+            const style = categoryStyleMap[category.slug as keyof typeof categoryStyleMap] || fallbackStyle;
+            return {
+              ...category,
+              description: category.description ?? '',
+              gradientFrom: style.gradientFrom,
+              gradientTo: style.gradientTo,
+              icon: style.icon,
+              weeklySalesCount: category.weeklySalesCount ?? 0,
+            };
+          });
 
         const consolidated = [...merged, ...remaining];
 
@@ -311,7 +314,7 @@ export default function CategoriesPage() {
                 transition={{ duration: 0.5, delay: 0.3 + index * 0.05 }}
               >
                 <Link href={`/automations?category=${category.slug}`} className="group block">
-                  <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-[1px] shadow-xl backdrop-blur-sm transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:from-purple-500/20 hover:to-blue-500/20">
+                  <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-[1px] shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:from-purple-500/20 hover:to-blue-500/20">
                     {category.isTopPerformer && (
                       <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-3 py-1 text-xs font-semibold text-purple-100 backdrop-blur">
                         <Sparkles className="h-3 w-3" /> Bu haftanın yıldızı
@@ -319,7 +322,7 @@ export default function CategoriesPage() {
                     )}
                     {/* Glow Effect */}
                     <div
-                      className="absolute inset-0 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-20"
+                      className="absolute inset-0 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-20"
                       style={{
                         background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`
                       }}

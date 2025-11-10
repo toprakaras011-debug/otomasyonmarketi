@@ -84,7 +84,7 @@ export function Footer() {
                 whileHover={{ scale: 1.05, rotate: 3 }}
               >
                 <motion.div
-                  className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-75"
+                  className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-75"
                   animate={{
                     rotate: [0, 360],
                   }}

@@ -21,8 +21,8 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     name: 'E-Ticaret & Pazaryeri Otomasyonları',
     description: '',
     icon: 'ShoppingCart',
-    gradientFrom: '#9333ea',
-    gradientTo: '#6d28d9',
+    gradientFrom: '#3b82f6',
+    gradientTo: '#2563eb',
   },
   {
     slug: 'crm-musteri-yonetimi',
@@ -69,8 +69,8 @@ export const CATEGORY_DEFINITIONS: CategoryDefinition[] = [
     name: 'Kişisel Verimlilik & Takvim',
     description: '',
     icon: 'CalendarDays',
-    gradientFrom: '#14b8a6',
-    gradientTo: '#0d9488',
+    gradientFrom: '#06b6d4',
+    gradientTo: '#0891b2',
   },
   {
     slug: 'insan-kaynaklari',

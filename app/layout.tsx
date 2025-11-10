@@ -48,7 +48,6 @@ const inter = Inter({
   preload: true,
   fallback: ['system-ui', 'arial'],
   adjustFontFallback: true,
-  // Only load weights we actually use
   weight: ['400', '500', '600', '700'],
 });
 
@@ -57,7 +56,7 @@ const poppins = Poppins({
   subsets: ['latin'],
   variable: '--font-poppins',
   display: 'swap',
-  preload: false, // Defer Poppins - not critical for LCP
+  preload: false,
   fallback: ['system-ui', 'arial'],
   adjustFontFallback: true,
 });
@@ -166,7 +165,7 @@ export default async function RootLayout({
   if (user) {
     const { data } = await supabase
       .from('user_profiles')
-      .select('id,username,avatar_url,role,is_admin,is_developer')
+      .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
       .eq('id', user.id)
       .maybeSingle();
     profile = data ?? null;
@@ -185,9 +184,6 @@ export default async function RootLayout({
         {/* Preconnect to Google Fonts - Optimized */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Prefetch critical resources */}
-        <link rel="prefetch" href="/automations" as="document" />
-        <link rel="prefetch" href="/categories" as="document" />
         
         {/* Critical inline script - must run before render */}
         <script

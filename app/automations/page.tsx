@@ -12,15 +12,18 @@ export default async function AutomationsPage() {
     error: automationsError,
   } = await supabase
     .from('automations')
-    .select('*, category:categories(*), developer:user_profiles(*)')
-        .order('created_at', { ascending: false });
+    .select('id,title,slug,description,price,image_url,total_sales,rating_avg,created_at,is_published,admin_approved, category:categories(id,name,slug), developer:user_profiles(id,username,avatar_url)')
+    .eq('is_published', true)
+    .eq('admin_approved', true)
+    .order('created_at', { ascending: false })
+    .limit(100);
 
   const {
     data: categories,
     error: categoriesError,
   } = await supabase
     .from('categories')
-    .select('*')
+    .select('id,name,slug')
     .order('name');
 
   if (automationsError || categoriesError) {

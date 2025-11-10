@@ -38,7 +38,7 @@ export default function DashboardPage() {
 
       const { data: profileData } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
         .eq('id', currentUser.id)
         .maybeSingle();
 
@@ -55,7 +55,7 @@ export default function DashboardPage() {
             id,
             user_id,
             automation_id,
-            price_paid,
+            price,
             status,
             purchased_at,
             automation:automations!inner(
@@ -72,19 +72,8 @@ export default function DashboardPage() {
           .order('purchased_at', { ascending: false });
         
         if (purchasesError) {
-          console.error('Purchases fetch error details:', {
-            message: purchasesError.message,
-            details: purchasesError.details,
-            hint: purchasesError.hint,
-            code: purchasesError.code,
-            userId: currentUser.id
-          });
-          
-          // Check if it's a table access issue
-          if (purchasesError.code === 'PGRST116' || purchasesError.message?.includes('relation') || purchasesError.message?.includes('does not exist')) {
-            console.warn('Purchases table may not exist or user lacks access. This is normal for new users.');
-          }
-          
+          // Silently handle errors - purchases may not exist for new users
+          console.warn('Purchases fetch error:', purchasesError.message);
           setPurchases([]);
         } else {
           setPurchases(purchasesData || []);
@@ -97,14 +86,15 @@ export default function DashboardPage() {
       const { data: favoritesData } = await supabase
         .from('favorites')
         .select(`
-          *,
+          id,created_at,
           automation:automations(
-            *,
-            category:categories(*)
+            id,title,slug,description,price,image_url,total_sales,rating_avg,
+            category:categories(id,name,slug)
           )
         `)
         .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (favoritesData) {
         setFavorites(favoritesData as any);

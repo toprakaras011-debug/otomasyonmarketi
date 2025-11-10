@@ -30,7 +30,8 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
         .from('automations')
         .select('tags')
         .eq('is_published', true)
-        .eq('admin_approved', true),
+        .eq('admin_approved', true)
+        .limit(1000),
     ]);
 
   const automationsCount = automationsResponse.count ?? 0;

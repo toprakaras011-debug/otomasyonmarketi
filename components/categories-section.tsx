@@ -42,13 +42,14 @@ function CategoryCard({ category, index }: { category: CategoryStat; index: numb
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="gpu-accelerated"
     >
       <Link href={`/automations?category=${category.slug}`} className="group block h-full">
-        <div className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 p-[1px] shadow-xl backdrop-blur-sm transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:from-purple-500/10 hover:to-blue-500/10">
+        <div className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 p-[1px] shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:from-purple-500/10 hover:to-blue-500/10">
           {/* Animated glow effect */}
-          <div className="absolute inset-0 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-30">
+          <div className="absolute inset-0 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-30">
             <div className={`h-full w-full bg-gradient-to-br ${category.gradient}`} />
           </div>
 

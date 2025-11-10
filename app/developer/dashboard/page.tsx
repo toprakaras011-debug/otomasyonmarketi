@@ -23,10 +23,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 import { Separator } from '@/components/ui/separator';
-import { Calendar } from '@/components/ui/calendar';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
-import { Plus, TrendingUp, DollarSign, Package, Pencil, Trash2, Sparkles, Info, Loader2, Wand2, Tags, Layers, Link2, FileText, CalendarClock, ShieldCheck, Rocket, Zap, Gauge, ChevronRight, Globe, SparklesIcon, Star, Filter, ListChecks, BookOpen } from 'lucide-react';
+import { Plus, TrendingUp, DollarSign, Package, Pencil, Trash2, Sparkles, Info, Loader2, Wand2, Tags, Layers, FileText, ShieldCheck, Rocket, Zap, Star, Filter } from 'lucide-react';
 import { supabase, type Automation } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { FileUpload } from '@/components/file-upload';
@@ -39,22 +38,11 @@ const createInitialFormState = () => ({
   long_description: '',
   price: '',
   category_id: '',
-  category_custom: '',
-  automation_type: 'template',
-  complexity: 'beginner',
   image_path: '',
   file_path: '',
-  demo_url: '',
-  documentation: '',
   tags: '',
   tag_ids: [] as string[],
   is_published: true,
-  enable_support: true,
-  support_response_time: '48',
-  estimated_setup_time: '15',
-  release_notes: '',
-  changelog_url: '',
-  integrations: '',
 });
 
 type FormState = ReturnType<typeof createInitialFormState>;
@@ -84,7 +72,7 @@ export default function DeveloperDashboardPage() {
   const [formUploading, setFormUploading] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormState>(() => createInitialFormState());
-  const [activeTab, setActiveTab] = useState<'overview' | 'assets' | 'experience' | 'metadata'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'assets' | 'metadata'>('overview');
   const [tagSearch, setTagSearch] = useState('');
 
   const derivedCategories = useMemo(() => {
@@ -143,7 +131,7 @@ export default function DeveloperDashboardPage() {
 
       const { data: profileData } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
         .eq('id', currentUser.id)
         .maybeSingle();
 
@@ -163,12 +151,12 @@ export default function DeveloperDashboardPage() {
         supabase
           .from('automations')
           .select(`
-            *,
-            category:categories(*)
+            id,title,slug,description,price,image_path,file_path,total_sales,rating_avg,created_at,is_published,admin_approved,
+            category:categories(id,name,slug)
           `)
           .eq('developer_id', currentUser.id)
           .order('created_at', { ascending: false }),
-        supabase.from('categories').select('*').order('name'),
+        supabase.from('categories').select('id,name,slug').order('name'),
         supabase
           .from('purchases')
           .select('developer_earnings, status')
@@ -262,8 +250,6 @@ export default function DeveloperDashboardPage() {
       category_id: categoryId || null,
       image_path: formData.image_path || null,
       file_path: formData.file_path || null,
-      demo_url: formData.demo_url || null,
-      documentation: formData.documentation || null,
       tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
       is_published: formData.is_published,
     };
@@ -299,8 +285,8 @@ export default function DeveloperDashboardPage() {
       const { data: automationsData } = await supabase
         .from('automations')
         .select(`
-          *,
-          category:categories(*)
+          id,title,slug,description,price,image_path,file_path,total_sales,rating_avg,created_at,is_published,admin_approved,
+          category:categories(id,name,slug)
         `)
         .eq('developer_id', user.id)
         .order('created_at', { ascending: false });
@@ -341,21 +327,9 @@ export default function DeveloperDashboardPage() {
       category_id: automation.category_id || '',
       image_path: (automation as any).image_path || '',
       file_path: (automation as any).file_path || '',
-      demo_url: automation.demo_url || '',
-      documentation: automation.documentation || '',
       tags: automation.tags?.join(', ') || '',
       tag_ids: automation.tags || [],
       is_published: (automation as any).is_published ?? false,
-      automation_type: (automation as any).automation_type || 'template',
-      complexity: (automation as any).complexity || 'beginner',
-      enable_support: (automation as any).enable_support ?? true,
-      support_response_time: (automation as any).support_response_time?.toString() || '48',
-      estimated_setup_time: (automation as any).estimated_setup_time?.toString() || '15',
-      release_notes: (automation as any).release_notes || '',
-      changelog_url: (automation as any).changelog_url || '',
-      integrations: Array.isArray((automation as any).integrations)
-        ? (automation as any).integrations.join(', ')
-        : (automation as any).integrations || '',
     }));
     setDialogOpen(true);
   };
@@ -458,7 +432,7 @@ export default function DeveloperDashboardPage() {
                 )}
               </DialogHeader>
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col overflow-hidden">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="overview" className="flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     Genel
@@ -467,13 +441,9 @@ export default function DeveloperDashboardPage() {
                     <Layers className="h-4 w-4" />
                     Dosyalar
                   </TabsTrigger>
-                  <TabsTrigger value="experience" className="flex items-center gap-2">
-                    <Gauge className="h-4 w-4" />
-                    Deneyim
-                  </TabsTrigger>
                   <TabsTrigger value="metadata" className="flex items-center gap-2">
                     <Tags className="h-4 w-4" />
-                    Metadata
+                    Etiketler
                   </TabsTrigger>
                 </TabsList>
                 <ScrollArea className="flex-1 pr-4">
@@ -604,118 +574,8 @@ export default function DeveloperDashboardPage() {
                         Görsel dosyası için yukarıdaki "Otomasyon Görseli" alanını kullanın.
                       </p>
 
-                      <Separator />
-
-                      <div>
-                        <Label htmlFor="demo_url" className="flex items-center gap-2">
-                          <Link2 className="h-4 w-4" />
-                          Demo URL
-                        </Label>
-                        <Input
-                          id="demo_url"
-                          type="url"
-                          value={formData.demo_url}
-                          onChange={(e) => setFormData({ ...formData, demo_url: e.target.value })}
-                          placeholder="https://demo.example.com"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="documentation" className="flex items-center gap-2">
-                          <BookOpen className="h-4 w-4" />
-                          Dokümantasyon
-                        </Label>
-                        <Textarea
-                          id="documentation"
-                          value={formData.documentation}
-                          onChange={(e) => setFormData({ ...formData, documentation: e.target.value })}
-                          rows={6}
-                          placeholder="Kurulum adımları, kullanım talimatları, gereksinimler..."
-                        />
-                      </div>
                     </TabsContent>
 
-                    <TabsContent value="experience" className="space-y-4 mt-0">
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <Label htmlFor="automation_type">Otomasyon Tipi</Label>
-                          <Select value={formData.automation_type} onValueChange={(value) => setFormData({ ...formData, automation_type: value })}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="template">Şablon</SelectItem>
-                              <SelectItem value="workflow">İş Akışı</SelectItem>
-                              <SelectItem value="integration">Entegrasyon</SelectItem>
-                              <SelectItem value="script">Script</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="complexity">Karmaşıklık Seviyesi</Label>
-                          <Select value={formData.complexity} onValueChange={(value) => setFormData({ ...formData, complexity: value })}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="beginner">Başlangıç</SelectItem>
-                              <SelectItem value="intermediate">Orta</SelectItem>
-                              <SelectItem value="advanced">İleri</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="estimated_setup_time">Tahmini Kurulum Süresi (dakika)</Label>
-                        <Input
-                          id="estimated_setup_time"
-                          type="number"
-                          min="1"
-                          value={formData.estimated_setup_time}
-                          onChange={(e) => setFormData({ ...formData, estimated_setup_time: e.target.value })}
-                          placeholder="15"
-                        />
-                      </div>
-
-                      <Separator />
-
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>Destek Hizmeti</Label>
-                          <p className="text-xs text-muted-foreground">Müşterilere destek sağlayacak mısınız?</p>
-                        </div>
-                        <Switch
-                          checked={formData.enable_support}
-                          onCheckedChange={(checked) => setFormData({ ...formData, enable_support: checked })}
-                        />
-                      </div>
-
-                      {formData.enable_support && (
-                        <div>
-                          <Label htmlFor="support_response_time">Destek Yanıt Süresi (saat)</Label>
-                          <Input
-                            id="support_response_time"
-                            type="number"
-                            min="1"
-                            value={formData.support_response_time}
-                            onChange={(e) => setFormData({ ...formData, support_response_time: e.target.value })}
-                            placeholder="48"
-                          />
-                        </div>
-                      )}
-
-                      <div>
-                        <Label htmlFor="integrations">Entegrasyonlar (virgülle ayırın)</Label>
-                        <Input
-                          id="integrations"
-                          value={formData.integrations}
-                          onChange={(e) => setFormData({ ...formData, integrations: e.target.value })}
-                          placeholder="Slack, Google Sheets, Trello"
-                        />
-                      </div>
-                    </TabsContent>
 
                     <TabsContent value="metadata" className="space-y-4 mt-0">
 
@@ -785,31 +645,7 @@ export default function DeveloperDashboardPage() {
                         />
                       </div>
 
-                      <Separator />
-
-                      <div>
-                        <Label htmlFor="changelog_url">Değişiklik Günlüğü URL</Label>
-                        <Input
-                          id="changelog_url"
-                          type="url"
-                          value={formData.changelog_url}
-                          onChange={(e) => setFormData({ ...formData, changelog_url: e.target.value })}
-                          placeholder="https://changelog.example.com"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="release_notes">Sürüm Notları</Label>
-                        <Textarea
-                          id="release_notes"
-                          value={formData.release_notes}
-                          onChange={(e) => setFormData({ ...formData, release_notes: e.target.value })}
-                          rows={4}
-                          placeholder="Bu sürümdeki yenilikler ve düzeltmeler..."
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between pt-2">
                         <div className="space-y-0.5">
                           <Label>Yayınla</Label>
                           <p className="text-xs text-muted-foreground">Otomasyonu hemen yayınlamak istiyor musunuz?</p>
@@ -938,7 +774,7 @@ export default function DeveloperDashboardPage() {
                             alt={automation.title}
                             fill
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
                           />
                         ) : automation.image_url ? (
                           <Image src={automation.image_url} alt={automation.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-110" />

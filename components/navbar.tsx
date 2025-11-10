@@ -75,11 +75,17 @@ export function Navbar() {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      // Force page reload to clear any cached state
+      const { error } = await signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        // Even if there's an error, try to clear local state and redirect
+      }
+      // Clear any cached state and redirect
       window.location.href = '/';
     } catch (error) {
       console.error('Sign out error:', error);
+      // Force redirect even on error
+      window.location.href = '/';
     }
   };
 
@@ -93,7 +99,7 @@ export function Navbar() {
   return (
     <motion.nav 
       style={{ opacity: mounted ? navOpacity : 0.8 }}
-      className={`fixed top-0 z-50 w-full transition-all duration-500 ${
+      className={`fixed top-0 z-50 w-full transition-all duration-300 gpu-accelerated ${
         scrolled
           ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
           : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
@@ -111,7 +117,7 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           {/* Logo - Ultra Futuristic */}
-          <Link href="/" className="group relative flex items-center space-x-3">
+          <Link href="/" prefetch={true} className="group relative flex items-center space-x-3">
             <motion.div 
               className="relative"
               whileHover={{ scale: 1.05 }}
@@ -119,7 +125,7 @@ export function Navbar() {
             >
               {/* Outer glow */}
               <motion.div 
-                className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 opacity-0 blur-xl group-hover:opacity-75 transition-opacity duration-500"
+                className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 opacity-0 blur-xl group-hover:opacity-75 transition-opacity duration-300"
                 animate={{
                   rotate: [0, 360],
                 }}
@@ -161,6 +167,7 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={true}
                   className="group relative"
                 >
                   <motion.div
@@ -175,13 +182,13 @@ export function Navbar() {
                       <motion.div
                         layoutId="navbar-active"
                         className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
                       />
                     )}
                     
                     {/* Hover effect */}
                     {!isActive && (
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600/0 to-blue-600/0 opacity-0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 group-hover:opacity-100 transition-all duration-300" />
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600/0 to-blue-600/0 opacity-0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 group-hover:opacity-100 transition-all duration-200" />
                     )}
                     
                     <div className="relative flex items-center gap-2 z-10">
@@ -201,7 +208,7 @@ export function Navbar() {
             <ThemeToggle />
             
             {user && (
-              <Link href="/cart" className="relative group">
+              <Link href="/cart" prefetch={true} className="relative group">
                 <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                   <Button variant="ghost" className="rounded-xl relative" size="icon">
                     <ShoppingCart className="h-5 w-5" />
@@ -230,7 +237,7 @@ export function Navbar() {
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium max-w-[100px] truncate">
-                      {profile?.username || user?.email || '...'}
+                      {profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Button>
@@ -245,21 +252,21 @@ export function Navbar() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-semibold">{profile?.username}</p>
+                        <p className="text-sm font-semibold">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                    <Link href="/dashboard" className="flex items-center gap-2">
+                    <Link href="/dashboard" prefetch={true} className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       Panelim
                     </Link>
                   </DropdownMenuItem>
-                  {profile?.role === 'admin' && (
+                  {(profile?.role === 'admin' || profile?.is_admin) && (
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                      <Link href="/admin/dashboard" className="flex items-center gap-2">
+                      <Link href="/admin/dashboard" prefetch={true} className="flex items-center gap-2">
                         <Shield className="h-4 w-4 text-red-500" />
                         <span className="text-red-500 font-semibold">Yönetim Paneli</span>
                       </Link>
@@ -267,20 +274,20 @@ export function Navbar() {
                   )}
                   {(profile?.is_developer || profile?.developer_approved) && (
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                      <Link href="/developer/dashboard" className="flex items-center gap-2">
+                      <Link href="/developer/dashboard" prefetch={true} className="flex items-center gap-2">
                         <Code2 className="h-4 w-4" />
                         Geliştirici Paneli
                       </Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                    <Link href="/dashboard/favorites" className="flex items-center gap-2">
+                    <Link href="/dashboard/favorites" prefetch={true} className="flex items-center gap-2">
                       <Heart className="h-4 w-4" />
                       Favorilerim
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                    <Link href="/dashboard/settings" className="flex items-center gap-2">
+                    <Link href="/dashboard/settings" prefetch={true} className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
                       Ayarlar
                     </Link>
@@ -295,12 +302,12 @@ export function Navbar() {
               <>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button variant="ghost" asChild className="rounded-xl font-semibold hover:bg-purple-500/10">
-                    <Link href="/auth/signin">Giriş Yap</Link>
+                    <Link href="/auth/signin" prefetch={true}>Giriş Yap</Link>
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Button asChild className="relative rounded-xl font-semibold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 shadow-lg shadow-purple-500/50 overflow-hidden group">
-                    <Link href="/auth/signup">
+                    <Link href="/auth/signup" prefetch={true}>
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 opacity-0 group-hover:opacity-30"
                         animate={{
@@ -321,7 +328,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
             {user && (
-              <Link href="/cart" className="relative">
+              <Link href="/cart" prefetch={true} className="relative">
                 <Button variant="ghost" size="icon" className="rounded-xl">
                   <ShoppingCart className="h-5 w-5" />
                   {count > 0 && (
@@ -360,6 +367,7 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={true}
                   className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
                     isActive
                       ? 'text-white bg-gradient-to-r from-purple-600 to-blue-600'
@@ -385,41 +393,41 @@ export function Navbar() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold">{profile?.username || 'Kullanıcı'}</p>
+                      <p className="font-semibold">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Button variant="outline" className="w-full rounded-xl justify-start border-purple-500/20" asChild>
-                      <Link href="/dashboard">
+                      <Link href="/dashboard" prefetch={true}>
                         <User className="mr-2 h-4 w-4" />
                         Panelim
                       </Link>
                     </Button>
-                    {profile?.role === 'admin' && (
+                    {(profile?.role === 'admin' || profile?.is_admin) && (
                       <Button variant="outline" className="w-full rounded-xl justify-start border-purple-500/20" asChild>
-                        <Link href="/admin/dashboard">
+                        <Link href="/admin/dashboard" prefetch={true}>
                           <Shield className="mr-2 h-4 w-4 text-red-500" />
                           <span className="text-red-500 font-semibold">Admin Paneli</span>
                         </Link>
                       </Button>
                     )}
-                    {profile?.is_developer && (
+                    {(profile?.is_developer || profile?.developer_approved) && (
                       <Button variant="outline" className="w-full rounded-xl justify-start border-purple-500/20" asChild>
-                        <Link href="/developer/dashboard">
+                        <Link href="/developer/dashboard" prefetch={true}>
                           <Code2 className="mr-2 h-4 w-4" />
                           Geliştirici Paneli
                         </Link>
                       </Button>
                     )}
                     <Button variant="outline" className="w-full rounded-xl justify-start border-purple-500/20" asChild>
-                      <Link href="/dashboard/favorites">
+                      <Link href="/dashboard/favorites" prefetch={true}>
                         <Heart className="mr-2 h-4 w-4" />
                         Favorilerim
                       </Link>
                     </Button>
                     <Button variant="outline" className="w-full rounded-xl justify-start border-purple-500/20" asChild>
-                      <Link href="/dashboard/settings">
+                      <Link href="/dashboard/settings" prefetch={true}>
                         <Settings className="mr-2 h-4 w-4" />
                         Ayarlar
                       </Link>
@@ -432,10 +440,10 @@ export function Navbar() {
               ) : (
                 <>
                   <Button variant="outline" className="w-full rounded-xl border-purple-500/20" asChild>
-                    <Link href="/auth/signin">Giriş Yap</Link>
+                    <Link href="/auth/signin" prefetch={true}>Giriş Yap</Link>
                   </Button>
                   <Button className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg" asChild>
-                    <Link href="/auth/signup">
+                    <Link href="/auth/signup" prefetch={true}>
                       <Sparkles className="mr-2 h-4 w-4" />
                       Kayıt Ol
                     </Link>

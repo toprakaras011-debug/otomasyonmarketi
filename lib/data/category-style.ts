@@ -26,8 +26,8 @@ export const CATEGORY_STYLES: CategoryStyleDefinition[] = [
     slug: 'e-ticaret-pazaryeri',
     name: 'E-Ticaret & Pazaryeri',
     iconKey: 'trending',
-    gradientFrom: '#9333ea',
-    gradientTo: '#6d28d9',
+    gradientFrom: '#3b82f6',
+    gradientTo: '#2563eb',
   },
   {
     slug: 'crm-musteri-yonetimi',
@@ -68,8 +68,8 @@ export const CATEGORY_STYLES: CategoryStyleDefinition[] = [
     slug: 'kisisel-verimlilik-takvim',
     name: 'Kişisel Verimlilik & Takvim',
     iconKey: 'users',
-    gradientFrom: '#14b8a6',
-    gradientTo: '#0d9488',
+    gradientFrom: '#06b6d4',
+    gradientTo: '#0891b2',
   },
   {
     slug: 'insan-kaynaklari',

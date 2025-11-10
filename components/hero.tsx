@@ -203,13 +203,13 @@ export function Hero({ initialStats }: HeroProps) {
         )}
       </div>
 
-      <motion.div style={{ y, opacity }} className="container relative mx-auto px-4">
+      <motion.div style={{ y, opacity }} className="container relative mx-auto px-4 gpu-accelerated">
         <div className="mx-auto max-w-6xl text-center">
           {/* Main Heading with Advanced Typography */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+            transition={{ duration: 0.3, delay: 0.05, ease: "easeOut" }}
             className="mb-6 text-4xl font-black leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl"
           >
             <span className="relative inline-block">
@@ -228,7 +228,7 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
             className="mx-auto mb-4 max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl md:text-2xl"
           >
             <span className="block text-balance text-foreground/85">
@@ -258,7 +258,7 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.35, delay: 0.15 }}
             className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6"
           >
             <Button
@@ -291,7 +291,7 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.div
             initial={{ opacity: 0, scale: 0.9, rotateX: 20 }}
             animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
             className="mb-20 perspective-[2000px]"
           >
             <div className="relative mx-auto max-w-5xl">
@@ -304,7 +304,7 @@ export function Hero({ initialStats }: HeroProps) {
                         key={i}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6 + i * 0.1 }}
+                        transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
                         className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${stat.bg} p-6 shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:shadow-2xl`}
                       >
                         <motion.div
@@ -329,7 +329,7 @@ export function Hero({ initialStats }: HeroProps) {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
+            transition={{ duration: 0.35, delay: 0.25 }}
             className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-3"
           >
             {secondaryStats.map((stat, i) => (

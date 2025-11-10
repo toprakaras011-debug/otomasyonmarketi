@@ -33,7 +33,7 @@ export default function DeveloperRegisterPage() {
 
       const { data: profileData } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('id,is_developer,developer_approved')
         .eq('id', currentUser.id)
         .maybeSingle();
 
@@ -153,7 +153,7 @@ export default function DeveloperRegisterPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-[1px] shadow-xl backdrop-blur-sm transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl"
+                className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-[1px] shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
               >
                 <div className="relative h-full rounded-2xl bg-background/80 p-6 backdrop-blur-sm">
                   <IconBox icon={feature.icon} gradient={feature.gradient} className="mb-4" />
