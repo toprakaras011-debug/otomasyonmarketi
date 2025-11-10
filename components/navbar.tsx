@@ -358,7 +358,7 @@ export function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden py-6 space-y-2 border-t border-purple-500/20"
+            className="md:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background/98 backdrop-blur-xl"
           >
             {navLinks.map((link) => {
               const Icon = link.icon;
@@ -384,7 +384,7 @@ export function Navbar() {
             
             <div className="border-t border-purple-500/20 pt-6 space-y-4">
               {user ? (
-                <div className="rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-blue-500/5 backdrop-blur-xl p-4">
+                <div className="rounded-2xl border border-purple-500/20 bg-background/95 backdrop-blur-xl p-4 shadow-lg">
                   <div className="flex items-center gap-3 mb-4">
                     <Avatar className="h-10 w-10 ring-2 ring-purple-500/30">
                       <AvatarImage src={profile?.avatar_url} />
