@@ -25,6 +25,7 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
         .select('id', { count: 'exact', head: true })
         .eq('is_developer', true)
         .eq('developer_approved', true),
+      // Count all user profiles (no filter to get total users)
       supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
       supabase
         .from('automations')
@@ -34,6 +35,7 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
         .limit(1000),
     ]);
 
+  // Ensure we have valid counts, fallback to 0 if null/undefined
   const automationsCount = automationsResponse.count ?? 0;
   const developersCount = developersResponse.count ?? 0;
   const usersCount = usersResponse.count ?? 0;
@@ -73,6 +75,6 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
 };
 
 export const getHeroStats = unstable_cache(fetchHeroStats, ['hero-stats'], {
-  revalidate: 300, // 5 minutes - more aggressive caching
+  revalidate: 60, // 1 minute - more frequent updates for production
   tags: ['hero-stats'],
 });

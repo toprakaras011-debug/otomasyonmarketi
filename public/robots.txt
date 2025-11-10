@@ -7,8 +7,9 @@ Disallow: /api/
 Disallow: /admin/
 Disallow: /developer/dashboard
 
-# Sitemap
+# Sitemaps
 Sitemap: https://otomasyonmagazasi.com.tr/sitemap.xml
+Sitemap: https://otomasyonmagazasi.com/sitemap.xml
 
 # Crawl-delay for better performance
 Crawl-delay: 1

@@ -26,24 +26,24 @@ export default async function Home() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Otomasyon Mağazası',
-    alternateName: ['Otomasyon Marketplace', 'Türkiye Otomasyon Mağazası'],
-    description: 'Türkiye\'nin en büyük otomasyon marketplace\'i. E-ticaret, sosyal medya, veri işleme ve RPA çözümleri.',
-    url: 'https://otomasyonmagazasi.com.tr',
+    alternateName: ['Otomasyon Marketplace', 'Türkiye Otomasyon Mağazası', 'https://otomasyonmagazasi.com', 'https://www.otomasyonmagazasi.com.tr', 'https://www.otomasyonmagazasi.com'],
+    description: 'Türkiye\'nin en büyük workflow automation ve otomasyon marketplace\'i. Business process automation, workflow management, RPA, API integration, Make.com, Zapier, n8n şablonları. Workflow automation software, automation tools, integration platform.',
+    url: 'https://otomasyonmagazasi.com',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: 'https://otomasyonmagazasi.com.tr/automations?search={search_term_string}'
+        urlTemplate: 'https://otomasyonmagazasi.com/automations?search={search_term_string}'
       },
       'query-input': 'required name=search_term_string'
     },
     publisher: {
       '@type': 'Organization',
       name: 'Otomasyon Mağazası',
-      url: 'https://otomasyonmagazasi.com.tr',
+      url: 'https://otomasyonmagazasi.com',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://otomasyonmagazasi.com.tr/logo.png'
+        url: 'https://otomasyonmagazasi.com/logo.png'
       },
       sameAs: [
         'https://twitter.com/otomasyonmagaza',
@@ -58,11 +58,11 @@ export default async function Home() {
     '@type': 'Organization',
     name: 'Otomasyon Mağazası',
     legalName: 'Otomasyon Mağazası A.Ş.', // Örnek yasal isim, bunu kendi şirketinizin yasal adıyla değiştirmelisiniz.
-    alternateName: 'Automation Store Turkey',
-    url: 'https://otomasyonmagazasi.com.tr',
-    logo: 'https://otomasyonmagazasi.com.tr/logo.png',
+    alternateName: ['Automation Store Turkey', 'https://otomasyonmagazasi.com.tr', 'https://www.otomasyonmagazasi.com.tr', 'https://www.otomasyonmagazasi.com'],
+    url: 'https://otomasyonmagazasi.com',
+    logo: 'https://otomasyonmagazasi.com/logo.png',
     foundingDate: '2023-01-01', // Kendi kuruluş tarihinizi ekleyin.
-    description: 'Türkiye\'nin en büyük otomasyon marketplace\'i',
+    description: 'Türkiye\'nin en büyük workflow automation ve otomasyon marketplace\'i. Business process automation, workflow management, RPA, API integration platform.',
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'TR',

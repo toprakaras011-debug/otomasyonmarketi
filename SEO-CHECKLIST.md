@@ -113,9 +113,12 @@
 ### 1. Google Search Console
 ```bash
 1. https://search.google.com/search-console
-2. Domain ekle: otomasyonmagazasi.com.tr
-3. Verification code'u layout.tsx'e ekle
-4. Sitemap gönder: https://otomasyonmagazasi.com.tr/sitemap.xml
+2. Domain ekle: otomasyonmagazasi.com.tr (Primary)
+3. Domain ekle: otomasyonmagazasi.com (Alternate)
+4. Verification code'u layout.tsx'e ekle
+5. Sitemap gönder: 
+   - https://otomasyonmagazasi.com.tr/sitemap.xml
+   - https://otomasyonmagazasi.com/sitemap.xml
 ```
 
 ### 2. Google Analytics
@@ -182,16 +185,34 @@
 ## 📝 Notlar
 
 ### Önemli URL'ler
+**Primary Domain:**
 - Sitemap: `https://otomasyonmagazasi.com.tr/sitemap.xml`
 - Robots: `https://otomasyonmagazasi.com.tr/robots.txt`
 - Ana Sayfa: `https://otomasyonmagazasi.com.tr`
 
+**Alternate Domain:**
+- Sitemap: `https://otomasyonmagazasi.com/sitemap.xml`
+- Robots: `https://otomasyonmagazasi.com/robots.txt`
+- Ana Sayfa: `https://otomasyonmagazasi.com`
+
+### Domain Yapılandırması
+**Aktif Domainler:**
+- Primary: `otomasyonmagazasi.com.tr`
+- Alternate: `otomasyonmagazasi.com`
+
+Her iki domain de SEO ayarlarına eklenmiştir:
+- `/app/layout.tsx` - metadataBase ve structured data
+- `/app/sitemap.ts` - baseUrl (alternate domain notu eklendi)
+- `/app/robots.ts` - sitemap array (her iki domain)
+- `/app/page.tsx` - JSON-LD alternateName'ler
+- `/app/automations/[slug]/page.tsx` - Product schema url'leri
+
 ### Domain Değişiklikleri
 Eğer domain değişirse, aşağıdaki dosyalarda güncelleme yapın:
-- `/app/layout.tsx` - metadataBase
+- `/app/layout.tsx` - metadataBase ve alternates
 - `/app/sitemap.ts` - baseUrl
-- `/app/robots.ts` - host
-- `/app/page.tsx` - JSON-LD url'leri
+- `/app/robots.ts` - host ve sitemap array
+- `/app/page.tsx` - JSON-LD url'leri ve alternateName'ler
 - `/app/automations/[slug]/page.tsx` - Product schema url'leri
 
 ### Verification Kodları Ekleme

@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useCart } from '@/components/cart-context';
 import { useAuth } from '@/components/auth-provider';
 import type { User } from '@supabase/supabase-js';
+import { maskUsername } from '@/lib/utils/username-mask';
 
 interface AutomationDetailClientProps {
   automation: Automation;
@@ -152,61 +153,165 @@ export default function AutomationDetailClient({
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : 0;
 
-  const productJsonLd = {
+  // Build Product schema for Rich Snippets (both domains)
+  const productUrl = `https://otomasyonmagazasi.com/automations/${automation.slug}`;
+  const productUrlAlt = `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`;
+  const productJsonLd: any = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: automation.title,
     description: automation.description,
-    sku: automation.id,
+    sku: automation.id.toString(),
     mpn: automation.slug,
+    url: productUrl,
+    sameAs: [productUrlAlt], // Alternate domain
     category: (Array.isArray(automation.category) ? automation.category[0] : automation.category)?.name,
     image: (automation as any).image_path 
       ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}`
-      : automation.image_url || 'https://otomasyonmagazasi.com.tr/placeholder.jpg',
+      : automation.image_url || 'https://otomasyonmagazasi.com/placeholder.jpg',
     brand: {
       '@type': 'Brand',
       name: (automation as any).developer?.username || 'Otomasyon Mağazası'
     },
-    offers: {
-      '@type': 'Offer',
-      url: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`,
-      priceCurrency: 'TRY',
-      price: automation.price,
-      availability: 'https://schema.org/InStock',
-      seller: {
-        '@type': 'Organization',
-        name: (automation as any).developer?.username || 'Otomasyon Mağazası'
+    offers: [
+      {
+        '@type': 'Offer',
+        url: productUrl,
+        priceCurrency: 'TRY',
+        price: automation.price.toString(),
+        priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year from now
+        availability: 'https://schema.org/InStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        seller: {
+          '@type': 'Organization',
+          name: (automation as any).developer?.username || 'Otomasyon Mağazası'
+        }
+      },
+      {
+        '@type': 'Offer',
+        url: productUrlAlt,
+        priceCurrency: 'TRY',
+        price: automation.price.toString(),
+        priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        availability: 'https://schema.org/InStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        seller: {
+          '@type': 'Organization',
+          name: (automation as any).developer?.username || 'Otomasyon Mağazası'
+        }
       }
-    },
-    aggregateRating: reviews.length > 0 ? {
+    ]
+  };
+
+  // Add aggregateRating only if reviews exist
+  if (reviews.length > 0 && averageRating > 0) {
+    productJsonLd.aggregateRating = {
       '@type': 'AggregateRating',
       ratingValue: averageRating.toFixed(1),
       reviewCount: reviews.length,
       bestRating: '5',
       worstRating: '1'
-    } : undefined,
-    review: reviews.slice(0, 5).map(review => ({
+    };
+
+    // Add reviews (max 5 for Rich Snippets)
+    productJsonLd.review = reviews.slice(0, 5).map((review: any) => ({
       '@type': 'Review',
       reviewRating: {
         '@type': 'Rating',
-        ratingValue: review.rating,
+        ratingValue: review.rating.toString(),
         bestRating: '5',
         worstRating: '1'
       },
       author: {
         '@type': 'Person',
-        name: (review as any).user?.username || 'Kullanıcı'
+        name: review.user?.username || 'Kullanıcı'
       },
-      reviewBody: review.comment,
+      reviewBody: review.comment || '',
       datePublished: review.created_at
-    }))
+    }));
+  }
+
+  // Add BreadcrumbList for Rich Snippets (both domains)
+  const category = Array.isArray(automation.category) ? automation.category[0] : automation.category;
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Ana Sayfa',
+        item: 'https://otomasyonmagazasi.com'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Otomasyonlar',
+        item: 'https://otomasyonmagazasi.com/automations'
+      },
+      ...(category ? [{
+        '@type': 'ListItem',
+        position: 3,
+        name: category.name,
+        item: `https://otomasyonmagazasi.com/categories/${category.slug}`
+      }] : []),
+      {
+        '@type': 'ListItem',
+        position: category ? 4 : 3,
+        name: automation.title,
+        item: `https://otomasyonmagazasi.com/automations/${automation.slug}`
+      }
+    ]
+  };
+
+  // Alternate BreadcrumbList for otomasyonmagazasi.com.tr domain
+  const breadcrumbJsonLdAlt = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Ana Sayfa',
+        item: 'https://otomasyonmagazasi.com.tr'
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Otomasyonlar',
+        item: 'https://otomasyonmagazasi.com.tr/automations'
+      },
+      ...(category ? [{
+        '@type': 'ListItem',
+        position: 3,
+        name: category.name,
+        item: `https://otomasyonmagazasi.com.tr/categories/${category.slug}`
+      }] : []),
+      {
+        '@type': 'ListItem',
+        position: category ? 4 : 3,
+        name: automation.title,
+        item: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`
+      }
+    ]
   };
 
   return (
     <>
+      {/* Product Schema for Rich Snippets (Primary Domain) */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      {/* BreadcrumbList Schema for Rich Snippets (Primary Domain) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      {/* BreadcrumbList Schema for Rich Snippets (Alternate Domain) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLdAlt) }}
       />
       
       {/* Background Effects */}
@@ -515,12 +620,10 @@ export default function AutomationDetailClient({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold">{developer?.username}</p>
-                          {developer?.full_name && (
-                            <p className="text-sm text-foreground/60">
-                              {developer.full_name}
-                            </p>
-                          )}
+                          <p className="font-semibold">{maskUsername(developer?.username)}</p>
+                          <p className="text-xs text-foreground/50">
+                            Geliştirici
+                          </p>
                         </div>
                       </div>
                     ) : null;

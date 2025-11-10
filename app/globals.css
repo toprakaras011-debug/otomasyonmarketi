@@ -143,25 +143,8 @@
     }
     
     /* Reduce animations on mobile */
-    [data-framer-motion],
-    .motion-element {
+    [data-framer-motion] {
       will-change: auto;
-    }
-    
-    /* Disable heavy effects on mobile */
-    .backdrop-blur-2xl {
-      backdrop-filter: blur(8px) !important;
-    }
-    
-    /* Optimize images on mobile */
-    img {
-      content-visibility: auto;
-      will-change: auto;
-    }
-    
-    /* Reduce shadow complexity on mobile */
-    [class*="shadow-"] {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     }
   }
   

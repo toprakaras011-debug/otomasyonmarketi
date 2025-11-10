@@ -2,7 +2,10 @@ import { MetadataRoute } from 'next';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://otomasyonmagazasi.com.tr';
+  // Primary domain
+  const baseUrl = 'https://otomasyonmagazasi.com';
+  // Alternate domain
+  const alternateBaseUrl = 'https://otomasyonmagazasi.com.tr';
   const supabase = await createClient();
 
   const { data: automations } = await supabase

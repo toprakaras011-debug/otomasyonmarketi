@@ -55,11 +55,119 @@ export default async function AutomationsPage() {
       name: category.name,
     }));
 
+    // ItemList Schema for Rich Snippets (Product Listings - Primary Domain)
+    const itemListJsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'Otomasyon Listesi',
+      description: 'Türkiye\'nin en büyük otomasyon marketplace\'i - Tüm otomasyon çözümleri',
+      url: 'https://otomasyonmagazasi.com/automations',
+      sameAs: ['https://otomasyonmagazasi.com.tr/automations'],
+      numberOfItems: automations?.length || 0,
+      itemListElement: (automations || []).slice(0, 20).map((automation: any, index: number) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Product',
+          name: automation.title,
+          description: automation.description,
+          url: `https://otomasyonmagazasi.com/automations/${automation.slug}`,
+          sameAs: [`https://otomasyonmagazasi.com.tr/automations/${automation.slug}`],
+          image: automation.image_path 
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${automation.image_path}`
+            : automation.image_url || 'https://otomasyonmagazasi.com/placeholder.jpg',
+          offers: [
+            {
+              '@type': 'Offer',
+              url: `https://otomasyonmagazasi.com/automations/${automation.slug}`,
+              priceCurrency: 'TRY',
+              price: automation.price.toString(),
+              availability: 'https://schema.org/InStock'
+            },
+            {
+              '@type': 'Offer',
+              url: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`,
+              priceCurrency: 'TRY',
+              price: automation.price.toString(),
+              availability: 'https://schema.org/InStock'
+            }
+          ],
+          aggregateRating: automation.rating_avg > 0 ? {
+            '@type': 'AggregateRating',
+            ratingValue: automation.rating_avg.toFixed(1),
+            reviewCount: automation.rating_count || 0,
+            bestRating: '5',
+            worstRating: '1'
+          } : undefined
+        }
+      }))
+    };
+
+    // ItemList Schema for Rich Snippets (Product Listings - Alternate Domain)
+    const itemListJsonLdAlt = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'Otomasyon Listesi',
+      description: 'Türkiye\'nin en büyük otomasyon marketplace\'i - Tüm otomasyon çözümleri',
+      url: 'https://otomasyonmagazasi.com.tr/automations',
+      sameAs: ['https://otomasyonmagazasi.com/automations'],
+      numberOfItems: automations?.length || 0,
+      itemListElement: (automations || []).slice(0, 20).map((automation: any, index: number) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Product',
+          name: automation.title,
+          description: automation.description,
+          url: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`,
+          sameAs: [`https://otomasyonmagazasi.com/automations/${automation.slug}`],
+          image: automation.image_path 
+            ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${automation.image_path}`
+            : automation.image_url || 'https://otomasyonmagazasi.com.tr/placeholder.jpg',
+          offers: [
+            {
+              '@type': 'Offer',
+              url: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`,
+              priceCurrency: 'TRY',
+              price: automation.price.toString(),
+              availability: 'https://schema.org/InStock'
+            },
+            {
+              '@type': 'Offer',
+              url: `https://otomasyonmagazasi.com/automations/${automation.slug}`,
+              priceCurrency: 'TRY',
+              price: automation.price.toString(),
+              availability: 'https://schema.org/InStock'
+            }
+          ],
+          aggregateRating: automation.rating_avg > 0 ? {
+            '@type': 'AggregateRating',
+            ratingValue: automation.rating_avg.toFixed(1),
+            reviewCount: automation.rating_count || 0,
+            bestRating: '5',
+            worstRating: '1'
+          } : undefined
+        }
+      }))
+    };
+
     return (
-      <AutomationsClient
-        automations={(automations || []) as any}
-        categories={[...mergedCategories, ...remainingCategories]}
-      />
+      <>
+        {/* ItemList Schema for Rich Snippets (Primary Domain) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        />
+        {/* ItemList Schema for Rich Snippets (Alternate Domain) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLdAlt) }}
+        />
+        <AutomationsClient
+          automations={(automations || []) as any}
+          categories={[...mergedCategories, ...remainingCategories]}
+        />
+      </>
     );
   } catch (error: any) {
     console.error('Automations page exception:', error);
