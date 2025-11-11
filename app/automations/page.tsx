@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import AutomationsClient from './AutomationsClient';
 import { CATEGORY_DEFINITIONS } from '@/lib/constants/categories';
 
-export const revalidate = 60; // Cache for 60 seconds
+export const revalidate = 300; // Cache for 5 minutes - better performance
 export const dynamic = 'force-static'; // Force static generation
 
 export default async function AutomationsPage() {

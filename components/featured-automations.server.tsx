@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Star, TrendingUp, Sparkles, ArrowRight, Zap } from 'lucide-react';
 
-export const revalidate = 60;
+export const revalidate = 300; // Cache for 5 minutes - better performance
 
 async function getFeaturedAutomations(): Promise<Automation[]> {
   const { data, error } = await supabase

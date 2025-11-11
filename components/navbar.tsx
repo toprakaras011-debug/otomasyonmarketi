@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,7 +20,7 @@ import { useCart } from '@/components/cart-context';
 import { useAuth } from '@/components/auth-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
 
-export function Navbar() {
+export const Navbar = memo(function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, profile, loading: authLoading } = useAuth();
@@ -73,7 +73,7 @@ export function Navbar() {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       const { error } = await signOut();
       if (error) {
@@ -87,7 +87,7 @@ export function Navbar() {
       // Force redirect even on error
       window.location.href = '/';
     }
-  };
+  }, []);
 
   const navLinks = [
     { href: '/automations', label: 'Otomasyonlar', icon: Package },
@@ -456,4 +456,4 @@ export function Navbar() {
       </div>
     </motion.nav>
   );
-}
+});

@@ -326,6 +326,7 @@ export default async function RootLayout({
             <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
             {/* Preconnect to Supabase storage for faster image loading */}
             <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} />
+            <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} crossOrigin="anonymous" />
           </>
         )}
         {/* Preconnect to Google Fonts - Early connection */}
@@ -333,9 +334,10 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Preconnect to Vercel Analytics */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+        <link rel="preconnect" href="https://vitals.vercel-insights.com" crossOrigin="anonymous" />
         {/* Preconnect to Cloudflare Turnstile */}
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
-        <link rel="preconnect" href="https://challenges.cloudflare.com" />
+        <link rel="preconnect" href="https://challenges.cloudflare.com" crossOrigin="anonymous" />
         
         {/* Critical inline script - must run before render (non-blocking) */}
         <script

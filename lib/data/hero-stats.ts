@@ -76,6 +76,6 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
 };
 
 export const getHeroStats = unstable_cache(fetchHeroStats, ['hero-stats'], {
-  revalidate: 60, // 1 minute - more frequent updates for production
+  revalidate: 300, // 5 minutes - better caching for performance
   tags: ['hero-stats'],
 });

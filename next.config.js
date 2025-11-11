@@ -66,7 +66,7 @@ const nextConfig = {
   },
   // Enable experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion', 'sonner'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion', 'sonner', '@radix-ui/react-dropdown-menu', '@radix-ui/react-dialog', '@radix-ui/react-select'],
     optimizeCss: true,
     // Enable partial prerendering for faster navigation
     ppr: false, // Can enable if needed
@@ -76,6 +76,8 @@ const nextConfig = {
     },
     // Optimize client chunks
     optimizeServerReact: true,
+    // Optimize memory usage
+    memoryBasedWorkersCount: true,
   },
   // Turbopack configuration (Next.js 16+)
   // Turbopack automatically handles code splitting and optimization

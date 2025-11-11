@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles, Zap, Shield, TrendingUp, Rocket, Globe, Code2, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from 'react';
 
 type HeroStats = {
   automations: number;
@@ -56,7 +56,7 @@ const PARTICLE_CONFIG = Array.from({ length: 6 }, (_, index) => {
   };
 });
 
-export function Hero({ initialStats }: HeroProps) {
+export const Hero = memo(function Hero({ initialStats }: HeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -89,7 +89,7 @@ export function Hero({ initialStats }: HeroProps) {
     }
   }, [initialStats]);
 
-  const formatWithPlus = (value: number, suffix?: string) => {
+  const formatWithPlus = useCallback((value: number, suffix?: string) => {
     if (!value) {
       return suffix ? `0 ${suffix}` : '0';
     }
@@ -99,7 +99,7 @@ export function Hero({ initialStats }: HeroProps) {
       : new Intl.NumberFormat('tr-TR').format(value);
 
     return suffix ? `${formatted}+ ${suffix}` : `${formatted}+`;
-  };
+  }, []);
 
   const primaryStats = useMemo(() => ([
     {
@@ -125,11 +125,11 @@ export function Hero({ initialStats }: HeroProps) {
     },
   ]), [stats]);
 
-  const featureCards: FeatureCard[] = [
+  const featureCards: FeatureCard[] = useMemo(() => [
     { icon: Zap, title: 'Hızlı Entegrasyon', desc: 'Dakikalar içinde kurulum', color: 'purple' },
     { icon: Shield, title: 'Güvenli Ödeme', desc: 'SSL korumalı işlemler', color: 'blue' },
     { icon: TrendingUp, title: '%85 Gelir', desc: 'Geliştiriciler için', color: 'pink' },
-  ];
+  ], []);
 
   const secondaryStats = useMemo(() => ([
     {
@@ -424,4 +424,4 @@ export function Hero({ initialStats }: HeroProps) {
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
     </section>
   );
-}
+});
