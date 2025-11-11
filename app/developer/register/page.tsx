@@ -21,6 +21,7 @@ export default function DeveloperRegisterPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchUser = async () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
 
@@ -51,6 +52,10 @@ export default function DeveloperRegisterPage() {
     };
 
     fetchUser();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

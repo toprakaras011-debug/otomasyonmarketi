@@ -229,14 +229,14 @@ function NavbarComponent() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="group relative h-11 min-h-[44px] gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20 min-w-[140px] touch-manipulation">
+                  <Button variant="ghost" className="group relative h-11 min-h-[44px] gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20 min-w-[180px] touch-manipulation">
                     <Avatar className="h-8 w-8 ring-2 ring-purple-500/30 group-hover:ring-purple-500/60 transition-all">
                       <AvatarImage src={profile?.avatar_url} />
                       <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-sm font-semibold">
                         {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium max-w-[100px] truncate min-w-[60px]">
+                    <span className="text-sm font-medium whitespace-nowrap">
                       {authLoading ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
