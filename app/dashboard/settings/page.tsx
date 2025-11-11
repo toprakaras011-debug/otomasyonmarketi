@@ -232,9 +232,14 @@ export default function SettingsPage() {
         updateData.company_name = null;
       }
       
+      // Filter out undefined and null values to avoid 400 errors
+      const cleanUpdateData = Object.fromEntries(
+        Object.entries(updateData).filter(([_, value]) => value !== undefined)
+      );
+
       const { data, error } = await supabase
         .from('user_profiles')
-        .update(updateData)
+        .update(cleanUpdateData)
         .eq('id', user.id)
         .select()
         .single();
@@ -281,7 +286,9 @@ export default function SettingsPage() {
         }));
 
         toast.success('Ödeme bilgileri başarıyla kaydedildi!', {
-          duration: 3000,
+          duration: 4000,
+          description: 'Bilgileriniz güvenle saklandı.',
+          className: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
         });
       } else {
         toast.error('Kayıt başarısız. Veri döndürülmedi.');
@@ -497,9 +504,14 @@ export default function SettingsPage() {
         updateData.avatar_url = profileData.avatar_url;
       }
 
+      // Filter out undefined and null values to avoid 400 errors
+      const cleanUpdateData = Object.fromEntries(
+        Object.entries(updateData).filter(([_, value]) => value !== undefined)
+      );
+
       const { data, error } = await supabase
         .from('user_profiles')
-        .update(updateData)
+        .update(cleanUpdateData)
         .eq('id', user.id)
         .select()
         .single();
@@ -541,7 +553,9 @@ export default function SettingsPage() {
           avatar_url: data.avatar_url || prev.avatar_url,
         }));
         toast.success('Profil bilgileriniz başarıyla güncellendi', {
-          duration: 3000,
+          duration: 4000,
+          description: 'Bilgileriniz güvenle saklandı.',
+          className: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
         });
       } else {
         toast.error('Güncelleme başarısız. Veri döndürülmedi.');
