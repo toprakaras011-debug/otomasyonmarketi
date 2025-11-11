@@ -222,13 +222,21 @@ export default function CategoriesPage() {
 
         const totalAutomations = consolidated.reduce((sum, cat) => sum + (cat.automationCount ?? 0), 0);
 
-        setCategoriesWithStats(sortedByPerformance);
-        setTotalAutomationCount(totalAutomations);
+        if (isMounted) {
+          setCategoriesWithStats(sortedByPerformance);
+          setTotalAutomationCount(totalAutomations);
+        }
       }
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     };
 
     fetchCategories();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const iconMap: Record<string, any> = {
