@@ -66,17 +66,25 @@ const nextConfig = {
   },
   // Enable experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion', 'sonner', '@radix-ui/react-dropdown-menu', '@radix-ui/react-dialog', '@radix-ui/react-select'],
+    optimizePackageImports: [
+      'lucide-react', 
+      '@radix-ui/react-icons', 
+      'framer-motion', 
+      'sonner', 
+      '@radix-ui/react-dropdown-menu', 
+      '@radix-ui/react-dialog', 
+      '@radix-ui/react-select',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-tabs',
+      'recharts',
+      'date-fns'
+    ],
     optimizeCss: true,
-    // Enable partial prerendering for faster navigation
-    ppr: false, // Can enable if needed
     // Optimize server components
     serverActions: {
-      bodySizeLimit: '100mb', // Increased for automation file uploads
+      bodySizeLimit: '100mb',
     },
-    // Optimize client chunks
     optimizeServerReact: true,
-    // Optimize memory usage
     memoryBasedWorkersCount: true,
   },
   // Turbopack configuration (Next.js 16+)
@@ -94,18 +102,71 @@ const nextConfig = {
   },
   // Production optimizations
   productionBrowserSourceMaps: false,
-  // Compress responses
   compress: true,
-  // Optimize for production
   poweredByHeader: false,
   reactStrictMode: true,
-  // Output optimization
   output: 'standalone',
+  
   // Performance optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
     } : false,
+    // React compiler optimizations
+    reactRemoveProperties: process.env.NODE_ENV === 'production',
+  },
+  
+  // Headers for security and performance
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()'
+          }
+        ]
+      },
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0'
+          }
+        ]
+      },
+      {
+        source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      }
+    ];
   },
   // CSS and JS optimization is handled automatically by Next.js 16 + Turbopack
   // Critical CSS is automatically inlined, non-critical is deferred

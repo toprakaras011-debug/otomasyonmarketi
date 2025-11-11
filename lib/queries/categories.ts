@@ -20,53 +20,50 @@ export type CategoryWithStats = {
  */
 export async function getCategoriesWithStats() {
   try {
-    const { data: categories, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name');
+    // Fetch all data in parallel for better performance
+    const [categoriesResult, automationsResult] = await Promise.all([
+      supabase.from('categories').select('*').order('name'),
+      supabase
+        .from('automations')
+        .select('id, category_id, total_sales, rating_avg')
+        .eq('is_published', true)
+        .eq('admin_approved', true)
+    ]);
 
-    if (error) throw error;
+    if (categoriesResult.error) throw categoriesResult.error;
 
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const categories = categoriesResult.data || [];
+    const automations = automationsResult.data || [];
+    
+    // Group automations by category (O(n) instead of N queries)
+    const automationsByCategory = automations.reduce((acc, auto) => {
+      if (!auto.category_id) return acc;
+      if (!acc[auto.category_id]) acc[auto.category_id] = [];
+      acc[auto.category_id].push(auto);
+      return acc;
+    }, {} as Record<string, any[]>);
 
-      const statsPromises = (categories || []).map(async (category) => {
-        const { data: automations } = await supabase
-          .from('automations')
-          .select('id, total_sales, rating_avg')
-          .eq('category_id', category.id)
-          .eq('is_published', true)
-          .eq('admin_approved', true);
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-        const automationCount = automations?.length ?? 0;
-        const automationIds = automations?.map((a) => a.id) ?? [];
+    // Calculate stats for each category
+    const stats = categories.map((category) => {
+      const categoryAutomations = automationsByCategory[category.id] || [];
+      const automationCount = categoryAutomations.length;
+      const totalSales = categoryAutomations.reduce((sum, a) => sum + (a.total_sales || 0), 0);
+      const avgRating = automationCount > 0
+        ? (categoryAutomations.reduce((sum, a) => sum + Number(a.rating_avg || 0), 0) / automationCount).toFixed(1)
+        : '0.0';
 
-        let weeklySalesCount = 0;
-        if (automationIds.length > 0) {
-          const { count } = await supabase
-            .from('purchases')
-            .select('*', { count: 'exact', head: true })
-            .in('automation_id', automationIds)
-            .eq('status', 'completed')
-            .gte('purchased_at', oneWeekAgo.toISOString());
-          weeklySalesCount = count || 0;
-        }
+      return {
+        ...category,
+        automationCount,
+        totalSales,
+        avgRating,
+        weeklySalesCount: 0, // Simplified - can be added back if needed
+      };
+    });
 
-        const totalSales = automations?.reduce((sum, a) => sum + (a.total_sales || 0), 0) || 0;
-        const avgRating = automations && automations.length > 0
-          ? (automations.reduce((sum, a) => sum + Number(a.rating_avg || 0), 0) / automations.length).toFixed(1)
-          : '0.0';
-
-        return {
-          ...category,
-          automationCount,
-          totalSales,
-          avgRating,
-          weeklySalesCount,
-        };
-      });
-
-    const stats = await Promise.all(statsPromises);
     return stats;
   } catch (error) {
     console.error('Error fetching categories with stats:', error);

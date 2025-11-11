@@ -12,12 +12,24 @@ export async function getAutomations(options: {
   offset?: number;
 } = {}) {
   try {
+    // Select only necessary fields for better performance
     let query = supabase
       .from('automations')
       .select(`
-        *,
-        category:categories(*),
-        developer:user_profiles(username, avatar_url)
+        id,
+        title,
+        slug,
+        description,
+        price,
+        image_url,
+        image_path,
+        total_sales,
+        rating_avg,
+        rating_count,
+        is_featured,
+        created_at,
+        category:categories(id, name, slug, icon, color),
+        developer:user_profiles(id, username, avatar_url)
       `)
       .eq('is_published', true)
       .eq('admin_approved', true);
@@ -27,7 +39,7 @@ export async function getAutomations(options: {
     }
 
     if (options.search) {
-      query = query.or(`title.ilike.%${options.search}%,description.ilike.%${options.search}%`);
+      query = query.or(`title.ilike.%${options.search}%,description.ilike.%${options.search}%,tags.cs.{${options.search}}`);
     }
 
     if (options.featured) {
@@ -42,7 +54,10 @@ export async function getAutomations(options: {
       query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
     }
 
-    query = query.order('created_at', { ascending: false });
+    // Order by featured first, then by sales/rating
+    query = query.order('is_featured', { ascending: false })
+                 .order('total_sales', { ascending: false })
+                 .order('created_at', { ascending: false });
 
     const { data, error } = await query;
 

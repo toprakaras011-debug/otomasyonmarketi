@@ -7,15 +7,25 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Star, TrendingUp, Sparkles, ArrowRight, Zap } from 'lucide-react';
 
-export const revalidate = 300; // Cache for 5 minutes - better performance
+// Cache for 10 minutes for better performance (balance between freshness and speed)
+export const revalidate = 600;
 
 async function getFeaturedAutomations(): Promise<Automation[]> {
   const { data, error } = await supabase
     .from('automations')
     .select(`
-      *,
-      category:categories(*),
-      developer:user_profiles(id,username,avatar_url)
+      id,
+      title,
+      slug,
+      description,
+      price,
+      image_url,
+      image_path,
+      total_sales,
+      rating_avg,
+      rating_count,
+      category:categories(id, name, slug, icon, color),
+      developer:user_profiles(id, username, avatar_url)
     `)
     .eq('is_published', true)
     .eq('admin_approved', true)
@@ -92,7 +102,11 @@ export default async function FeaturedAutomationsServer() {
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-110"
-                        priority={index < 2}
+                        priority={index === 0} // Only first image priority
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        quality={85}
+                        placeholder="blur"
+                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iIzIwMjAyMCIvPjwvc3ZnPg=="
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">

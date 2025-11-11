@@ -72,7 +72,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://otomasyonmagazasi.com'),
   title: {
-    default: 'Otomasyon Mağazası - Workflow Automation & İş Süreçlerinizi Otomatikleştirin | Türkiye\'nin En Büyük Workflow Platformu',
+    default: 'Otomasyon Mağazası - Workflow Automation & İş Süreçlerini Otomatikleştirin',
     template: '%s | Otomasyon Mağazası'
   },
   icons: {
@@ -89,7 +89,7 @@ export const metadata: Metadata = {
     'robots': 'index, follow',
     'google-site-verification': 'your-google-site-verification-code'
   },
-  description: 'Türkiye\'nin en büyük workflow automation ve otomasyon marketplace\'i. Business process automation, workflow management, RPA, API integration, Make.com, Zapier, n8n şablonları. İş süreçlerinizi otomatikleştirin, verimliliği artırın. Workflow automation software, automation tools, integration platform.',
+  description: 'Türkiye\'nin en büyük workflow automation ve otomasyon marketplace platformu. Make.com, Zapier, n8n şablonları, RPA çözümleri ve API entegrasyonları. İş süreçlerinizi otomatikleştirin, verimliliği %300 artırın.',
   keywords: [
     // Turkish keywords
     'otomasyon',

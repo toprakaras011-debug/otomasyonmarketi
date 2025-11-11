@@ -2,17 +2,24 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Note: In Next.js 16+, middleware is still supported but proxy is recommended for future
-// This middleware adds security headers and is safe to use
+// This middleware adds security and performance headers
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
-  // Add security headers
+  // Security headers (Enhanced)
   response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   
   // Performance headers
   response.headers.set('X-DNS-Prefetch-Control', 'on');
+  
+  // HSTS (HTTP Strict Transport Security) for HTTPS enforcement
+  if (request.nextUrl.protocol === 'https:') {
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  }
   
   return response;
 }

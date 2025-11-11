@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 
 export type CartItem = {
   id: string;
@@ -25,31 +25,50 @@ const STORAGE_KEY = 'om_cart_v1';
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [mounted, setMounted] = useState(false);
 
+  // Hydration fix - only load from localStorage after mount
   useEffect(() => {
+    setMounted(true);
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw));
-    } catch {}
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setItems(parsed);
+        }
+      }
+    } catch (error) {
+      console.error('Cart load error:', error);
+    }
   }, []);
 
+  // Save to localStorage on items change (only after mount)
   useEffect(() => {
+    if (!mounted) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {}
-  }, [items]);
+    } catch (error) {
+      console.error('Cart save error:', error);
+    }
+  }, [items, mounted]);
 
-  const add = (item: CartItem) => {
+  const add = useCallback((item: CartItem) => {
     setItems((prev) => (prev.find((i) => i.id === item.id) ? prev : [...prev, item]));
-  };
+  }, []);
 
-  const remove = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
-  const clear = () => setItems([]);
+  const remove = useCallback((id: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  }, []);
+  
+  const clear = useCallback(() => {
+    setItems([]);
+  }, []);
 
   const count = items.length;
   const total = useMemo(() => items.reduce((s, i) => s + (i.price || 0), 0), [items]);
 
-  const value = useMemo(() => ({ items, add, remove, clear, count, total }), [items, count, total]);
+  const value = useMemo(() => ({ items, add, remove, clear, count, total }), [items, add, remove, clear, count, total]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

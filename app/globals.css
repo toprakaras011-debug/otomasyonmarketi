@@ -97,11 +97,21 @@
     overflow-x: hidden;
   }
 
-  /* Optimize animations and transitions */
+  /* Optimize animations and transitions - GPU acceleration */
   * {
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Force GPU acceleration for smooth animations */
+  [class*="motion-"],
+  [class*="animate-"],
+  [data-state],
+  button,
+  a {
+    will-change: auto;
+    transform: translateZ(0);
   }
 
   /* Prevent layout shift from dropdowns and modals */
@@ -118,11 +128,19 @@
     }
   }
 
-  /* Prevent layout shift from navbar */
+  /* Prevent layout shift from navbar and containers */
   nav, header {
     position: relative;
     width: 100%;
+    contain: layout style;
   }
+  
+  /* Container query optimization */
+  main, section, article {
+    contain: layout style;
+  }
+  
+  /* Prevent flash of unstyled content - removed invalid selector */
 
   body {
     @apply bg-background text-foreground;
