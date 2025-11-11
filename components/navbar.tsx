@@ -393,8 +393,8 @@ function NavbarComponent() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold text-foreground">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
-                      <p className="text-xs text-foreground/70">{user.email}</p>
+                      <p className="font-semibold text-foreground">{(authLoading && !profile && !user?.email) ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}</p>
+                      <p className="text-xs text-foreground/70">{user?.email || ''}</p>
                     </div>
                   </div>
                   <div className="space-y-2">
