@@ -219,8 +219,13 @@ export const signIn = async (email: string, password: string) => {
       throw new Error('Geçerli bir e-posta adresi giriniz.');
     }
 
-    // Password validation - check minimum length
-    if (password.length < 6) {
+    // Password validation - check minimum length (don't trim - spaces might be intentional)
+    // Only validate if password is not empty
+    if (password.length === 0) {
+      throw new Error('Şifre gereklidir.');
+    }
+    // Minimum length check - but be lenient (let Supabase handle strict validation)
+    if (password.length > 0 && password.length < 6) {
       throw new Error('Şifre en az 6 karakter olmalıdır.');
     }
 
