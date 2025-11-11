@@ -149,6 +149,10 @@ export const signIn = async (email: string, password: string) => {
       }
     }
 
+    // Wait a moment to ensure session is fully established
+    // This is especially important for admin accounts
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     return data;
   } catch (error: any) {
     // Only log in development

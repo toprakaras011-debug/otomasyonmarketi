@@ -42,13 +42,24 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      await signIn(formData.email, formData.password);
+      const result = await signIn(formData.email, formData.password);
+      
+      // Verify sign-in was successful
+      if (!result || !result.user) {
+        throw new Error('Giriş başarısız. Lütfen tekrar deneyin.');
+      }
+
+      // Wait for session to be established
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       toast.success('Giriş başarılı!', {
-        duration: 3000,
+        duration: 2000,
       });
-      // Toast'ın görünmesi için kısa bir gecikme
+      
+      // Force page reload to ensure session is properly established
+      // This is especially important for admin accounts
       setTimeout(() => {
-        router.push(redirectTo);
+        window.location.href = redirectTo;
       }, 500);
     } catch (error: any) {
       const errorMessage = error?.message || 'Giriş yapılamadı';
