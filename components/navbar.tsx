@@ -19,6 +19,7 @@ import { signOut } from '@/lib/auth';
 import { useCart } from '@/components/cart-context';
 import { useAuth } from '@/components/auth-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { ProfileDropdown } from '@/components/profile-dropdown';
 
 function NavbarComponent() {
   const pathname = usePathname();
@@ -262,87 +263,7 @@ function NavbarComponent() {
             )}
             
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="group relative h-11 min-h-[44px] gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20 min-w-[180px] touch-manipulation">
-                    <Avatar className="h-8 w-8 ring-2 ring-purple-500/30 group-hover:ring-purple-500/60 transition-all">
-                      <AvatarImage src={profile?.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-sm font-semibold">
-                        {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium whitespace-nowrap">
-                      {profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="end" 
-                  sideOffset={12}
-                  className="w-64 rounded-xl border-purple-500/20 bg-background/95 backdrop-blur-xl p-2 shadow-2xl"
-                  style={{ 
-                    willChange: 'transform, opacity',
-                    zIndex: 999999,
-                    position: 'fixed',
-                    isolation: 'isolate'
-                  }}
-                >
-                  <DropdownMenuLabel className="pb-2">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-purple-500/30">
-                        <AvatarImage src={profile?.avatar_url} />
-                        <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white font-semibold">
-                          {profile?.username?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-semibold">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                    <Link href="/dashboard" prefetch={true} className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Panelim
-                    </Link>
-                  </DropdownMenuItem>
-                  {(profile?.role === 'admin' || profile?.is_admin) && (
-                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                      <Link href="/admin/dashboard" prefetch={true} className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-red-500" />
-                        <span className="text-red-500 font-semibold">Yönetim Paneli</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  {(profile?.is_developer || profile?.developer_approved) && (
-                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                      <Link href="/developer/dashboard" prefetch={true} className="flex items-center gap-2">
-                        <Code2 className="h-4 w-4" />
-                        Geliştirici Paneli
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                    <Link href="/dashboard/favorites" prefetch={true} className="flex items-center gap-2">
-                      <Heart className="h-4 w-4" />
-                      Favorilerim
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-                    <Link href="/dashboard/settings" prefetch={true} className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      Ayarlar
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="rounded-lg cursor-pointer text-destructive">
-                    Çıkış Yap
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ProfileDropdown user={user} profile={profile} />
             ) : (
               <>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
