@@ -353,22 +353,13 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <>
-            {/* Backdrop overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-background z-40 md:hidden"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <motion.div
-              ref={mobileMenuRef}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed top-16 left-0 right-0 bottom-0 md:hidden py-6 px-4 space-y-2 bg-background overflow-y-auto z-50"
-            >
+          <motion.div
+            ref={mobileMenuRef}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="md:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background"
+          >
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
@@ -461,7 +452,6 @@ export function Navbar() {
               )}
             </div>
           </motion.div>
-          </>
         )}
       </div>
     </motion.nav>
