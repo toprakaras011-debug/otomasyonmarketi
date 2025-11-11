@@ -397,13 +397,16 @@ export default async function RootLayout({
                 {children}
                 <CookieConsent />
                 <Toaster 
-                  position="bottom-right" 
+                  position="top-center" 
                   richColors 
                   closeButton
                   expand={false}
-                  visibleToasts={3}
+                  visibleToasts={5}
                   toastOptions={{
-                    duration: 3000,
+                    duration: 4000,
+                  }}
+                  style={{
+                    zIndex: 9999,
                   }}
                 />
                 <SpeedInsights />

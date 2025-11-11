@@ -569,3 +569,26 @@ body {
   width: 1.25rem !important;
   height: 1.25rem !important;
 }
+
+/* Toast visibility and positioning */
+[data-sonner-toaster],
+.sonner-toaster {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 1rem !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  right: auto !important;
+  bottom: auto !important;
+}
+
+[data-sonner-toast],
+.sonner-toast {
+  z-index: 9999 !important;
+  position: relative !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 0.5rem !important;
+  min-width: 356px !important;
+  max-width: 420px !important;
+}
