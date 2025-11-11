@@ -130,7 +130,7 @@ function NavbarComponent() {
       />
 
       <div className="container mx-auto px-4">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo - Ultra Futuristic */}
           <Link href="/" prefetch={true} className="group relative flex items-center space-x-3">
             <motion.div 
@@ -240,7 +240,7 @@ function NavbarComponent() {
           </div>
 
           {/* Right Side Actions - Hidden on tablet, show mobile menu */}
-          <div className="hidden lg:flex lg:items-center lg:space-x-3">
+          <div className="hidden lg:flex lg:items-center lg:justify-center lg:space-x-3">
             <ThemeToggle />
             
             {user && (
@@ -267,19 +267,15 @@ function NavbarComponent() {
             ) : (
               <>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="ghost" asChild className="rounded-xl font-semibold hover:bg-purple-500/10 min-h-[44px] touch-manipulation">
-                    <Link href="/auth/signin" prefetch={true} className="touch-manipulation">Giriş Yap</Link>
+                  <Button variant="ghost" asChild className="rounded-xl font-semibold hover:bg-purple-500/10 min-h-[44px] h-11 touch-manipulation flex items-center">
+                    <Link href="/auth/signin" prefetch={true} className="touch-manipulation flex items-center">Giriş Yap</Link>
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button asChild className="relative rounded-xl font-semibold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 shadow-lg shadow-purple-500/50 overflow-hidden group min-h-[44px] touch-manipulation">
-                    <Link href="/auth/signup" prefetch={true} className="touch-manipulation">
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 opacity-0 group-hover:opacity-30"
-                        animate={{
-                          x: [-100, 100],
-                        }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
+                  <Button asChild className="relative rounded-xl font-semibold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 shadow-lg shadow-purple-500/50 overflow-hidden group min-h-[44px] h-11 touch-manipulation flex items-center">
+                    <Link href="/auth/signup" prefetch={true} className="touch-manipulation flex items-center">
+                      <div
+                        className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 opacity-0 group-hover:opacity-30 transition-opacity duration-300"
                       />
                       <Sparkles className="mr-2 h-4 w-4 relative z-10" />
                       <span className="relative z-10">Kayıt Ol</span>
@@ -350,7 +346,7 @@ function NavbarComponent() {
             
             <div className="border-t border-purple-500/20 pt-6 space-y-4">
               {user ? (
-                <div className="rounded-2xl border border-purple-500/20 bg-background p-4 shadow-lg">
+                <div className="rounded-2xl border border-purple-500/20 bg-background p-4 shadow-lg backdrop-blur-none">
                   <div className="flex items-center gap-3 mb-4">
                     <Avatar className="h-10 w-10 ring-2 ring-purple-500/30">
                       <AvatarImage src={profile?.avatar_url} />

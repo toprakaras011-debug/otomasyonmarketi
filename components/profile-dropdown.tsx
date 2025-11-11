@@ -102,7 +102,7 @@ export function ProfileDropdown({ user, profile }: ProfileDropdownProps) {
         ref={buttonRef}
         variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
-        className="group relative h-11 min-h-[44px] gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20 min-w-[180px] touch-manipulation"
+        className="group relative h-11 min-h-[44px] gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20 min-w-[180px] touch-manipulation flex items-center"
       >
         <Avatar className="h-8 w-8 ring-2 ring-purple-500/30 group-hover:ring-purple-500/60 transition-all">
           <AvatarImage src={profile?.avatar_url} />
@@ -129,7 +129,7 @@ export function ProfileDropdown({ user, profile }: ProfileDropdownProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute mt-4 w-64 rounded-xl border border-purple-500/20 bg-background/95 backdrop-blur-xl p-2 shadow-2xl"
+            className="absolute mt-4 w-64 rounded-xl border border-purple-500/20 bg-background p-2 shadow-2xl"
             style={{
               zIndex: 999999,
               position: 'absolute',

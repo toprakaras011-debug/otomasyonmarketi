@@ -713,7 +713,7 @@ export default function SettingsPage() {
       </div>
       <Navbar />
 
-      <div className="container relative mx-auto px-4 py-16">
+      <div className="container relative mx-auto px-4 pt-24 pb-16">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
