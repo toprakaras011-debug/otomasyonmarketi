@@ -161,62 +161,81 @@ export default function SettingsPage() {
       return;
     }
 
-    if (!paymentData.full_name.trim()) {
+    // Prevent double submission
+    if (savingPayment) {
+      return;
+    }
+
+    // Client-side validation
+    if (!paymentData.full_name?.trim()) {
       toast.error('Ad soyad zorunludur');
       return;
     }
-    if (!paymentData.tc_no.trim()) {
-      toast.error('TC Kimlik No zorunludur');
+
+    if (!paymentData.tc_no?.trim() || paymentData.tc_no.length !== 11) {
+      toast.error('Geçerli bir TC Kimlik No giriniz (11 haneli)');
       return;
     }
-    if (!paymentData.tax_office.trim()) {
+
+    if (!paymentData.tax_office?.trim()) {
       toast.error('Vergi dairesi zorunludur');
       return;
     }
-    if (!paymentData.iban.trim()) {
+
+    if (!paymentData.iban?.trim()) {
       toast.error('IBAN zorunludur');
       return;
     }
+
     if (!validateIban(paymentData.iban)) {
-      toast.error('Geçerli bir IBAN giriniz');
+      toast.error('Geçerli bir IBAN giriniz (TR ile başlamalı, 26 karakter)');
       return;
     }
-    if (!paymentData.billing_address.trim()) {
+
+    if (!paymentData.billing_address?.trim()) {
       toast.error('Adres zorunludur');
       return;
     }
 
     const bankName = getBankNameFromIban(paymentData.iban);
     if (!bankName) {
-      toast.error('IBAN\'dan banka adı tespit edilemedi');
+      toast.error('IBAN\'dan banka adı tespit edilemedi. Lütfen geçerli bir IBAN giriniz.');
       return;
     }
 
     setSavingPayment(true);
     
-    // Timeout koruması (10 saniye)
+    // Timeout koruması (15 saniye - increased for reliability)
     let timeoutCleared = false;
     const timeoutId = setTimeout(() => {
       if (!timeoutCleared) {
         setSavingPayment(false);
         toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
       }
-    }, 10000);
+    }, 15000);
     
     try {
       const cleanIban = paymentData.iban.replace(/[\s\-_.,]/g, '').toUpperCase();
       
+      const updateData: any = {
+        full_name: paymentData.full_name.trim(),
+        tc_no: paymentData.tc_no.trim(),
+        tax_office: paymentData.tax_office.trim(),
+        iban: cleanIban,
+        bank_name: bankName,
+        billing_address: paymentData.billing_address.trim(),
+      };
+
+      // Only update company_name if it exists
+      if (paymentData.company_name?.trim()) {
+        updateData.company_name = paymentData.company_name.trim();
+      } else {
+        updateData.company_name = null;
+      }
+      
       const { data, error } = await supabase
         .from('user_profiles')
-        .update({
-          full_name: paymentData.full_name.trim(),
-          company_name: paymentData.company_name.trim() || null, // Allow empty string to be saved as null
-          tc_no: paymentData.tc_no.trim(),
-          tax_office: paymentData.tax_office.trim(),
-          iban: cleanIban,
-          bank_name: bankName,
-          billing_address: paymentData.billing_address.trim(), // ✅ Adres alanını ekle
-        })
+        .update(updateData)
         .eq('id', user.id)
         .select()
         .single();
@@ -228,9 +247,15 @@ export default function SettingsPage() {
         console.error('Payment save error:', error);
         // Kolon yoksa daha açıklayıcı hata mesajı
         if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
-          toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.');
+          toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.', {
+            duration: 8000,
+          });
+        } else if (error.code === '23505' || error.message?.includes('unique')) {
+          toast.error('Bu bilgiler zaten kullanılıyor. Lütfen farklı bilgiler giriniz.');
         } else {
-          toast.error(error.message || 'Kayıt başarısız. Lütfen tekrar deneyin.');
+          toast.error(error.message || 'Kayıt başarısız. Lütfen tekrar deneyin.', {
+            duration: 5000,
+          });
         }
         setSavingPayment(false);
         return;
@@ -239,16 +264,22 @@ export default function SettingsPage() {
       if (data) {
         setProfile((prev: any) => ({
           ...prev,
-          full_name: paymentData.full_name.trim(),
-          company_name: paymentData.company_name.trim(),
-          tc_no: paymentData.tc_no.trim(),
-          tax_office: paymentData.tax_office.trim(),
-          iban: cleanIban,
-          bank_name: bankName,
-          billing_address: paymentData.billing_address.trim(),
+          ...data,
         }));
 
-        toast.success('Ödeme bilgileri kaydedildi!', {
+        // Update paymentData with returned data to ensure sync
+        setPaymentData(prev => ({
+          ...prev,
+          full_name: data.full_name || prev.full_name,
+          company_name: data.company_name || prev.company_name || '',
+          tc_no: data.tc_no || prev.tc_no,
+          tax_office: data.tax_office || prev.tax_office,
+          iban: data.iban || prev.iban,
+          bank_name: data.bank_name || prev.bank_name,
+          billing_address: data.billing_address || prev.billing_address,
+        }));
+
+        toast.success('Ödeme bilgileri başarıyla kaydedildi!', {
           duration: 3000,
         });
       } else {
@@ -258,7 +289,9 @@ export default function SettingsPage() {
       clearTimeout(timeoutId);
       timeoutCleared = true;
       console.error('Payment save exception:', error);
-      toast.error(error?.message || 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+      toast.error(error?.message || 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.', {
+        duration: 5000,
+      });
     } finally {
       setSavingPayment(false);
     }
@@ -409,30 +442,61 @@ export default function SettingsPage() {
     if (saving || avatarUploading) {
       return;
     }
+
+    // Client-side validation
+    if (!profileData.full_name?.trim()) {
+      toast.error('Ad soyad zorunludur');
+      return;
+    }
+
+    if (!profileData.city?.trim()) {
+      toast.error('İl seçimi zorunludur');
+      return;
+    }
+
+    if (!profileData.district?.trim()) {
+      toast.error('İlçe seçimi zorunludur');
+      return;
+    }
+
+    if (!profileData.postal_code?.trim() || profileData.postal_code.length !== 5) {
+      toast.error('Geçerli bir posta kodu giriniz (5 haneli)');
+      return;
+    }
+
+    if (!profileData.phone?.trim()) {
+      toast.error('Telefon numarası zorunludur');
+      return;
+    }
     
     setSaving(true);
 
-    // Timeout protection (10 seconds)
+    // Timeout protection (15 seconds - increased for reliability)
     let timeoutCleared = false;
     const timeoutId = setTimeout(() => {
       if (!timeoutCleared) {
         setSaving(false);
         toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
       }
-    }, 10000);
+    }, 15000);
 
     try {
+      const updateData: any = {
+        full_name: profileData.full_name.trim(),
+        phone: profileData.phone.trim(),
+        city: profileData.city.trim(),
+        district: profileData.district.trim(),
+        postal_code: profileData.postal_code.trim(),
+      };
+
+      // Only update avatar_url if it exists
+      if (profileData.avatar_url) {
+        updateData.avatar_url = profileData.avatar_url;
+      }
+
       const { data, error } = await supabase
         .from('user_profiles')
-        .update({
-          // Username is not updatable - set during signup
-          full_name: profileData.full_name?.trim() || null,
-          avatar_url: profileData.avatar_url || null,
-          phone: profileData.phone?.trim() || null,
-          city: profileData.city?.trim() || null,
-          district: profileData.district?.trim() || null,
-          postal_code: profileData.postal_code?.trim() || null,
-        })
+        .update(updateData)
         .eq('id', user.id)
         .select()
         .single();
@@ -445,7 +509,11 @@ export default function SettingsPage() {
         
         // More specific error handling
         if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
-          toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.');
+          toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.', {
+            duration: 8000,
+          });
+        } else if (error.code === '23505' || error.message?.includes('unique')) {
+          toast.error('Bu bilgiler zaten kullanılıyor. Lütfen farklı bilgiler giriniz.');
         } else {
           toast.error(error.message || 'Güncelleme başarısız. Lütfen tekrar deneyin.', {
             duration: 5000,
@@ -457,7 +525,17 @@ export default function SettingsPage() {
 
       if (data) {
         setProfile({ ...profile, ...data });
-        toast.success('Profil bilgileriniz güncellendi', {
+        // Update profileData with returned data to ensure sync
+        setProfileData(prev => ({
+          ...prev,
+          full_name: data.full_name || prev.full_name,
+          phone: data.phone || prev.phone,
+          city: data.city || prev.city,
+          district: data.district || prev.district,
+          postal_code: data.postal_code || prev.postal_code,
+          avatar_url: data.avatar_url || prev.avatar_url,
+        }));
+        toast.success('Profil bilgileriniz başarıyla güncellendi', {
           duration: 3000,
         });
       } else {
@@ -467,7 +545,7 @@ export default function SettingsPage() {
       clearTimeout(timeoutId);
       timeoutCleared = true;
       console.error('Profile update exception:', error);
-      toast.error(error?.message || 'Güncelleme başarısız', {
+      toast.error(error?.message || 'Güncelleme başarısız. Lütfen tekrar deneyin.', {
         duration: 5000,
       });
     } finally {
@@ -823,7 +901,11 @@ export default function SettingsPage() {
                               sideOffset={4}
                               avoidCollisions={true}
                               collisionPadding={8}
-                              className="z-[100] max-h-[300px]"
+                              className="z-[9999] max-h-[300px] w-[var(--radix-select-trigger-width)]"
+                              style={{ 
+                                position: 'fixed',
+                                transform: 'none'
+                              }}
                             >
                               {TURKEY_CITIES.map((city) => (
                                 <SelectItem key={city.code} value={city.name}>
@@ -851,7 +933,11 @@ export default function SettingsPage() {
                               sideOffset={4}
                               avoidCollisions={true}
                               collisionPadding={8}
-                              className="z-[100] max-h-[300px]"
+                              className="z-[9999] max-h-[300px] w-[var(--radix-select-trigger-width)]"
+                              style={{ 
+                                position: 'fixed',
+                                transform: 'none'
+                              }}
                             >
                               {availableDistricts.map((district, index) => (
                                 <SelectItem key={`${district}-${index}`} value={district}>
