@@ -273,8 +273,8 @@ export default function SignInPage() {
                 </Link>
               </p>
               
-              {/* Guest Checkout Option - Only show if not from cart */}
-              {!isFromCart && (
+              {/* Guest Checkout Option - Only show if coming from cart (has items) */}
+              {isFromCart && (
                 <Button
                   asChild
                   variant="outline"
