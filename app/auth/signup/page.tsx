@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { signUp, signInWithGithub, signInWithGoogle } from '@/lib/auth';
 import { toast } from 'sonner';
-import { Zap, Github, ArrowLeft, Sparkles, Shield } from 'lucide-react';
+import { Zap, Github, ArrowLeft, Sparkles, Shield, User, Mail, Phone, Lock, Code2, ShoppingBag, Info, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Turnstile } from '@/components/turnstile';
 
 export default function SignUpPage() {
@@ -318,121 +318,190 @@ export default function SignUpPage() {
             </div>
 
             {/* Email/Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="username" className="text-xs font-medium">
-                    Kullanıcı Adı *
-                  </Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="kullaniciadi"
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    required
-                    className="h-9 text-sm"
-                  />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Personal Information Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                  <User className="h-4 w-4 text-purple-500" />
+                  <h3 className="text-sm font-semibold text-foreground">Kişisel Bilgiler</h3>
                 </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5 group">
+                    <Label htmlFor="username" className="text-xs font-medium flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      Kullanıcı Adı
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="username"
+                        type="text"
+                        placeholder="@kullaniciadi"
+                        value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        required
+                        className="h-10 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      />
+                      {formData.username && formData.username.length >= 3 && (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                      <Shield className="h-3 w-3" />
+                      <span>Kalıcıdır, değiştirilemez</span>
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fullName" className="text-xs font-medium flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
+                      Ad Soyad
+                      <span className="text-xs text-muted-foreground">(Opsiyonel)</span>
+                    </Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Adınız Soyadınız"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                  <Mail className="h-4 w-4 text-purple-500" />
+                  <h3 className="text-sm font-semibold text-foreground">İletişim Bilgileri</h3>
+                </div>
+                
                 <div className="space-y-1.5">
-                  <Label htmlFor="fullName" className="text-xs font-medium">
-                    Ad Soyad
+                  <Label htmlFor="email" className="text-xs font-medium flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                    E-posta Adresi
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="ornek@email.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
+                      required
+                      autoComplete="email"
+                      className="h-10 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                    />
+                    {formData.email && formData.email.includes('@') && (
+                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone" className="text-xs font-medium flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                    Telefon Numarası
+                    <span className="text-xs text-muted-foreground">(Opsiyonel)</span>
                   </Label>
                   <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Ad Soyad"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="h-9 text-sm"
+                    id="phone"
+                    type="tel"
+                    placeholder="0555 123 45 67"
+                    value={formData.phone}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d\s-]/g, '');
+                      setFormData({ ...formData, phone: value });
+                    }}
+                    onBlur={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
+                    autoComplete="tel"
+                    className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
               </div>
 
-              <p className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1 -mt-1">
-                <Shield className="h-3 w-3" />
-                <span>Kullanıcı adı değiştirilemez</span>
-              </p>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="phone" className="text-xs font-medium">
-                  Telefon (Opsiyonel)
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="05xx xxx xx xx"
-                  value={formData.phone}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d\s-]/g, '');
-                    setFormData({ ...formData, phone: value });
-                  }}
-                  onBlur={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
-                  autoComplete="tel"
-                  className="h-9 text-sm"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs font-medium">
-                  E-posta *
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="ornek@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
-                  required
-                  autoComplete="email"
-                  className="h-9 text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="password" className="text-xs font-medium">
-                    Şifre *
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Min. 6 karakter"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                    minLength={6}
-                    className="h-9 text-sm"
-                  />
+              {/* Security Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                  <Lock className="h-4 w-4 text-purple-500" />
+                  <h3 className="text-sm font-semibold text-foreground">Güvenlik</h3>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="confirmPassword" className="text-xs font-medium">
-                    Şifre Tekrar *
-                  </Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Şifre tekrar"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    required
-                    minLength={6}
-                    className="h-9 text-sm"
-                  />
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-xs font-medium flex items-center gap-1.5">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                      Şifre
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        required
+                        minLength={6}
+                        className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      />
+                      {formData.password && formData.password.length >= 6 && (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Min. 6 karakter</p>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmPassword" className="text-xs font-medium flex items-center gap-1.5">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                      Şifre Tekrar
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        required
+                        minLength={6}
+                        className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      />
+                      {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                      )}
+                      {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                        <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                      )}
+                    </div>
+                    {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                      <p className="text-[10px] text-red-500">Şifreler eşleşmiyor</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Hesap Türü</Label>
-                <div className="grid grid-cols-2 gap-2">
+              {/* Account Type Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+                  <Sparkles className="h-4 w-4 text-purple-500" />
+                  <h3 className="text-sm font-semibold text-foreground">Hesap Türü Seçimi</h3>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
                   <motion.label 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`relative cursor-pointer overflow-hidden rounded-lg border-2 p-3 transition-all ${
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all duration-300 ${
                       formData.role === 'user' 
-                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10' 
-                        : 'border-border hover:border-purple-500/50'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10 shadow-lg shadow-purple-500/20' 
+                        : 'border-border hover:border-purple-500/50 hover:shadow-md'
                     }`}
                   >
                     <input
@@ -443,27 +512,45 @@ export default function SignUpPage() {
                       onChange={() => setFormData({ ...formData, role: 'user' })}
                       className="sr-only"
                     />
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div className={`rounded-lg p-1.5 ${
+                    {formData.role === 'user' && (
+                      <motion.div 
+                        layoutId="activeRole"
+                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/5 rounded-xl"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <div className="relative flex flex-col items-center gap-2">
+                      <div className={`rounded-xl p-2.5 transition-all duration-300 ${
                         formData.role === 'user' 
-                          ? 'bg-gradient-to-br from-purple-600 to-blue-600' 
+                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg' 
                           : 'bg-muted'
                       }`}>
-                        <Zap className={`h-4 w-4 ${
+                        <ShoppingBag className={`h-5 w-5 transition-colors ${
                           formData.role === 'user' ? 'text-white' : 'text-muted-foreground'
                         }`} />
                       </div>
-                      <span className="text-xs font-semibold">Kullanıcı</span>
-                      <span className="text-[10px] text-center text-muted-foreground">Satın al</span>
+                      <div className="text-center space-y-0.5">
+                        <span className="text-sm font-bold block">Kullanıcı</span>
+                        <span className="text-[11px] text-muted-foreground block">Otomasyonları satın al</span>
+                      </div>
+                      {formData.role === 'user' && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1"
+                        >
+                          <CheckCircle2 className="h-3 w-3 text-white" />
+                        </motion.div>
+                      )}
                     </div>
                   </motion.label>
                   <motion.label 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`relative cursor-pointer overflow-hidden rounded-lg border-2 p-3 transition-all ${
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all duration-300 ${
                       formData.role === 'developer' 
-                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10' 
-                        : 'border-border hover:border-purple-500/50'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10 shadow-lg shadow-purple-500/20' 
+                        : 'border-border hover:border-purple-500/50 hover:shadow-md'
                     }`}
                   >
                     <input
@@ -474,20 +561,36 @@ export default function SignUpPage() {
                       onChange={() => setFormData({ ...formData, role: 'developer' })}
                       className="sr-only"
                     />
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div className={`rounded-lg p-1.5 ${
+                    {formData.role === 'developer' && (
+                      <motion.div 
+                        layoutId="activeRole"
+                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/5 rounded-xl"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <div className="relative flex flex-col items-center gap-2">
+                      <div className={`rounded-xl p-2.5 transition-all duration-300 ${
                         formData.role === 'developer' 
-                          ? 'bg-gradient-to-br from-purple-600 to-blue-600' 
+                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg' 
                           : 'bg-muted'
                       }`}>
-                        <svg className={`h-4 w-4 ${
+                        <Code2 className={`h-5 w-5 transition-colors ${
                           formData.role === 'developer' ? 'text-white' : 'text-muted-foreground'
-                        }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                        </svg>
+                        }`} />
                       </div>
-                      <span className="text-xs font-semibold">Geliştirici</span>
-                      <span className="text-[10px] text-center text-muted-foreground">Sat</span>
+                      <div className="text-center space-y-0.5">
+                        <span className="text-sm font-bold block">Geliştirici</span>
+                        <span className="text-[11px] text-muted-foreground block">Otomasyonları sat</span>
+                      </div>
+                      {formData.role === 'developer' && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1"
+                        >
+                          <CheckCircle2 className="h-3 w-3 text-white" />
+                        </motion.div>
+                      )}
                     </div>
                   </motion.label>
                 </div>
