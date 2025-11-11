@@ -67,18 +67,10 @@ export default function SignInPage() {
         throw new Error('Giriş başarısız. Lütfen tekrar deneyin.');
       }
 
-      // Wait for session to be established
-      await new Promise(resolve => setTimeout(resolve, 100));
+      toast.success('Giriş başarılı!');
       
-      toast.success('Giriş başarılı!', {
-        duration: 3000,
-      });
-      
-      // Force page reload to ensure session is properly established
-      // This is especially important for admin accounts
-      setTimeout(() => {
-        window.location.href = redirectTo;
-      }, 500);
+      // Immediate redirect using router (faster and smoother)
+      router.push(redirectTo);
     } catch (error: any) {
       const errorMessage = error?.message || 'Giriş yapılamadı';
       toast.error(errorMessage, {
