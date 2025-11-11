@@ -404,27 +404,55 @@ export default function SettingsPage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (saving || avatarUploading) {
+      return;
+    }
+    
     setSaving(true);
+
+    // Timeout protection (10 seconds)
+    let timeoutCleared = false;
+    const timeoutId = setTimeout(() => {
+      if (!timeoutCleared) {
+        setSaving(false);
+        toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
+      }
+    }, 10000);
 
     try {
       const { data, error } = await supabase
         .from('user_profiles')
         .update({
           // Username is not updatable - set during signup
-          full_name: profileData.full_name,
-          avatar_url: profileData.avatar_url,
-          phone: profileData.phone,
-          city: profileData.city,
-          district: profileData.district,
-          postal_code: profileData.postal_code,
+          full_name: profileData.full_name?.trim() || null,
+          avatar_url: profileData.avatar_url || null,
+          phone: profileData.phone?.trim() || null,
+          city: profileData.city?.trim() || null,
+          district: profileData.district?.trim() || null,
+          postal_code: profileData.postal_code?.trim() || null,
         })
         .eq('id', user.id)
         .select()
         .single();
 
+      clearTimeout(timeoutId);
+      timeoutCleared = true;
+
       if (error) {
         console.error('Profile update error:', error);
-        throw error;
+        
+        // More specific error handling
+        if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
+          toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.');
+        } else {
+          toast.error(error.message || 'Güncelleme başarısız. Lütfen tekrar deneyin.', {
+            duration: 5000,
+          });
+        }
+        setSaving(false);
+        return;
       }
 
       if (data) {
@@ -436,6 +464,8 @@ export default function SettingsPage() {
         toast.error('Güncelleme başarısız. Veri döndürülmedi.');
       }
     } catch (error: any) {
+      clearTimeout(timeoutId);
+      timeoutCleared = true;
       console.error('Profile update exception:', error);
       toast.error(error?.message || 'Güncelleme başarısız', {
         duration: 5000,
