@@ -11,12 +11,20 @@ export const supabase = createClient(
   {
     auth: {
       persistSession: true, // ✅ Explicitly enable session persistence
-      autoRefreshToken: true, // ✅ Auto-refresh tokens
+      autoRefreshToken: true, // ✅ Auto-refresh tokens (Supabase handles this automatically)
       detectSessionInUrl: true, // ✅ Detect session in URL (for OAuth callbacks)
       storage: typeof window !== 'undefined' ? window.localStorage : undefined, // ✅ Use localStorage in browser
+      // Session duration: Supabase default is 1 hour, tokens auto-refresh before expiry
+      // No need to set custom timeout - Supabase handles it
     },
     functions: {
       url: supabaseFunctionsUrl,
+    },
+    // Global options
+    global: {
+      headers: {
+        'x-client-info': 'otomasyonmagazasi-web',
+      },
     },
   } as any
 );

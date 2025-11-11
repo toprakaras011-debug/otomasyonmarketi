@@ -18,8 +18,9 @@ const AuthContext = createContext<AuthContextType>({
   loading: true 
 });
 
-// Inactivity timeout: 2 minutes (120000 ms)
-const INACTIVITY_TIMEOUT = 120000;
+// Inactivity timeout: 30 minutes (1800000 ms) - Only logout if truly inactive
+// Note: Supabase handles token refresh automatically, so we don't need aggressive timeouts
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 export function AuthProvider({ 
   children, 
@@ -172,6 +173,8 @@ export function AuthProvider({
   }, [pathname, user, fetchUserProfile]);
 
   // Inactivity detection and auto-logout
+  // DISABLED: Supabase handles session management automatically with autoRefreshToken
+  // Only enable if you want to force logout after extended inactivity
   useEffect(() => {
     if (!user) {
       // Clear timer if user is not logged in
@@ -182,6 +185,12 @@ export function AuthProvider({
       return;
     }
 
+    // DISABLED: Auto-logout on inactivity
+    // Supabase automatically refreshes tokens and manages sessions
+    // This was causing users to be logged out too aggressively
+    // If you want to re-enable, uncomment below and adjust INACTIVITY_TIMEOUT
+    
+    /*
     // Reset activity timestamp
     const resetInactivityTimer = () => {
       lastActivityRef.current = Date.now();
@@ -195,7 +204,7 @@ export function AuthProvider({
       inactivityTimerRef.current = setTimeout(async () => {
         const timeSinceLastActivity = Date.now() - lastActivityRef.current;
         
-        // Double-check: if more than 2 minutes have passed, logout
+        // Double-check: if more than timeout has passed, logout
         if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {
           try {
             await supabase.auth.signOut();
@@ -238,6 +247,7 @@ export function AuthProvider({
         document.removeEventListener(event, handleActivity);
       });
     };
+    */
   }, [user, pathname, router]);
 
   const value = useMemo(() => ({ user, profile, loading }), [user, profile, loading]);
