@@ -26,6 +26,7 @@ export default function SignInPage() {
   });
 
   const redirectTo = searchParams.get('redirect') || '/dashboard';
+  const isFromCart = redirectTo === '/cart';
   
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
@@ -272,16 +273,18 @@ export default function SignInPage() {
                 </Link>
               </p>
               
-              {/* Guest Checkout Option */}
-              <Button
-                asChild
-                variant="outline"
-                className="w-full border-purple-500/50 hover:bg-purple-500/10 hover:border-purple-500"
-              >
-                <Link href="/checkout/guest">
-                  Üye Olmadan Devam Et
-                </Link>
-              </Button>
+              {/* Guest Checkout Option - Only show if not from cart */}
+              {!isFromCart && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full border-purple-500/50 hover:bg-purple-500/10 hover:border-purple-500"
+                >
+                  <Link href="/checkout/guest">
+                    Üye Olmadan Devam Et
+                  </Link>
+                </Button>
+              )}
               
               <Link
                 href="/"

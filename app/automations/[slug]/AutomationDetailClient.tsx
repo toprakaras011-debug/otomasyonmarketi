@@ -328,7 +328,7 @@ export default function AutomationDetailClient({
         />
       </div>
 
-      <div className="container relative mx-auto px-4 py-16">
+      <div className="container relative mx-auto px-4 pt-24 pb-16">
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-8">
             {/* Hero Image */}
