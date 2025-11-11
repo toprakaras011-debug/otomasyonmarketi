@@ -53,7 +53,7 @@ export function AuthProvider({
           .from('user_profiles')
           .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
           .eq('id', user.id)
-          .single();
+          .maybeSingle(); // ✅ Use maybeSingle instead of single to handle missing profiles gracefully
         
         if (error) {
           console.error('Profile fetch error:', error);
