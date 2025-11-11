@@ -154,7 +154,7 @@ export default function AutomationDetailClient({
 
   // Build Product schema for Rich Snippets (both domains)
   const productUrl = `https://otomasyonmagazasi.com/automations/${automation.slug}`;
-  const productUrlAlt = `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`;
+  const productUrlAlt = `https://otomasyonmagazasi.com/automations/${automation.slug}`;
   const productJsonLd: any = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -263,7 +263,7 @@ export default function AutomationDetailClient({
     ]
   };
 
-  // Alternate BreadcrumbList for otomasyonmagazasi.com.tr domain
+  // Alternate BreadcrumbList for otomasyonmagazasi.com domain
   const breadcrumbJsonLdAlt = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -272,25 +272,25 @@ export default function AutomationDetailClient({
         '@type': 'ListItem',
         position: 1,
         name: 'Ana Sayfa',
-        item: 'https://otomasyonmagazasi.com.tr'
+        item: 'https://otomasyonmagazasi.com'
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Otomasyonlar',
-        item: 'https://otomasyonmagazasi.com.tr/automations'
+        item: 'https://otomasyonmagazasi.com/automations'
       },
       ...(category ? [{
         '@type': 'ListItem',
         position: 3,
         name: category.name,
-        item: `https://otomasyonmagazasi.com.tr/categories/${category.slug}`
+        item: `https://otomasyonmagazasi.com/categories/${category.slug}`
       }] : []),
       {
         '@type': 'ListItem',
         position: category ? 4 : 3,
         name: automation.title,
-        item: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`
+        item: `https://otomasyonmagazasi.com/automations/${automation.slug}`
       }
     ]
   };

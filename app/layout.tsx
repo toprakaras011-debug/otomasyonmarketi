@@ -364,7 +364,7 @@ export default async function RootLayout({
               "@type": "WebSite",
               "name": "Otomasyon Mağazası",
               "url": "https://www.otomasyonmagazasi.com",
-              "alternateName": ["https://otomasyonmagazasi.com.tr", "https://www.otomasyonmagazasi.com.tr"],
+              "alternateName": ["https://otomasyonmagazasi.com", "https://www.otomasyonmagazasi.com"],
               "potentialAction": {
                 "@type": "SearchAction",
                 "target": "https://www.otomasyonmagazasi.com/arama?q={search_term_string}",

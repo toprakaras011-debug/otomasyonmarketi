@@ -50,7 +50,7 @@ export default function ContactPage() {
       
       // E-posta içeriği
       const emailContent = {
-        to: 'info@otomasyonmagazasi.com.tr',
+        to: 'info@otomasyonmagazasi.com',
         from: formData.email,
         subject: `İletişim Formu: ${formData.subject}`,
         text: `
@@ -77,7 +77,7 @@ export default function ContactPage() {
             </div>
             
             <p style="font-size: 12px; color: #6b7280; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
-              Bu e-posta, otomasyonmagazasi.com.tr üzerindeki iletişim formu aracılığıyla gönderilmiştir.<br>
+              Bu e-posta, otomasyonmagazasi.com üzerindeki iletişim formu aracılığıyla gönderilmiştir.<br>
               Gönderim Tarihi: ${new Date().toLocaleString('tr-TR')}
             </p>
           </div>
@@ -155,7 +155,7 @@ export default function ContactPage() {
           {/* Contact Cards */}
           <div className="mb-12 grid gap-6 md:grid-cols-2 max-w-2xl mx-auto">
             {[
-              { icon: Mail, label: 'E-posta', value: 'info@otomasyonmagazasi.com.tr', href: 'mailto:info@otomasyonmagazasi.com.tr', gradient: 'from-purple-600 to-blue-600' },
+              { icon: Mail, label: 'E-posta', value: 'info@otomasyonmagazasi.com', href: 'mailto:info@otomasyonmagazasi.com', gradient: 'from-purple-600 to-blue-600' },
               { icon: Phone, label: 'Telefon', value: '+90 507 420 19 20', href: 'tel:+905074201920', gradient: 'from-pink-600 to-rose-600' },
             ].map((contact, index) => (
               <motion.div

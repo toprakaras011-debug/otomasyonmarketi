@@ -77,7 +77,7 @@ export default async function AutomationsPage() {
       name: 'Otomasyon Listesi',
       description: 'Türkiye\'nin en büyük otomasyon marketplace\'i - Tüm otomasyon çözümleri',
       url: 'https://otomasyonmagazasi.com/automations',
-      sameAs: ['https://otomasyonmagazasi.com.tr/automations'],
+      sameAs: ['https://otomasyonmagazasi.com/automations'],
       numberOfItems: automations?.length || 0,
       itemListElement: (automations || []).slice(0, 20).map((automation: any, index: number) => ({
         '@type': 'ListItem',
@@ -87,7 +87,7 @@ export default async function AutomationsPage() {
           name: automation.title,
           description: automation.description,
           url: `https://otomasyonmagazasi.com/automations/${automation.slug}`,
-          sameAs: [`https://otomasyonmagazasi.com.tr/automations/${automation.slug}`],
+          sameAs: [`https://otomasyonmagazasi.com/automations/${automation.slug}`],
           image: automation.image_path 
             ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${automation.image_path}`
             : automation.image_url || 'https://otomasyonmagazasi.com/placeholder.jpg',
@@ -101,7 +101,7 @@ export default async function AutomationsPage() {
             },
             {
               '@type': 'Offer',
-              url: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`,
+              url: `https://otomasyonmagazasi.com/automations/${automation.slug}`,
               priceCurrency: 'TRY',
               price: automation.price.toString(),
               availability: 'https://schema.org/InStock'
@@ -124,7 +124,7 @@ export default async function AutomationsPage() {
       '@type': 'ItemList',
       name: 'Otomasyon Listesi',
       description: 'Türkiye\'nin en büyük otomasyon marketplace\'i - Tüm otomasyon çözümleri',
-      url: 'https://otomasyonmagazasi.com.tr/automations',
+      url: 'https://otomasyonmagazasi.com/automations',
       sameAs: ['https://otomasyonmagazasi.com/automations'],
       numberOfItems: automations?.length || 0,
       itemListElement: (automations || []).slice(0, 20).map((automation: any, index: number) => ({
@@ -134,15 +134,15 @@ export default async function AutomationsPage() {
           '@type': 'Product',
           name: automation.title,
           description: automation.description,
-          url: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`,
+          url: `https://otomasyonmagazasi.com/automations/${automation.slug}`,
           sameAs: [`https://otomasyonmagazasi.com/automations/${automation.slug}`],
           image: automation.image_path 
             ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${automation.image_path}`
-            : automation.image_url || 'https://otomasyonmagazasi.com.tr/placeholder.jpg',
+            : automation.image_url || 'https://otomasyonmagazasi.com/placeholder.jpg',
           offers: [
             {
               '@type': 'Offer',
-              url: `https://otomasyonmagazasi.com.tr/automations/${automation.slug}`,
+              url: `https://otomasyonmagazasi.com/automations/${automation.slug}`,
               priceCurrency: 'TRY',
               price: automation.price.toString(),
               availability: 'https://schema.org/InStock'

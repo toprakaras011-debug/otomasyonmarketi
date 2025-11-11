@@ -5,7 +5,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Primary domain
   const baseUrl = 'https://otomasyonmagazasi.com';
   // Alternate domain
-  const alternateBaseUrl = 'https://otomasyonmagazasi.com.tr';
+  const alternateBaseUrl = 'https://otomasyonmagazasi.com';
   const supabase = await createClient();
 
   const { data: automations } = await supabase

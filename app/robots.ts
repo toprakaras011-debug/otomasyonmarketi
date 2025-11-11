@@ -33,7 +33,7 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: [
       'https://otomasyonmagazasi.com/sitemap.xml',
-      'https://otomasyonmagazasi.com.tr/sitemap.xml',
+      'https://otomasyonmagazasi.com/sitemap.xml',
     ],
     host: 'https://otomasyonmagazasi.com',
   };

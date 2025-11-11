@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const transporter = createTransporter();
 
     // E-posta gönder
-    const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'info@otomasyonmagazasi.com.tr';
+    const emailFrom = process.env.EMAIL_FROM || process.env.EMAIL_USER || 'info@otomasyonmagazasi.com';
     const info = await transporter.sendMail({
       from: `"${from}" <${emailFrom}>`,
       to: to || emailFrom,

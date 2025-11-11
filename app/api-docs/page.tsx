@@ -102,7 +102,7 @@ export default function ApiDocsPage() {
                 <div>
                   <h3 className="mb-2 font-semibold">2. Base URL</h3>
                   <div className="rounded-lg bg-background/50 p-4 font-mono text-sm">
-                    https://api.otomasyonmagazasi.com.tr/v1
+                    https://api.otomasyonmagazasi.com/v1
                   </div>
                 </div>
                 

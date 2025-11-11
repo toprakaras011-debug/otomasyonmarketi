@@ -116,7 +116,7 @@ export async function POST(req: Request) {
     // E-posta içeriği
     const mailOptions = {
       from: `"${name}" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
-      to: 'info@otomasyonmagazasi.com.tr',
+      to: 'info@otomasyonmagazasi.com',
       replyTo: email,
       subject: `İletişim Formu: ${subject}`,
       text: message,
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
           </div>
           
           <p style="font-size: 12px; color: #6b7280; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
-            Bu e-posta, otomasyonmagazasi.com.tr üzerindeki iletişim formu aracılığıyla gönderilmiştir.
+            Bu e-posta, otomasyonmagazasi.com üzerindeki iletişim formu aracılığıyla gönderilmiştir.
             <br>Gönderim Tarihi: ${new Date().toLocaleString('tr-TR')}
           </p>
         </div>

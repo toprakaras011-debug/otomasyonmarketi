@@ -36,7 +36,7 @@ export function Footer() {
 
   const socialLinks = [
     { icon: XLogo, href: 'https://x.com', label: 'X' },
-    { icon: Instagram, href: 'https://www.instagram.com/otomasyonmagazasi.com.tr/', label: 'Instagram' },
+    { icon: Instagram, href: 'https://www.instagram.com/otomasyonmagazasi/', label: 'Instagram' },
     { icon: Linkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
     { icon: Mail, href: 'mailto:info@otomasyonmagazasi.com', label: 'Email' },
   ];
