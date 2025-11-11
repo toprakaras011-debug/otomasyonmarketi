@@ -9,6 +9,7 @@
 
 -- 2. Admin hesabını user_profiles tablosunda güncelleyin
 -- (Email'i kendi admin email'inizle değiştirin)
+-- ✅ DOĞRU YÖNTEM: auth.users tablosundan email ile bulup user_profiles'ı güncelle
 UPDATE user_profiles
 SET 
   is_admin = true,
@@ -16,8 +17,16 @@ SET
   updated_at = NOW()
 WHERE id IN (
   SELECT id FROM auth.users
-  WHERE email = 'admin@example.com'  -- ⚠️ BURAYA ADMIN EMAIL'İNİZİ YAZIN
+  WHERE email = 'ftnakras01@gmail.com'  -- ⚠️ Admin email'iniz
 );
+
+-- ✅ ALTERNATİF: Direkt user ID ile güncelle (daha hızlı)
+-- UPDATE user_profiles
+-- SET 
+--   is_admin = true,
+--   role = 'admin',
+--   updated_at = NOW()
+-- WHERE id = 'fe1f19d5-b201-4754-a900-88500fa8cc52';  -- ⚠️ Admin user ID'niz
 
 -- 3. RLS Policy'leri oluşturun (eğer yoksa)
 
