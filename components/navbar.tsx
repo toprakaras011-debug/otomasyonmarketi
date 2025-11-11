@@ -279,12 +279,13 @@ function NavbarComponent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
                   align="end" 
-                  sideOffset={8}
-                  className="w-64 rounded-xl border-purple-500/20 bg-background/95 backdrop-blur-xl p-2"
+                  sideOffset={12}
+                  className="w-64 rounded-xl border-purple-500/20 bg-background/95 backdrop-blur-xl p-2 shadow-2xl"
                   style={{ 
                     willChange: 'transform, opacity',
-                    zIndex: 9999,
-                    position: 'fixed'
+                    zIndex: 999999,
+                    position: 'fixed',
+                    isolation: 'isolate'
                   }}
                 >
                   <DropdownMenuLabel className="pb-2">
