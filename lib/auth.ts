@@ -287,6 +287,17 @@ export const signIn = async (email: string, password: string) => {
       throw new Error('Giriş başarısız. Kullanıcı bilgisi alınamadı. Lütfen tekrar deneyin.');
     }
 
+    // Verify user email matches (case-insensitive)
+    if (data.user.email?.toLowerCase() !== normalizedEmail) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Email mismatch:', { expected: normalizedEmail, got: data.user.email });
+      }
+    }
+
+    // Wait a moment to ensure session is fully established
+    // This is especially important for admin accounts
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     return data;
   } catch (error: any) {
     // Only log in development

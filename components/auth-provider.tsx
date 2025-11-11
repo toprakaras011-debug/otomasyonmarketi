@@ -133,37 +133,42 @@ export function AuthProvider({
     checkSession();
   }, [initialUser, fetchUserProfile]);
 
-  // Auth state change listener
+  // Auth state change listener - OPTIMIZED FOR NO FLICKER
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Auth state changed:', event, session?.user?.id);
-      }
-      
-      // Only show loading for significant auth events (sign in, sign out)
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+      // Only show loading for SIGNED_IN and SIGNED_OUT (not TOKEN_REFRESHED)
+      const shouldShowLoading = event === 'SIGNED_IN' || event === 'SIGNED_OUT';
+      if (shouldShowLoading) {
         setLoading(true);
       }
       
       const currentUser = session?.user ?? null;
-      setUser(currentUser);
+      
+      // Only update user if it actually changed
+      setUser((prev: User | null) => {
+        if (prev?.id === currentUser?.id) return prev;
+        return currentUser;
+      });
       
       if (currentUser) {
-        // Always fetch profile on auth state change to ensure it's fresh
-        // ✅ Especially important for admin accounts
-        const profileData = await fetchUserProfile(currentUser, true);
-        // ✅ Double-check admin status if profile was fetched
-        if (profileData && (profileData.is_admin || profileData.role === 'admin')) {
-          // Ensure admin status is properly set
-          setProfile(profileData);
+        // Fetch profile silently (without loading state for token refresh)
+        const profileData = await fetchUserProfile(currentUser, event === 'SIGNED_IN');
+        if (profileData) {
+          setProfile((prev: any) => {
+            // Only update if data actually changed
+            if (JSON.stringify(prev) === JSON.stringify(profileData)) return prev;
+            return profileData;
+          });
         }
       } else {
         setProfile(null);
         profileFetchRef.current.clear();
       }
       
-      setLoading(false);
-      setInitialLoad(false); // Mark initial load as complete
+      if (shouldShowLoading) {
+        setLoading(false);
+      }
+      setInitialLoad(false);
     });
 
     return () => {
@@ -171,33 +176,9 @@ export function AuthProvider({
     };
   }, [fetchUserProfile]);
 
-  // Refresh profile on pathname change (only if pathname actually changed)
-  // DISABLED: This was causing constant profile fetches and loading states
-  // Profile is already cached and refreshed on auth state changes
-  // Only refresh if explicitly needed (e.g., after profile update)
-  useEffect(() => {
-    // Skip if initial load is not complete
-    if (initialLoad) return;
-    
-    // Only refresh on specific pathname changes (e.g., profile settings)
-    // Don't refresh on every navigation
-    if (user && pathname && pathname !== lastPathnameRef.current) {
-      lastPathnameRef.current = pathname;
-      
-      // Only refresh if we're on a page that might have updated the profile
-      const profileRelatedPaths = ['/dashboard/settings', '/profile', '/developer/dashboard'];
-      const shouldRefresh = profileRelatedPaths.some(path => pathname.startsWith(path));
-      
-      if (shouldRefresh) {
-        // Debounce profile refresh
-        const timeoutId = setTimeout(() => {
-          fetchUserProfile(user, false);
-        }, 500); // Increased debounce time
-        
-        return () => clearTimeout(timeoutId);
-      }
-    }
-  }, [pathname, user, fetchUserProfile, initialLoad]);
+  // DISABLED: Pathname-based profile refresh - causes flicker
+  // Profile is refreshed on auth state changes only
+  // This prevents unnecessary re-renders and loading states on navigation
 
   // Inactivity detection and auto-logout
   // DISABLED: Supabase handles session management automatically with autoRefreshToken

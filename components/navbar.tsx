@@ -23,7 +23,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 function NavbarComponent() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile } = useAuth(); // Remove authLoading to prevent flicker
   const [scrolled, setScrolled] = useState(false);
   const { count } = useCart();
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
@@ -237,7 +237,7 @@ function NavbarComponent() {
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium whitespace-nowrap">
-                      {(authLoading && !profile && !user?.email) ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}
+                      {profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Button>
@@ -252,7 +252,7 @@ function NavbarComponent() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-semibold">{(authLoading && !profile && !user?.email) ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}</p>
+                        <p className="text-sm font-semibold">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
@@ -393,7 +393,7 @@ function NavbarComponent() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold text-foreground">{(authLoading && !profile && !user?.email) ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}</p>
+                      <p className="font-semibold text-foreground">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
                       <p className="text-xs text-foreground/70">{user?.email || ''}</p>
                     </div>
                   </div>
