@@ -104,8 +104,9 @@ export function AuthProvider({
           // ✅ Always refresh profile for admin accounts to ensure admin status is up-to-date
           else if (initialUser && session.user && initialUser.id === session.user.id) {
             // Check if user is admin and refresh profile
-            const currentProfile = initialProfile || profile;
-            if (currentProfile?.is_admin || currentProfile?.role === 'admin') {
+            // Use initialProfile from server-side, or check if we need to refresh
+            if (initialProfile?.is_admin || initialProfile?.role === 'admin') {
+              // Always refresh admin profile to ensure latest permissions
               await fetchUserProfile(session.user, true);
             }
           }
