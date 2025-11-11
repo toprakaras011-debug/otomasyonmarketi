@@ -56,7 +56,7 @@ const PARTICLE_CONFIG = Array.from({ length: 6 }, (_, index) => {
   };
 });
 
-export const Hero = memo(function Hero({ initialStats }: HeroProps) {
+function HeroComponent({ initialStats }: HeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -424,4 +424,6 @@ export const Hero = memo(function Hero({ initialStats }: HeroProps) {
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
     </section>
   );
-});
+}
+
+export const Hero = memo(HeroComponent);

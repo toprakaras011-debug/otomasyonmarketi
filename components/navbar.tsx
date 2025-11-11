@@ -20,7 +20,7 @@ import { useCart } from '@/components/cart-context';
 import { useAuth } from '@/components/auth-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
 
-export const Navbar = memo(function Navbar() {
+function NavbarComponent() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, profile, loading: authLoading } = useAuth();
@@ -456,4 +456,6 @@ export const Navbar = memo(function Navbar() {
       </div>
     </motion.nav>
   );
-});
+}
+
+export const Navbar = memo(NavbarComponent);
