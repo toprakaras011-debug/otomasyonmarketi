@@ -187,7 +187,7 @@ function HeroComponent({ initialStats }: HeroProps) {
         
         {/* Floating Particles - Reduced for mobile performance */}
         {isMounted && typeof window !== 'undefined' && window.innerWidth >= 768 && (
-          <div className="pointer-events-none absolute inset-0 hidden md:block">
+          <div className="pointer-events-none absolute inset-0 hidden lg:block">
             {PARTICLE_CONFIG.map((particle, index) => (
               <motion.div
                 key={index}

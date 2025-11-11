@@ -114,7 +114,7 @@ function NavbarComponent() {
         transition={{ duration: 3, repeat: Infinity }}
       />
 
-      <div className="container mx-auto px-4 md:px-6">
+      <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           {/* Logo - Ultra Futuristic */}
           <Link href="/" prefetch={true} className="group relative flex items-center space-x-3">
@@ -158,8 +158,8 @@ function NavbarComponent() {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-1">
+          {/* Desktop Navigation - Hidden on tablet, show mobile menu */}
+          <div className="hidden lg:flex lg:items-center lg:space-x-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
@@ -203,8 +203,8 @@ function NavbarComponent() {
             })}
           </div>
 
-          {/* Right Side Actions */}
-          <div className="hidden md:flex md:items-center md:space-x-3">
+          {/* Right Side Actions - Hidden on tablet, show mobile menu */}
+          <div className="hidden lg:flex lg:items-center lg:space-x-3">
             <ThemeToggle />
             
             {user && (
@@ -324,8 +324,8 @@ function NavbarComponent() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="flex items-center gap-2 md:hidden">
+          {/* Mobile Menu Button - Show on tablet and mobile */}
+          <div className="flex items-center gap-2 lg:hidden">
             <ThemeToggle />
             {user && (
               <Link href="/cart" prefetch={true} className="relative">
@@ -358,7 +358,7 @@ function NavbarComponent() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background"
+            className="lg:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background"
           >
             {navLinks.map((link) => {
               const Icon = link.icon;

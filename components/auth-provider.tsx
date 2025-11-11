@@ -86,6 +86,7 @@ export function AuthProvider({
     lastPathnameRef.current = pathname;
     
     // ✅ Check for existing session on mount (in case server data is stale)
+    // ✅ Special handling for admin accounts - always refresh profile
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -99,6 +100,14 @@ export function AuthProvider({
           else if (initialUser && session.user && initialUser.id !== session.user.id) {
             setUser(session.user);
             await fetchUserProfile(session.user, true);
+          }
+          // ✅ Always refresh profile for admin accounts to ensure admin status is up-to-date
+          else if (initialUser && session.user && initialUser.id === session.user.id) {
+            // Check if user is admin and refresh profile
+            const currentProfile = initialProfile || profile;
+            if (currentProfile?.is_admin || currentProfile?.role === 'admin') {
+              await fetchUserProfile(session.user, true);
+            }
           }
         }
       } catch (error) {
@@ -121,7 +130,13 @@ export function AuthProvider({
       
       if (currentUser) {
         // Always fetch profile on auth state change to ensure it's fresh
-        await fetchUserProfile(currentUser, true);
+        // ✅ Especially important for admin accounts
+        const profileData = await fetchUserProfile(currentUser, true);
+        // ✅ Double-check admin status if profile was fetched
+        if (profileData && (profileData.is_admin || profileData.role === 'admin')) {
+          // Ensure admin status is properly set
+          setProfile(profileData);
+        }
       } else {
         setProfile(null);
         profileFetchRef.current.clear();
