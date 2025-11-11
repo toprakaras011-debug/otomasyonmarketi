@@ -505,7 +505,7 @@ export default function SettingsPage() {
 
       // Filter out undefined and null values to avoid 400 errors
       const cleanUpdateData = Object.fromEntries(
-        Object.entries(updateData).filter(([_, value]) => value !== undefined)
+        Object.entries(updateData).filter(([_, value]) => value !== undefined && value !== null)
       );
 
       const { data, error } = await supabase
