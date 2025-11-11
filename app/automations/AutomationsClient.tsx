@@ -211,7 +211,7 @@ export default function AutomationsClient({ automations, categories }: Props) {
                     {/* Card Content */}
                     <div className="relative h-full overflow-hidden rounded-2xl bg-background/80 backdrop-blur-sm">
                       {/* Image Section */}
-                      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-600/20 to-blue-600/20">
+                      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-purple-600/20 to-blue-600/20">
                         {((automation as any).image_path || automation.image_url) ? (
                           <Image
                             src={
@@ -235,9 +235,6 @@ export default function AutomationsClient({ automations, categories }: Props) {
                         <div className="image-fallback flex h-full items-center justify-center" style={{ display: (automation as any).image_path || automation.image_url ? 'none' : 'flex' }}>
                           <TrendingUp className="h-16 w-16 text-purple-400/50" />
                         </div>
-                        
-                        {/* Overlay Gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                         
                         {/* Featured Badge (if applicable) */}
                         {(automation as any).is_featured && (
