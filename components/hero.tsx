@@ -158,7 +158,7 @@ function HeroComponent({ initialStats }: HeroProps) {
   return (
     <section 
       ref={containerRef} 
-      className="relative overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-28 md:pb-20 lg:pt-40 lg:pb-32 xl:pt-48 xl:pb-40"
+      className="relative overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-32 md:pb-24 lg:pt-40 lg:pb-32 xl:pt-48 xl:pb-40"
       style={{ position: 'relative' }}
     >
       {/* Advanced Background Effects */}

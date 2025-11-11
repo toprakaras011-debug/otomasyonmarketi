@@ -114,7 +114,7 @@ function NavbarComponent() {
         transition={{ duration: 3, repeat: Infinity }}
       />
 
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 md:px-6">
         <div className="flex h-20 items-center justify-between">
           {/* Logo - Ultra Futuristic */}
           <Link href="/" prefetch={true} className="group relative flex items-center space-x-3">
