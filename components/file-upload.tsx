@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, File, Image, Loader2 } from 'lucide-react';
+import { Upload, X, File, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -70,58 +70,6 @@ export function FileUpload({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Compress and resize image to 1:1 square ratio
-  const compressImage = async (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // Calculate square dimensions (use the smaller dimension)
-          const size = Math.min(img.width, img.height);
-          const canvas = document.createElement('canvas');
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          
-          if (!ctx) {
-            reject(new Error('Canvas context not available'));
-            return;
-          }
-
-          // Draw image centered and cropped to square
-          const sourceX = (img.width - size) / 2;
-          const sourceY = (img.height - size) / 2;
-          ctx.drawImage(img, sourceX, sourceY, size, size, 0, 0, size, size);
-
-          // Convert to blob with quality optimization
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('Failed to compress image'));
-                return;
-              }
-              
-              // Create new file with compressed image
-              const compressedFile = new File(
-                [blob],
-                file.name,
-                { type: 'image/jpeg', lastModified: Date.now() }
-              );
-              resolve(compressedFile);
-            },
-            'image/jpeg',
-            0.85 // 85% quality for good balance
-          );
-        };
-        img.onerror = () => reject(new Error('Failed to load image'));
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsDataURL(file);
-    });
-  };
-
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -153,30 +101,7 @@ export function FileUpload({
       return;
     }
 
-    // Process image for preview and compression
-    let fileToUpload = file;
-    if (fileType === 'image' && bucketName === 'automation-images') {
-      try {
-        // Compress and resize to 1:1 square
-        fileToUpload = await compressImage(file);
-        
-        // Show preview of compressed image
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreview(reader.result as string);
-        };
-        reader.readAsDataURL(fileToUpload);
-      } catch (error) {
-        console.error('Image compression error:', error);
-        toast.warning('Görsel sıkıştırma başarısız, orijinal görsel yüklenecek');
-        // Fallback to original file
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    } else if (fileType === 'image') {
+    if (fileType === 'image') {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
@@ -187,16 +112,10 @@ export function FileUpload({
     setUploading(true);
     onUploadingChange?.(true);
 
-    // Use .jpg extension for compressed automation images
-    const fileExt = (fileType === 'image' && bucketName === 'automation-images') 
-      ? 'jpg' 
-      : file.name.split('.').pop();
+    const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${Date.now()}.${fileExt}`;
     const uploadId = `${userId}-${Date.now()}-${fileName}`;
     uploadIdRef.current = uploadId;
-
-    // Store fileToUpload in a variable accessible to uploadWithTimeout
-    const finalFileToUpload = fileToUpload;
 
     try {
       // Ensure bucket exists before upload
@@ -238,15 +157,15 @@ export function FileUpload({
 
             const uploadPromise = supabase.storage
               .from(bucketName)
-              .upload(fileName, finalFileToUpload, {
+              .upload(fileName, file, {
                 cacheControl: '3600',
                 upsert: false,
-                contentType: finalFileToUpload.type || 'image/jpeg',
+                contentType: file.type || undefined,
               });
 
             // Track upload progress (Supabase doesn't support progress callback, so we simulate)
             const startTime = Date.now();
-            const totalSize = finalFileToUpload.size;
+            const totalSize = file.size;
             
             progressInterval = setInterval(() => {
               if (isAborted) {
@@ -452,7 +371,7 @@ export function FileUpload({
               ) : (
                 <>
                   {fileType === 'image' ? (
-                    <Image className="mr-2 h-4 w-4" />
+                    <ImageIcon className="mr-2 h-4 w-4" />
                   ) : (
                     <Upload className="mr-2 h-4 w-4" />
                   )}
