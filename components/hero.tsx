@@ -185,8 +185,8 @@ function HeroComponent({ initialStats }: HeroProps) {
         />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-pink-500/20 blur-[100px]" />
         
-        {/* Floating Particles - Reduced for mobile performance */}
-        {isMounted && typeof window !== 'undefined' && window.innerWidth >= 768 && (
+        {/* Floating Particles - Only show on desktop (lg and above) */}
+        {isMounted && (
           <div className="pointer-events-none absolute inset-0 hidden lg:block">
             {PARTICLE_CONFIG.map((particle, index) => (
               <motion.div
