@@ -215,7 +215,7 @@ export default function SignUpPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-sm font-medium">
-                    Kullanıcı Adı
+                    Kullanıcı Adı *
                   </Label>
                   <Input
                     id="username"
@@ -226,6 +226,10 @@ export default function SignUpPage() {
                     required
                     className="h-11"
                   />
+                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    <span>Kullanıcı adı kayıt sonrası değiştirilemez. Lütfen dikkatli seçin.</span>
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="text-sm font-medium">

@@ -42,10 +42,7 @@ type ProfileFormData = {
   username: string;
   full_name: string;
   avatar_url: string;
-  company_name: string;
   phone: string;
-  tax_number: string;
-  billing_address: string;
   city: string;
   district: string;
   postal_code: string;
@@ -118,10 +115,7 @@ export default function SettingsPage() {
     username: '',
     full_name: '',
     avatar_url: '',
-    company_name: '',
     phone: '',
-    tax_number: '',
-    billing_address: '',
     city: '',
     district: '',
     postal_code: '',
@@ -138,10 +132,12 @@ export default function SettingsPage() {
   const [notificationSaving, setNotificationSaving] = useState(false);
   const [paymentData, setPaymentData] = useState({
     full_name: '',
+    company_name: '',
     tc_no: '',
     tax_office: '',
     iban: '',
     bank_name: '',
+    billing_address: '',
   });
   const [savingPayment, setSavingPayment] = useState(false);
   
@@ -183,6 +179,10 @@ export default function SettingsPage() {
     }
     if (!validateIban(paymentData.iban)) {
       toast.error('Geçerli bir IBAN giriniz');
+      return;
+    }
+    if (!paymentData.billing_address.trim()) {
+      toast.error('Adres zorunludur');
       return;
     }
 
@@ -238,10 +238,12 @@ export default function SettingsPage() {
         setProfile((prev: any) => ({
           ...prev,
           full_name: paymentData.full_name.trim(),
+          company_name: paymentData.company_name.trim(),
           tc_no: paymentData.tc_no.trim(),
           tax_office: paymentData.tax_office.trim(),
           iban: cleanIban,
           bank_name: bankName,
+          billing_address: paymentData.billing_address.trim(),
         }));
 
         toast.success('Ödeme bilgileri kaydedildi!', {
@@ -291,10 +293,7 @@ export default function SettingsPage() {
   const profileCompletionFields = [
     profileData.username,
     profileData.full_name,
-    profileData.company_name,
     profileData.phone,
-    profileData.tax_number,
-    profileData.billing_address,
     profileData.city,
     profileData.district,
     profileData.postal_code,
@@ -374,10 +373,7 @@ export default function SettingsPage() {
           username: profileRecord.username || '',
           full_name: profileRecord.full_name || '',
           avatar_url: profileRecord.avatar_url || '',
-          company_name: profileRecord.company_name || '',
           phone: profileRecord.phone || '',
-          tax_number: profileRecord.tax_number || '',
-          billing_address: profileRecord.billing_address || '',
           city: city,
           district: profileRecord.district || '',
           postal_code: profileRecord.postal_code || '',
@@ -389,10 +385,12 @@ export default function SettingsPage() {
         
         setPaymentData({
           full_name: profileRecord.full_name || '',
+          company_name: profileRecord.company_name || '',
           tc_no: profileRecord.tc_no || '',
           tax_office: profileRecord.tax_office || '',
           iban: profileRecord.iban || '',
           bank_name: profileRecord.bank_name || '',
+          billing_address: profileRecord.billing_address || '',
         });
       }
 
@@ -410,13 +408,10 @@ export default function SettingsPage() {
       const { error } = await supabase
         .from('user_profiles')
         .update({
-          username: profileData.username,
+          // Username is not updatable - set during signup
           full_name: profileData.full_name,
           avatar_url: profileData.avatar_url,
-          company_name: profileData.company_name,
           phone: profileData.phone,
-          tax_number: profileData.tax_number,
-          billing_address: profileData.billing_address,
           city: profileData.city,
           district: profileData.district,
           postal_code: profileData.postal_code,
@@ -722,10 +717,12 @@ export default function SettingsPage() {
                           <Input
                             id="username"
                             value={profileData.username}
-                            onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                            placeholder="kullanici_adi"
-                            className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                            disabled
+                            className="border-slate-200 bg-slate-100 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-white/70 cursor-not-allowed"
                           />
+                          <p className="text-xs text-slate-500 dark:text-white/60">
+                            Kullanıcı adı kayıt sırasında belirlenir ve değiştirilemez.
+                          </p>
                         </div>
 
                         <div className="space-y-2">
@@ -760,28 +757,6 @@ export default function SettingsPage() {
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="company_name" className="text-slate-700 dark:text-white/80">Şirket / Ticari Ünvan</Label>
-                          <Input
-                            id="company_name"
-                            value={profileData.company_name}
-                            onChange={(e) => setProfileData({ ...profileData, company_name: e.target.value })}
-                            placeholder="Şirketiniz ya da adınız"
-                            required
-                            className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="tax_number" className="text-slate-700 dark:text-white/80">Vergi / T.C. Numarası</Label>
-                          <Input
-                            id="tax_number"
-                            value={profileData.tax_number}
-                            onChange={(e) => setProfileData({ ...profileData, tax_number: e.target.value })}
-                            placeholder="Vergi numarası ya da T.C. Kimlik"
-                            required
-                            className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
-                          />
-                        </div>
                       </div>
 
                       <div className="grid gap-6 md:grid-cols-3">
@@ -841,17 +816,6 @@ export default function SettingsPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="billing_address" className="text-slate-700 dark:text-white/80">Fatura Adresi (Sokak, Mahalle, Bina No, Daire No)</Label>
-                        <Textarea
-                          id="billing_address"
-                          value={profileData.billing_address}
-                          onChange={(e) => setProfileData({ ...profileData, billing_address: e.target.value })}
-                          placeholder="Sokak, mahalle, bina no, daire no"
-                          required
-                          className="min-h-[120px] border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
-                        />
-                      </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-white/70">
                         <div className="flex items-center gap-3">
@@ -882,10 +846,7 @@ export default function SettingsPage() {
                               username: profile?.username || '',
                               full_name: profile?.full_name || '',
                               avatar_url: profile?.avatar_url || '',
-                              company_name: profile?.company_name || '',
                               phone: profile?.phone || '',
-                              tax_number: profile?.tax_number || '',
-                              billing_address: profile?.billing_address || '',
                               city: city,
                               district: profile?.district || '',
                               postal_code: profile?.postal_code || '',
@@ -895,6 +856,16 @@ export default function SettingsPage() {
                             } else {
                               setAvailableDistricts([]);
                             }
+                            // Reset payment data
+                            setPaymentData({
+                              full_name: profile?.full_name || '',
+                              company_name: profile?.company_name || '',
+                              tc_no: profile?.tc_no || '',
+                              tax_office: profile?.tax_office || '',
+                              iban: profile?.iban || '',
+                              bank_name: profile?.bank_name || '',
+                              billing_address: profile?.billing_address || '',
+                            });
                           }}
                         >
                           İptal Et
@@ -1242,6 +1213,18 @@ export default function SettingsPage() {
                             Geçersiz IBAN formatı (TR ile başlamalı, 26 karakter olmalı)
                           </p>
                         )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="payment_billing_address">Adres (Sokak, Mahalle, Bina No, Daire No) *</Label>
+                        <Textarea
+                          id="payment_billing_address"
+                          value={paymentData.billing_address}
+                          onChange={(e) => setPaymentData({ ...paymentData, billing_address: e.target.value })}
+                          placeholder="Sokak, mahalle, bina no, daire no"
+                          required
+                          className="min-h-[120px] border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                        />
                       </div>
 
                       <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
