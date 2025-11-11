@@ -99,7 +99,7 @@ export function Navbar() {
   return (
     <motion.nav 
       style={{ opacity: mounted ? navOpacity : 0.8 }}
-      className={`fixed top-0 z-50 w-full h-16 transition-all duration-300 gpu-accelerated overflow-x-hidden ${
+      className={`fixed top-0 z-50 w-full h-16 transition-all duration-300 gpu-accelerated ${
         scrolled
           ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
           : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
@@ -114,7 +114,7 @@ export function Navbar() {
         transition={{ duration: 3, repeat: Infinity }}
       />
 
-      <div className="container mx-auto px-4 max-w-full overflow-x-hidden">
+      <div className="container mx-auto px-4">
         <div className="flex h-20 items-center justify-between">
           {/* Logo - Ultra Futuristic */}
           <Link href="/" prefetch={true} className="group relative flex items-center space-x-3">

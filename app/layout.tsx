@@ -317,7 +317,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="tr" suppressHydrationWarning data-scroll-behavior="smooth" className="overflow-x-hidden">
+    <html lang="tr" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Resource Hints for Performance - Critical */}
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
@@ -374,7 +374,7 @@ export default async function RootLayout({
           defer
         />
       </head>
-      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground overflow-x-hidden`}>
+      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
         <ErrorBoundary>
           <ThemeProvider
             attribute="class"

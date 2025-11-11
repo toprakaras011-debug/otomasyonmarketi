@@ -92,7 +92,7 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         defer
       />
-      <main className="min-h-screen pt-0 w-full max-w-full overflow-x-hidden">
+      <main className="min-h-screen pt-0 w-full overflow-x-hidden">
         <Navbar />
         <Hero initialStats={heroStats} />
         <CategoriesSection />
