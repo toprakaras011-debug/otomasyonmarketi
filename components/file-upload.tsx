@@ -75,7 +75,7 @@ export function FileUpload({
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const img = new Image();
+        const img = new window.Image();
         img.onload = () => {
           // Calculate square dimensions (use the smaller dimension)
           const size = Math.min(img.width, img.height);
