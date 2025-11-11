@@ -339,7 +339,7 @@ export default function AutomationDetailClient({
               className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-[1px] shadow-2xl backdrop-blur-sm"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 opacity-0 blur-xl transition-opacity group-hover:opacity-20" />
-              <div className="relative h-96 overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600/20 to-blue-600/20">
+              <div className="relative aspect-video overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600/20 to-blue-600/20">
                 {((automation as any).image_path || automation.image_url) ? (
                   <Image
                     src={
@@ -364,7 +364,6 @@ export default function AutomationDetailClient({
                 <div className="image-fallback flex h-full items-center justify-center" style={{ display: (automation as any).image_path || automation.image_url ? 'none' : 'flex' }}>
                   <Sparkles className="h-32 w-32 text-purple-400/50" />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
               </div>
             </motion.div>
 
@@ -380,11 +379,9 @@ export default function AutomationDetailClient({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.1 }}
-                  className="mb-4 text-5xl font-black md:text-6xl lg:text-7xl"
+                  className="mb-4 text-xl font-bold"
                 >
-                  <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-                    {automation.title}
-                  </span>
+                  {automation.title}
                 </motion.h1>
                 {(() => {
                   const category = Array.isArray(automation.category) ? automation.category[0] : automation.category;
