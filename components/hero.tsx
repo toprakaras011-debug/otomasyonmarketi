@@ -211,7 +211,7 @@ export function Hero({ initialStats }: HeroProps) {
         )}
       </div>
 
-      <motion.div style={{ y, opacity }} className="container relative mx-auto px-4 gpu-accelerated">
+      <motion.div style={{ y, opacity }} className="container relative mx-auto px-4 gpu-accelerated max-w-full overflow-x-hidden">
         <div className="mx-auto max-w-6xl text-center">
           {/* Main Heading with Advanced Typography */}
           <motion.h1
