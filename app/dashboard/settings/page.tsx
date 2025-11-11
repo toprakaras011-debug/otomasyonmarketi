@@ -210,10 +210,12 @@ export default function SettingsPage() {
         .from('user_profiles')
         .update({
           full_name: paymentData.full_name.trim(),
+          company_name: paymentData.company_name.trim() || null, // Allow empty string to be saved as null
           tc_no: paymentData.tc_no.trim(),
           tax_office: paymentData.tax_office.trim(),
           iban: cleanIban,
           bank_name: bankName,
+          billing_address: paymentData.billing_address.trim(), // ✅ Adres alanını ekle
         })
         .eq('id', user.id)
         .select()
