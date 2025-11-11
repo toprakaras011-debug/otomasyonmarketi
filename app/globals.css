@@ -445,33 +445,50 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* Sonner Toast Styles - Alert-like appearance - FIXED VIEWPORT POSITION */
-/* CRITICAL: These styles ensure toasts are always visible in viewport, not page content */
-/* Target all possible Sonner container selectors */
+/* Sonner Toast Styles - ULTIMATE FIX - FIXED VIEWPORT POSITION */
+/* This is the nuclear option - override EVERYTHING */
 [data-sonner-toaster],
 .sonner-toaster,
 body > [data-sonner-toaster],
 body > .sonner-toaster,
 html > body > [data-sonner-toaster],
-html > body > .sonner-toaster {
-  z-index: 99999 !important;
+html > body > .sonner-toaster,
+#__next [data-sonner-toaster],
+div[data-sonner-toaster],
+ol[data-sonner-toaster] {
+  /* Position */
   position: fixed !important;
-  pointer-events: auto !important;
+  inset: auto 1.5rem 1.5rem auto !important;
   bottom: 1.5rem !important;
   right: 1.5rem !important;
   top: auto !important;
   left: auto !important;
+  
+  /* Transform */
   transform: none !important;
+  translate: none !important;
+  
+  /* Layout */
   margin: 0 !important;
   padding: 0 !important;
-  /* Force viewport positioning - always visible regardless of scroll */
-  inset: auto 1.5rem 1.5rem auto !important;
-  /* Prevent any parent from affecting position */
+  
+  /* Stacking */
+  z-index: 2147483647 !important; /* Max z-index value */
+  
+  /* Display */
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  
+  /* Pointer events */
+  pointer-events: auto !important;
+  
+  /* Isolation */
   isolation: isolate !important;
-  /* Ensure it's always on top */
-  will-change: transform !important;
-  /* Override any inline styles */
-  position: fixed !important;
+  
+  /* Override any transforms from parent */
+  will-change: auto !important;
+  contain: none !important;
 }
 
 [data-sonner-toast],
@@ -590,33 +607,36 @@ html > body > .sonner-toaster {
   height: 1.25rem !important;
 }
 
-/* Additional toast container fixes - ensure viewport positioning */
-/* Target all nested containers that Sonner might create */
-[data-sonner-toaster] > div,
-.sonner-toaster > div,
-[data-sonner-toaster] > ul,
-.sonner-toaster > ul,
-[data-sonner-toaster] > ol,
-.sonner-toaster > ol {
-  position: fixed !important;
-  bottom: 1.5rem !important;
-  right: 1.5rem !important;
-  top: auto !important;
-  left: auto !important;
-  z-index: 99999 !important;
-  transform: none !important;
+/* Nested containers - make them transparent */
+[data-sonner-toaster] > *,
+.sonner-toaster > * {
+  position: relative !important;
+  display: block !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Ensure body and html don't interfere */
+/* Ensure body and html don't interfere with fixed positioning */
 body,
 html {
   position: relative !important;
+  overflow-x: hidden !important;
 }
 
 /* Override any transform on body that might break fixed positioning */
 body[style*="transform"],
-html[style*="transform"] {
+html[style*="transform"],
+#__next[style*="transform"] {
   transform: none !important;
+}
+
+/* Force all possible containers to not interfere */
+body > *:not([data-sonner-toaster]) {
+  position: relative !important;
+}
+
+/* Make sure nothing covers toasts */
+[data-sonner-toaster],
+[data-sonner-toaster] * {
+  pointer-events: auto !important;
 }

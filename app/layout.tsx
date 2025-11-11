@@ -401,21 +401,31 @@ export default async function RootLayout({
             </CartProvider>
           </ThemeProvider>
         </ErrorBoundary>
-        {/* Toaster outside ErrorBoundary to ensure it always works */}
+        {/* Toaster outside ErrorBoundary - FIXED POSITION */}
         <Toaster 
           position="bottom-right" 
           richColors 
           closeButton
           expand={false}
           visibleToasts={5}
+          offset="24px"
           toastOptions={{
             duration: 4000,
+            style: {
+              position: 'fixed',
+              bottom: '1.5rem',
+              right: '1.5rem',
+            },
           }}
           style={{
-            zIndex: 99999,
+            zIndex: 2147483647, // Max z-index
             position: 'fixed',
             bottom: '1.5rem',
             right: '1.5rem',
+            top: 'auto',
+            left: 'auto',
+            transform: 'none',
+            inset: 'auto 1.5rem 1.5rem auto',
           }}
         />
       </body>

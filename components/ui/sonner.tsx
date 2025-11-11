@@ -9,36 +9,55 @@ type ToasterProps = React.ComponentProps<typeof Sonner>;
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = 'system' } = useTheme();
 
-  // Force viewport positioning at runtime
+  // NUCLEAR OPTION: Force viewport positioning at runtime with maximum aggression
   useEffect(() => {
     const forceToastPosition = () => {
-      const toasters = document.querySelectorAll('[data-sonner-toaster], .sonner-toaster');
+      const toasters = document.querySelectorAll('[data-sonner-toaster], .sonner-toaster, ol[data-sonner-toaster]');
       toasters.forEach((toaster) => {
         const element = toaster as HTMLElement;
-        if (element.style.position !== 'fixed') {
-          element.style.position = 'fixed';
-          element.style.bottom = '1.5rem';
-          element.style.right = '1.5rem';
-          element.style.top = 'auto';
-          element.style.left = 'auto';
-          element.style.zIndex = '99999';
-          element.style.transform = 'none';
-        }
+        // Force inline styles (highest specificity)
+        element.style.setProperty('position', 'fixed', 'important');
+        element.style.setProperty('bottom', '1.5rem', 'important');
+        element.style.setProperty('right', '1.5rem', 'important');
+        element.style.setProperty('top', 'auto', 'important');
+        element.style.setProperty('left', 'auto', 'important');
+        element.style.setProperty('z-index', '2147483647', 'important'); // Max z-index
+        element.style.setProperty('transform', 'none', 'important');
+        element.style.setProperty('margin', '0', 'important');
+        element.style.setProperty('padding', '0', 'important');
+        element.style.setProperty('inset', 'auto 1.5rem 1.5rem auto', 'important');
       });
     };
 
-    // Run immediately and after a short delay
+    // Run multiple times to ensure it takes effect
     forceToastPosition();
+    setTimeout(forceToastPosition, 0);
+    setTimeout(forceToastPosition, 50);
     setTimeout(forceToastPosition, 100);
+    setTimeout(forceToastPosition, 200);
 
-    // Watch for DOM changes
-    const observer = new MutationObserver(forceToastPosition);
+    // Watch for DOM changes aggressively
+    const observer = new MutationObserver(() => {
+      forceToastPosition();
+    });
+    
     observer.observe(document.body, {
       childList: true,
-      subtree: false, // Only watch direct children
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class'],
     });
 
-    return () => observer.disconnect();
+    // Also watch for window resize/scroll
+    const handleEvent = () => forceToastPosition();
+    window.addEventListener('resize', handleEvent);
+    window.addEventListener('scroll', handleEvent);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', handleEvent);
+      window.removeEventListener('scroll', handleEvent);
+    };
   }, []);
 
   return (
