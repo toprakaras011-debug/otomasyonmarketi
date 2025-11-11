@@ -96,7 +96,7 @@ export function ProfileDropdown({ user, profile }: ProfileDropdownProps) {
   ];
 
   return (
-    <div className="relative">
+    <div className="relative pr-2">
       {/* Trigger Button */}
       <Button
         ref={buttonRef}
@@ -129,12 +129,12 @@ export function ProfileDropdown({ user, profile }: ProfileDropdownProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute mt-3 w-64 rounded-xl border border-purple-500/20 bg-background/95 backdrop-blur-xl p-2 shadow-2xl"
+            className="absolute mt-4 w-64 rounded-xl border border-purple-500/20 bg-background/95 backdrop-blur-xl p-2 shadow-2xl"
             style={{
               zIndex: 999999,
               position: 'absolute',
-              right: '8px',
-              maxWidth: 'calc(100vw - 32px)',
+              right: '0',
+              maxWidth: '256px',
             }}
           >
             {/* User Info Header */}
