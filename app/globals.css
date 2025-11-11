@@ -447,8 +447,13 @@ body {
 
 /* Sonner Toast Styles - Alert-like appearance - FIXED VIEWPORT POSITION */
 /* CRITICAL: These styles ensure toasts are always visible in viewport, not page content */
+/* Target all possible Sonner container selectors */
 [data-sonner-toaster],
-.sonner-toaster {
+.sonner-toaster,
+body > [data-sonner-toaster],
+body > .sonner-toaster,
+html > body > [data-sonner-toaster],
+html > body > .sonner-toaster {
   z-index: 99999 !important;
   position: fixed !important;
   pointer-events: auto !important;
@@ -465,6 +470,8 @@ body {
   isolation: isolate !important;
   /* Ensure it's always on top */
   will-change: transform !important;
+  /* Override any inline styles */
+  position: fixed !important;
 }
 
 [data-sonner-toast],
@@ -584,12 +591,32 @@ body {
 }
 
 /* Additional toast container fixes - ensure viewport positioning */
+/* Target all nested containers that Sonner might create */
 [data-sonner-toaster] > div,
-.sonner-toaster > div {
+.sonner-toaster > div,
+[data-sonner-toaster] > ul,
+.sonner-toaster > ul,
+[data-sonner-toaster] > ol,
+.sonner-toaster > ol {
   position: fixed !important;
   bottom: 1.5rem !important;
   right: 1.5rem !important;
   top: auto !important;
   left: auto !important;
   z-index: 99999 !important;
+  transform: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure body and html don't interfere */
+body,
+html {
+  position: relative !important;
+}
+
+/* Override any transform on body that might break fixed positioning */
+body[style*="transform"],
+html[style*="transform"] {
+  transform: none !important;
 }

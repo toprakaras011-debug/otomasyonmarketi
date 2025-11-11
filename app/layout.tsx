@@ -396,27 +396,28 @@ export default async function RootLayout({
               <AuthProvider initialUser={user ?? null} initialProfile={profile}>
                 {children}
                 <CookieConsent />
-                <Toaster 
-                  position="bottom-right" 
-                  richColors 
-                  closeButton
-                  expand={false}
-                  visibleToasts={5}
-                  toastOptions={{
-                    duration: 4000,
-                  }}
-                  style={{
-                    zIndex: 99999,
-                    position: 'fixed',
-                    bottom: '1.5rem',
-                    right: '1.5rem',
-                  }}
-                />
                 <SpeedInsights />
               </AuthProvider>
             </CartProvider>
           </ThemeProvider>
         </ErrorBoundary>
+        {/* Toaster outside ErrorBoundary to ensure it always works */}
+        <Toaster 
+          position="bottom-right" 
+          richColors 
+          closeButton
+          expand={false}
+          visibleToasts={5}
+          toastOptions={{
+            duration: 4000,
+          }}
+          style={{
+            zIndex: 99999,
+            position: 'fixed',
+            bottom: '1.5rem',
+            right: '1.5rem',
+          }}
+        />
       </body>
     </html>
   );
