@@ -35,6 +35,8 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getBankNameFromIban, validateIban } from '@/lib/utils/iban-bank';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TURKEY_CITIES, getDistrictsByCity } from '@/lib/utils/turkey-cities';
 
 type ProfileFormData = {
   username: string;
@@ -44,6 +46,9 @@ type ProfileFormData = {
   phone: string;
   tax_number: string;
   billing_address: string;
+  city: string;
+  district: string;
+  postal_code: string;
 };
 
 type PasswordFormData = {
@@ -117,7 +122,11 @@ export default function SettingsPage() {
     phone: '',
     tax_number: '',
     billing_address: '',
+    city: '',
+    district: '',
+    postal_code: '',
   });
+  const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
   const [passwordData, setPasswordData] = useState<PasswordFormData>({
     currentPassword: '',
     newPassword: '',
@@ -286,6 +295,9 @@ export default function SettingsPage() {
     profileData.phone,
     profileData.tax_number,
     profileData.billing_address,
+    profileData.city,
+    profileData.district,
+    profileData.postal_code,
   ];
 
   const profileCompletion = Math.round(
@@ -357,6 +369,7 @@ export default function SettingsPage() {
 
       if (profileRecord) {
         setProfile(profileRecord);
+        const city = profileRecord.city || '';
         setProfileData({
           username: profileRecord.username || '',
           full_name: profileRecord.full_name || '',
@@ -365,7 +378,14 @@ export default function SettingsPage() {
           phone: profileRecord.phone || '',
           tax_number: profileRecord.tax_number || '',
           billing_address: profileRecord.billing_address || '',
+          city: city,
+          district: profileRecord.district || '',
+          postal_code: profileRecord.postal_code || '',
         });
+        // İl seçilmişse ilçeleri yükle
+        if (city) {
+          setAvailableDistricts(getDistrictsByCity(city));
+        }
         
         setPaymentData({
           full_name: profileRecord.full_name || '',
@@ -397,6 +417,9 @@ export default function SettingsPage() {
           phone: profileData.phone,
           tax_number: profileData.tax_number,
           billing_address: profileData.billing_address,
+          city: profileData.city,
+          district: profileData.district,
+          postal_code: profileData.postal_code,
         })
         .eq('id', user.id);
 
@@ -759,16 +782,72 @@ export default function SettingsPage() {
                             className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
                           />
                         </div>
+                      </div>
 
+                      <div className="grid gap-6 md:grid-cols-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="city" className="text-slate-700 dark:text-white/80">İl *</Label>
+                          <Select
+                            value={profileData.city}
+                            onValueChange={(value) => {
+                              setProfileData({ ...profileData, city: value, district: '' }); // İl değişince ilçeyi sıfırla
+                              setAvailableDistricts(getDistrictsByCity(value));
+                            }}
+                          >
+                            <SelectTrigger className="border-slate-200 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-white">
+                              <SelectValue placeholder="İl seçiniz" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TURKEY_CITIES.map((city) => (
+                                <SelectItem key={city.code} value={city.name}>
+                                  {city.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="district" className="text-slate-700 dark:text-white/80">İlçe *</Label>
+                          <Select
+                            value={profileData.district}
+                            onValueChange={(value) => setProfileData({ ...profileData, district: value })}
+                            disabled={!profileData.city || availableDistricts.length === 0}
+                          >
+                            <SelectTrigger className="border-slate-200 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-white disabled:opacity-50">
+                              <SelectValue placeholder={profileData.city ? "İlçe seçiniz" : "Önce il seçiniz"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableDistricts.map((district) => (
+                                <SelectItem key={district} value={district}>
+                                  {district}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="postal_code" className="text-slate-700 dark:text-white/80">Posta Kodu *</Label>
+                          <Input
+                            id="postal_code"
+                            value={profileData.postal_code}
+                            onChange={(e) => setProfileData({ ...profileData, postal_code: e.target.value.replace(/\D/g, '').slice(0, 5) })}
+                            placeholder="34000"
+                            maxLength={5}
+                            required
+                            className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="billing_address" className="text-slate-700 dark:text-white/80">Fatura Adresi</Label>
+                        <Label htmlFor="billing_address" className="text-slate-700 dark:text-white/80">Fatura Adresi (Sokak, Mahalle, Bina No, Daire No)</Label>
                         <Textarea
                           id="billing_address"
                           value={profileData.billing_address}
                           onChange={(e) => setProfileData({ ...profileData, billing_address: e.target.value })}
-                          placeholder="Sokak, mahalle, il/ilçe ve posta kodu"
+                          placeholder="Sokak, mahalle, bina no, daire no"
                           required
                           className="min-h-[120px] border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
                         />
@@ -798,6 +877,7 @@ export default function SettingsPage() {
                           variant="outline"
                           className="border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/30 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
                           onClick={() => {
+                            const city = profile?.city || '';
                             setProfileData({
                               username: profile?.username || '',
                               full_name: profile?.full_name || '',
@@ -806,7 +886,15 @@ export default function SettingsPage() {
                               phone: profile?.phone || '',
                               tax_number: profile?.tax_number || '',
                               billing_address: profile?.billing_address || '',
+                              city: city,
+                              district: profile?.district || '',
+                              postal_code: profile?.postal_code || '',
                             });
+                            if (city) {
+                              setAvailableDistricts(getDistrictsByCity(city));
+                            } else {
+                              setAvailableDistricts([]);
+                            }
                           }}
                         >
                           İptal Et
