@@ -45,8 +45,9 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Client-side validation
-    if (!formData.email?.trim()) {
+    // Client-side validation - basic checks only
+    const trimmedEmail = formData.email?.trim() || '';
+    if (!trimmedEmail) {
       toast.error('E-posta adresi gereklidir', {
         duration: 4000,
       });
@@ -55,22 +56,31 @@ export default function SignInPage() {
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email.trim().toLowerCase())) {
+    const normalizedEmail = trimmedEmail.toLowerCase();
+    if (!emailRegex.test(normalizedEmail)) {
       toast.error('Geçerli bir e-posta adresi giriniz', {
         duration: 4000,
       });
       return;
     }
 
-    if (!formData.password || formData.password.length < 6) {
+    if (!formData.password || formData.password.trim().length === 0) {
+      toast.error('Şifre gereklidir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Password length check - but allow if it's just whitespace (let server handle it)
+    if (formData.password.trim().length > 0 && formData.password.trim().length < 6) {
       toast.error('Şifre en az 6 karakter olmalıdır', {
         duration: 4000,
       });
       return;
     }
     
-    // Validate Turnstile token
-    if (!!turnstileSiteKey && !turnstileToken) {
+    // Validate Turnstile token - only if site key is configured
+    if (turnstileSiteKey && !turnstileToken) {
       toast.error('Lütfen güvenlik doğrulamasını tamamlayın', {
         duration: 4000,
       });
@@ -80,7 +90,11 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const result = await signIn(formData.email.trim().toLowerCase(), formData.password);
+      // Normalize email before sending
+      const emailToSend = formData.email.trim().toLowerCase();
+      const passwordToSend = formData.password; // Don't trim password - preserve original
+      
+      const result = await signIn(emailToSend, passwordToSend);
       
       // Verify sign-in was successful
       if (!result || !result.user) {
@@ -259,7 +273,7 @@ export default function SignInPage() {
                   type="email"
                   placeholder="ornek@email.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value.trim() })}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                   required
                   autoComplete="email"
