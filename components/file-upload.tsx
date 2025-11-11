@@ -103,11 +103,11 @@ export function FileUpload({
               }
               
               // Create new file with compressed image
-              const compressedFile = new File(
+              const compressedFile = new (globalThis as any).File(
                 [blob],
                 file.name,
                 { type: 'image/jpeg', lastModified: Date.now() }
-              );
+              ) as File;
               resolve(compressedFile);
             },
             'image/jpeg',
