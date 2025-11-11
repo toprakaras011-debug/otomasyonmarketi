@@ -556,113 +556,378 @@ ol[data-sonner-toaster] {
   opacity: 1 !important;
   visibility: visible !important;
   display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
   pointer-events: auto !important;
   transform: translateY(0) !important;
-  margin-bottom: 0.5rem !important;
-  min-width: 320px !important;
-  max-width: 420px !important;
-  border-radius: 0.75rem !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  padding: 1rem 1.25rem !important;
+  margin-bottom: 0.875rem !important;
+  min-width: 380px !important;
+  max-width: 480px !important;
+  border-radius: 1rem !important;
+  box-shadow: 
+    0 20px 60px -15px rgba(0, 0, 0, 0.3),
+    0 10px 30px -10px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+  padding: 1.125rem 1.25rem !important;
   border: none !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Success toast - Green solid */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Success toast - Modern Green with Glassmorphism */
 [data-sonner-toast][data-type="success"],
 .sonner-toast[data-type="success"],
 [data-sonner-toast].toast-success {
-  background: #22c55e !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%) !important;
   color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 
+    0 20px 60px -15px rgba(16, 185, 129, 0.5),
+    0 10px 30px -10px rgba(5, 150, 105, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset !important;
+}
+
+[data-sonner-toast][data-type="success"]::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%) !important;
+  border-radius: 1rem !important;
+  pointer-events: none !important;
 }
 
 [data-sonner-toast][data-type="success"] [data-title],
-[data-sonner-toast][data-type="success"] .toast-title,
-.sonner-toast[data-type="success"] [data-title] {
+[data-sonner-toast][data-type="success"] [data-description],
+.sonner-toast[data-type="success"] [data-title],
+.sonner-toast[data-type="success"] [data-description] {
   color: white !important;
-  font-weight: 500 !important;
-  font-size: 0.9375rem !important;
-  margin-left: 0.5rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Error toast - Red solid (like the image) */
+[data-sonner-toast][data-type="success"] [data-title] {
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.01em !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-description] {
+  font-size: 0.8125rem !important;
+  opacity: 0.95 !important;
+  line-height: 1.5 !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Error toast - Modern Red with Glassmorphism */
 [data-sonner-toast][data-type="error"],
 .sonner-toast[data-type="error"],
 [data-sonner-toast].toast-error {
-  background: #ef4444 !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.95) 100%) !important;
   color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 
+    0 20px 60px -15px rgba(239, 68, 68, 0.5),
+    0 10px 30px -10px rgba(220, 38, 38, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset !important;
+}
+
+[data-sonner-toast][data-type="error"]::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%) !important;
+  border-radius: 1rem !important;
+  pointer-events: none !important;
 }
 
 [data-sonner-toast][data-type="error"] [data-title],
-[data-sonner-toast][data-type="error"] .toast-title,
-.sonner-toast[data-type="error"] [data-title] {
+[data-sonner-toast][data-type="error"] [data-description],
+.sonner-toast[data-type="error"] [data-title],
+.sonner-toast[data-type="error"] [data-description] {
   color: white !important;
-  font-weight: 500 !important;
-  font-size: 0.9375rem !important;
-  margin-left: 0.5rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Info toast - Blue solid */
+[data-sonner-toast][data-type="error"] [data-title] {
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.01em !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-description] {
+  font-size: 0.8125rem !important;
+  opacity: 0.95 !important;
+  line-height: 1.5 !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Info toast - Modern Blue with Glassmorphism */
 [data-sonner-toast][data-type="info"],
 .sonner-toast[data-type="info"],
 [data-sonner-toast].toast-info {
-  background: #3b82f6 !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%) !important;
   color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 
+    0 20px 60px -15px rgba(59, 130, 246, 0.5),
+    0 10px 30px -10px rgba(37, 99, 235, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset !important;
+}
+
+[data-sonner-toast][data-type="info"]::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%) !important;
+  border-radius: 1rem !important;
+  pointer-events: none !important;
 }
 
 [data-sonner-toast][data-type="info"] [data-title],
-[data-sonner-toast][data-type="info"] .toast-title,
-.sonner-toast[data-type="info"] [data-title] {
+[data-sonner-toast][data-type="info"] [data-description],
+.sonner-toast[data-type="info"] [data-title],
+.sonner-toast[data-type="info"] [data-description] {
   color: white !important;
-  font-weight: 500 !important;
-  font-size: 0.9375rem !important;
-  margin-left: 0.5rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Warning toast - Orange solid */
+[data-sonner-toast][data-type="info"] [data-title] {
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.01em !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-description] {
+  font-size: 0.8125rem !important;
+  opacity: 0.95 !important;
+  line-height: 1.5 !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Warning toast - Modern Orange with Glassmorphism */
 [data-sonner-toast][data-type="warning"],
 .sonner-toast[data-type="warning"],
 [data-sonner-toast].toast-warning {
-  background: #f59e0b !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95) 0%, rgba(217, 119, 6, 0.95) 100%) !important;
   color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 
+    0 20px 60px -15px rgba(245, 158, 11, 0.5),
+    0 10px 30px -10px rgba(217, 119, 6, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset !important;
+}
+
+[data-sonner-toast][data-type="warning"]::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%) !important;
+  border-radius: 1rem !important;
+  pointer-events: none !important;
 }
 
 [data-sonner-toast][data-type="warning"] [data-title],
-[data-sonner-toast][data-type="warning"] .toast-title,
-.sonner-toast[data-type="warning"] [data-title] {
+[data-sonner-toast][data-type="warning"] [data-description],
+.sonner-toast[data-type="warning"] [data-title],
+.sonner-toast[data-type="warning"] [data-description] {
   color: white !important;
-  font-weight: 500 !important;
-  font-size: 0.9375rem !important;
-  margin-left: 0.5rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Close button styling */
+[data-sonner-toast][data-type="warning"] [data-title] {
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.01em !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-description] {
+  font-size: 0.8125rem !important;
+  opacity: 0.95 !important;
+  line-height: 1.5 !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Close button styling - Modern & Elegant */
 [data-sonner-toast] [data-close-button],
-.sonner-toast [data-close-button] {
+.sonner-toast [data-close-button],
+[data-sonner-toast] button[data-close-button],
+.sonner-toast button[data-close-button] {
   background: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 50% !important;
-  width: 1.5rem !important;
-  height: 1.5rem !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 0.5rem !important;
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  min-width: 1.75rem !important;
+  min-height: 1.75rem !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   color: white !important;
-  opacity: 0.9 !important;
-  transition: opacity 0.2s !important;
+  opacity: 0.8 !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  padding: 0 !important;
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+[data-sonner-toast] [data-close-button]::before,
+.sonner-toast [data-close-button]::before,
+[data-sonner-toast] button[data-close-button]::before,
+.sonner-toast button[data-close-button]::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%) !important;
+  opacity: 0 !important;
+  transition: opacity 0.25s !important;
 }
 
 [data-sonner-toast] [data-close-button]:hover,
-.sonner-toast [data-close-button]:hover {
+.sonner-toast [data-close-button]:hover,
+[data-sonner-toast] button[data-close-button]:hover,
+.sonner-toast button[data-close-button]:hover {
   opacity: 1 !important;
   background: rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.1) rotate(90deg) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
-/* Icon styling */
+[data-sonner-toast] [data-close-button]:hover::before,
+.sonner-toast [data-close-button]:hover::before,
+[data-sonner-toast] button[data-close-button]:hover::before,
+.sonner-toast button[data-close-button]:hover::before {
+  opacity: 1 !important;
+}
+
+[data-sonner-toast] [data-close-button]:active,
+.sonner-toast [data-close-button]:active,
+[data-sonner-toast] button[data-close-button]:active,
+.sonner-toast button[data-close-button]:active {
+  transform: scale(0.95) rotate(90deg) !important;
+}
+
+/* Icon styling - Modern & Bold */
 [data-sonner-toast] [data-icon],
 .sonner-toast [data-icon] {
   color: white !important;
-  width: 1.25rem !important;
-  height: 1.25rem !important;
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  min-width: 1.5rem !important;
+  min-height: 1.5rem !important;
+  flex-shrink: 0 !important;
+  margin-right: 0 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15)) !important;
+  animation: iconPulse 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+@keyframes iconPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Dark mode optimizations */
+.dark [data-sonner-toast],
+.dark .sonner-toast {
+  box-shadow: 
+    0 20px 60px -15px rgba(0, 0, 0, 0.5),
+    0 10px 30px -10px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset !important;
+}
+
+.dark [data-sonner-toast][data-type="success"] {
+  box-shadow: 
+    0 20px 60px -15px rgba(16, 185, 129, 0.6),
+    0 10px 30px -10px rgba(5, 150, 105, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+.dark [data-sonner-toast][data-type="error"] {
+  box-shadow: 
+    0 20px 60px -15px rgba(239, 68, 68, 0.6),
+    0 10px 30px -10px rgba(220, 38, 38, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+.dark [data-sonner-toast][data-type="info"] {
+  box-shadow: 
+    0 20px 60px -15px rgba(59, 130, 246, 0.6),
+    0 10px 30px -10px rgba(37, 99, 235, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+.dark [data-sonner-toast][data-type="warning"] {
+  box-shadow: 
+    0 20px 60px -15px rgba(245, 158, 11, 0.6),
+    0 10px 30px -10px rgba(217, 119, 6, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+/* Progress bar styling */
+[data-sonner-toast] [data-progress],
+.sonner-toast [data-progress] {
+  background: rgba(255, 255, 255, 0.3) !important;
+  height: 3px !important;
+  border-radius: 999px !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  transform-origin: left !important;
+}
+
+/* Loading spinner */
+[data-sonner-toast] [data-loading-icon],
+.sonner-toast [data-loading-icon] {
+  animation: spin 1s linear infinite !important;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Nested containers - make them transparent */
@@ -672,6 +937,16 @@ ol[data-sonner-toaster] {
   display: block !important;
   margin: 0 !important;
   padding: 0 !important;
+}
+
+/* Toast content wrapper */
+[data-sonner-toast] [data-content],
+.sonner-toast [data-content] {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+  flex: 1 !important;
+  min-width: 0 !important;
 }
 
 /* Ensure body and html don't interfere with fixed positioning */

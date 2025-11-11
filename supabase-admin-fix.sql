@@ -97,7 +97,7 @@ SELECT
 FROM auth.users u
 LEFT JOIN user_profiles p ON u.id = p.id
 WHERE p.is_admin = true OR p.role = 'admin';
-
+pus
 -- ============================================
 -- ÖNEMLİ NOTLAR:
 -- ============================================

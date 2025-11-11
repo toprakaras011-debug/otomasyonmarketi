@@ -37,6 +37,7 @@ export function AuthProvider({
   const [profile, setProfile] = useState<any>(initialProfile);
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true); // Track initial load separately
+  const [isHydrated, setIsHydrated] = useState(false); // Track client hydration
   const profileFetchRef = useRef<Map<string, Promise<any>>>(new Map());
   const lastPathnameRef = useRef<string>('');
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -90,6 +91,10 @@ export function AuthProvider({
 
   // Initialize with server data and check for existing session
   useEffect(() => {
+    // Mark as hydrated immediately
+    setIsHydrated(true);
+    
+    // Use server data as source of truth initially
     setUser(initialUser);
     setProfile(initialProfile);
     lastPathnameRef.current = pathname;
@@ -99,43 +104,80 @@ export function AuthProvider({
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (!error && session?.user) {
-          // If we have a session but no initial user, update state
-          if (!initialUser && session.user) {
-            setUser(session.user);
-            await fetchUserProfile(session.user, true);
+        
+        if (error) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Session check error:', error);
           }
-          // If we have both, ensure they match
-          else if (initialUser && session.user && initialUser.id !== session.user.id) {
-            setUser(session.user);
-            await fetchUserProfile(session.user, true);
+          // If there's an error but we have initialUser, keep it
+          if (!initialUser) {
+            setUser(null);
+            setProfile(null);
           }
-          // ✅ Always refresh profile for admin accounts to ensure admin status is up-to-date
-          else if (initialUser && session.user && initialUser.id === session.user.id) {
-            // Check if user is admin and refresh profile
-            // Use initialProfile from server-side, or check if we need to refresh
-            if (initialProfile?.is_admin || initialProfile?.role === 'admin') {
-              // Always refresh admin profile to ensure latest permissions
-              await fetchUserProfile(session.user, true);
-            }
+          return;
+        }
+        
+        // No session found
+        if (!session?.user) {
+          // Only clear if we don't have initial user from server
+          if (!initialUser) {
+            setUser(null);
+            setProfile(null);
+          }
+          return;
+        }
+        
+        // Session exists
+        const sessionUser = session.user;
+        
+        // If we have a session but no initial user, update state
+        if (!initialUser) {
+          setUser(sessionUser);
+          await fetchUserProfile(sessionUser, true);
+        }
+        // If user IDs don't match, use session user (more up-to-date)
+        else if (initialUser.id !== sessionUser.id) {
+          setUser(sessionUser);
+          await fetchUserProfile(sessionUser, true);
+        }
+        // Same user - check if we need to refresh profile
+        else {
+          // Always refresh profile for admin accounts to ensure latest permissions
+          if (initialProfile?.is_admin || initialProfile?.role === 'admin') {
+            await fetchUserProfile(sessionUser, true);
+          }
+          // For regular users, only refresh if profile is missing
+          else if (!initialProfile) {
+            await fetchUserProfile(sessionUser, true);
           }
         }
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
-          console.error('Session check error:', error);
+          console.error('Session check exception:', error);
         }
+        // Keep initial data on error
       } finally {
         // Mark initial load as complete
         setInitialLoad(false);
       }
     };
     
-    checkSession();
-  }, [initialUser, fetchUserProfile]);
+    // Small delay to prevent flicker
+    const timer = setTimeout(checkSession, 50);
+    return () => clearTimeout(timer);
+  }, []); // Empty deps - only run once on mount
 
   // Auth state change listener - OPTIMIZED FOR NO FLICKER
   useEffect(() => {
+    // Don't set up listener until hydrated
+    if (!isHydrated) return;
+    
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Ignore initial session event to prevent flicker
+      if (event === 'INITIAL_SESSION') {
+        return;
+      }
+      
       // Only show loading for SIGNED_IN and SIGNED_OUT (not TOKEN_REFRESHED)
       const shouldShowLoading = event === 'SIGNED_IN' || event === 'SIGNED_OUT';
       if (shouldShowLoading) {
@@ -146,13 +188,15 @@ export function AuthProvider({
       
       // Only update user if it actually changed
       setUser((prev: User | null) => {
+        // If user ID is the same, keep the previous object to prevent re-renders
         if (prev?.id === currentUser?.id) return prev;
         return currentUser;
       });
       
       if (currentUser) {
         // Fetch profile silently (without loading state for token refresh)
-        const profileData = await fetchUserProfile(currentUser, event === 'SIGNED_IN');
+        const shouldForceRefresh = event === 'SIGNED_IN' || event === 'USER_UPDATED';
+        const profileData = await fetchUserProfile(currentUser, shouldForceRefresh);
         if (profileData) {
           setProfile((prev: any) => {
             // Only update if data actually changed
@@ -174,7 +218,7 @@ export function AuthProvider({
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [fetchUserProfile]);
+  }, [fetchUserProfile, isHydrated]);
 
   // DISABLED: Pathname-based profile refresh - causes flicker
   // Profile is refreshed on auth state changes only

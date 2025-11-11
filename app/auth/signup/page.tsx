@@ -152,20 +152,25 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
+      const normalizedEmail = formData.email.trim().toLowerCase();
+
       await signUp(
-        formData.email.trim().toLowerCase(),
+        normalizedEmail,
         formData.password,
         formData.username.trim(),
         formData.fullName?.trim() || undefined,
         formData.phone?.trim() || undefined
       );
-      toast.success('Hesabınız başarıyla oluşturuldu! Giriş yapabilirsiniz.', {
-        duration: 4000,
+      
+      toast.success('Hesabınız başarıyla oluşturuldu!', {
+        duration: 5000,
+        description: 'E-posta doğrulama linki gönderildi. Şimdi giriş yapabilirsiniz.',
       });
-      // Wait a moment for toast to be visible
+      
+      // Redirect to sign in page
       setTimeout(() => {
         router.push('/auth/signin');
-      }, 500);
+      }, 2000);
     } catch (error: any) {
       const errorMessage = error?.message || 'Kayıt oluşturulamadı';
       toast.error(errorMessage, {
@@ -215,7 +220,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-6">
       {/* Advanced Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f12_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f12_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_110%)]" />
@@ -244,44 +249,44 @@ export default function SignUpPage() {
         className="relative z-10 w-full max-w-md"
       >
         <Card className="border-border/50 bg-card/80 backdrop-blur-xl shadow-2xl">
-          <CardHeader className="space-y-4 text-center">
+          <CardHeader className="space-y-2 text-center pb-4">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", duration: 0.6 }}
-              className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/50"
+              className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/50"
             >
-              <Zap className="h-8 w-8 text-white" />
+              <Zap className="h-6 w-6 text-white" />
             </motion.div>
             <div>
-              <CardTitle className="text-3xl font-bold">Hesap Oluşturun</CardTitle>
-              <CardDescription className="mt-2 text-base">
+              <CardTitle className="text-2xl font-bold">Hesap Oluşturun</CardTitle>
+              <CardDescription className="mt-1 text-sm">
                 Otomasyonlarınızı yönetmeye başlayın
               </CardDescription>
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             {/* OAuth Buttons */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
+                className="w-full h-10 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
                 onClick={handleGithubSignIn}
                 disabled={oauthLoading !== null}
               >
-                <Github className="mr-2 h-5 w-5" />
+                <Github className="mr-2 h-4 w-4" />
                 {oauthLoading === 'github' ? 'Yönlendiriliyor...' : 'GitHub ile Kayıt Ol'}
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
+                className="w-full h-10 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
                 onClick={handleGoogleSignIn}
                 disabled={oauthLoading !== null}
               >
-                <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -313,10 +318,10 @@ export default function SignUpPage() {
             </div>
 
             {/* Email/Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="username" className="text-xs font-medium">
                     Kullanıcı Adı *
                   </Label>
                   <Input
@@ -326,15 +331,11 @@ export default function SignUpPage() {
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     required
-                    className="h-11"
+                    className="h-9 text-sm"
                   />
-                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                    <Shield className="h-3 w-3" />
-                    <span>Kullanıcı adı kayıt sonrası değiştirilemez. Lütfen dikkatli seçin.</span>
-                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-sm font-medium">
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName" className="text-xs font-medium">
                     Ad Soyad
                   </Label>
                   <Input
@@ -343,14 +344,19 @@ export default function SignUpPage() {
                     placeholder="Ad Soyad"
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="h-11"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium">
-                  Telefon Numarası
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 flex items-center gap-1 -mt-1">
+                <Shield className="h-3 w-3" />
+                <span>Kullanıcı adı değiştirilemez</span>
+              </p>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="phone" className="text-xs font-medium">
+                  Telefon (Opsiyonel)
                 </Label>
                 <Input
                   id="phone"
@@ -358,22 +364,18 @@ export default function SignUpPage() {
                   placeholder="05xx xxx xx xx"
                   value={formData.phone}
                   onChange={(e) => {
-                    // Only allow digits, spaces, and dashes
                     const value = e.target.value.replace(/[^\d\s-]/g, '');
                     setFormData({ ...formData, phone: value });
                   }}
-                  onBlur={(e) => {
-                    // Trim on blur
-                    setFormData({ ...formData, phone: e.target.value.trim() });
-                  }}
+                  onBlur={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
                   autoComplete="tel"
-                  className="h-11"
+                  className="h-9 text-sm"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  E-posta
+              <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-xs font-medium">
+                  E-posta *
                 </Label>
                 <Input
                   id="email"
@@ -384,50 +386,50 @@ export default function SignUpPage() {
                   onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                   required
                   autoComplete="email"
-                  className="h-11"
+                  className="h-9 text-sm"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
-                    Şifre
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" className="text-xs font-medium">
+                    Şifre *
                   </Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="En az 6 karakter"
+                    placeholder="Min. 6 karakter"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                     minLength={6}
-                    className="h-11"
+                    className="h-9 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                    Şifre Tekrar
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirmPassword" className="text-xs font-medium">
+                    Şifre Tekrar *
                   </Label>
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="Şifrenizi tekrar girin"
+                    placeholder="Şifre tekrar"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     required
                     minLength={6}
-                    className="h-11"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Hesap Türü</Label>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Hesap Türü</Label>
+                <div className="grid grid-cols-2 gap-2">
                   <motion.label 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all ${
+                    className={`relative cursor-pointer overflow-hidden rounded-lg border-2 p-3 transition-all ${
                       formData.role === 'user' 
                         ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10' 
                         : 'border-border hover:border-purple-500/50'
@@ -441,24 +443,24 @@ export default function SignUpPage() {
                       onChange={() => setFormData({ ...formData, role: 'user' })}
                       className="sr-only"
                     />
-                    <div className="flex flex-col items-center gap-2">
-                      <div className={`rounded-lg p-2 ${
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className={`rounded-lg p-1.5 ${
                         formData.role === 'user' 
                           ? 'bg-gradient-to-br from-purple-600 to-blue-600' 
                           : 'bg-muted'
                       }`}>
-                        <Zap className={`h-5 w-5 ${
+                        <Zap className={`h-4 w-4 ${
                           formData.role === 'user' ? 'text-white' : 'text-muted-foreground'
                         }`} />
                       </div>
-                      <span className="text-sm font-semibold">Kullanıcı</span>
-                      <span className="text-xs text-center text-muted-foreground">Otomasyonları satın al</span>
+                      <span className="text-xs font-semibold">Kullanıcı</span>
+                      <span className="text-[10px] text-center text-muted-foreground">Satın al</span>
                     </div>
                   </motion.label>
                   <motion.label 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all ${
+                    className={`relative cursor-pointer overflow-hidden rounded-lg border-2 p-3 transition-all ${
                       formData.role === 'developer' 
                         ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10' 
                         : 'border-border hover:border-purple-500/50'
@@ -472,33 +474,34 @@ export default function SignUpPage() {
                       onChange={() => setFormData({ ...formData, role: 'developer' })}
                       className="sr-only"
                     />
-                    <div className="flex flex-col items-center gap-2">
-                      <div className={`rounded-lg p-2 ${
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className={`rounded-lg p-1.5 ${
                         formData.role === 'developer' 
                           ? 'bg-gradient-to-br from-purple-600 to-blue-600' 
                           : 'bg-muted'
                       }`}>
-                        <svg className={`h-5 w-5 ${
+                        <svg className={`h-4 w-4 ${
                           formData.role === 'developer' ? 'text-white' : 'text-muted-foreground'
                         }`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                         </svg>
                       </div>
-                      <span className="text-sm font-semibold">Geliştirici</span>
-                      <span className="text-xs text-center text-muted-foreground">Otomasyonlar sat</span>
+                      <span className="text-xs font-semibold">Geliştirici</span>
+                      <span className="text-[10px] text-center text-muted-foreground">Sat</span>
                     </div>
                   </motion.label>
                 </div>
               </div>
 
-              <div className="space-y-3 rounded-lg border border-border/50 bg-muted/30 p-4">
-                <div className="flex items-start space-x-3">
+              <div className="space-y-2 rounded-lg border border-border/50 bg-muted/30 p-3">
+                <div className="flex items-start space-x-2">
                   <Checkbox
                     id="terms"
                     checked={formData.terms}
                     onCheckedChange={(checked) => setFormData({ ...formData, terms: checked as boolean })}
+                    className="mt-0.5"
                   />
-                  <label htmlFor="terms" className="cursor-pointer text-sm leading-tight">
+                  <label htmlFor="terms" className="cursor-pointer text-xs leading-tight">
                     <Link href="/terms" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                       Kullanım Koşulları
                     </Link>
@@ -506,13 +509,14 @@ export default function SignUpPage() {
                   </label>
                 </div>
 
-                <div className="flex items-start space-x-3">
+                <div className="flex items-start space-x-2">
                   <Checkbox
                     id="kvkk"
                     checked={formData.kvkk}
                     onCheckedChange={(checked) => setFormData({ ...formData, kvkk: checked as boolean })}
+                    className="mt-0.5"
                   />
-                  <label htmlFor="kvkk" className="cursor-pointer text-sm leading-tight">
+                  <label htmlFor="kvkk" className="cursor-pointer text-xs leading-tight">
                     <Link href="/kvkk" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                       KVKK Aydınlatma Metni
                     </Link>
@@ -522,13 +526,14 @@ export default function SignUpPage() {
 
                 {formData.role === 'developer' && (
                   <>
-                    <div className="flex items-start space-x-3">
+                    <div className="flex items-start space-x-2">
                       <Checkbox
                         id="developerTerms"
                         checked={formData.developerTerms}
                         onCheckedChange={(checked) => setFormData({ ...formData, developerTerms: checked as boolean })}
+                        className="mt-0.5"
                       />
-                      <label htmlFor="developerTerms" className="cursor-pointer text-sm leading-tight">
+                      <label htmlFor="developerTerms" className="cursor-pointer text-xs leading-tight">
                         <Link href="/developer-agreement" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                           Geliştirici Sözleşmesi
                         </Link>
@@ -536,26 +541,28 @@ export default function SignUpPage() {
                       </label>
                     </div>
 
-                    <div className="flex items-start space-x-3">
+                    <div className="flex items-start space-x-2">
                       <Checkbox
                         id="commission"
                         checked={formData.commission}
                         onCheckedChange={(checked) => setFormData({ ...formData, commission: checked as boolean })}
+                        className="mt-0.5"
                       />
-                      <label htmlFor="commission" className="cursor-pointer text-sm leading-tight">
+                      <label htmlFor="commission" className="cursor-pointer text-xs leading-tight">
                         %15 komisyon sistemini kabul ediyorum <span className="text-red-500">*</span>
                       </label>
                     </div>
                   </>
                 )}
 
-                <div className="flex items-start space-x-3">
+                <div className="flex items-start space-x-2">
                   <Checkbox
                     id="newsletter"
                     checked={formData.newsletter}
                     onCheckedChange={(checked) => setFormData({ ...formData, newsletter: checked as boolean })}
+                    className="mt-0.5"
                   />
-                  <label htmlFor="newsletter" className="cursor-pointer text-sm leading-tight">
+                  <label htmlFor="newsletter" className="cursor-pointer text-xs leading-tight">
                     Kampanya ve duyuru e-postaları almak istiyorum
                   </label>
                 </div>
@@ -563,7 +570,7 @@ export default function SignUpPage() {
 
               {/* Cloudflare Turnstile */}
               {turnstileSiteKey && (
-                <div className="py-2">
+                <div className="py-1">
                   <Turnstile
                     siteKey={turnstileSiteKey}
                     onVerify={(token) => setTurnstileToken(token)}
@@ -583,12 +590,12 @@ export default function SignUpPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02]"
+                className="w-full h-10 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02] text-sm"
                 disabled={loading || oauthLoading !== null || (!!turnstileSiteKey && !turnstileToken)}
               >
                 {loading ? (
                   <span className="flex items-center">
-                    <svg className="mr-2 h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                    <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
@@ -600,8 +607,8 @@ export default function SignUpPage() {
               </Button>
             </form>
 
-            <div className="space-y-4 pt-4 border-t">
-              <p className="text-center text-sm text-muted-foreground">
+            <div className="space-y-3 pt-3 border-t">
+              <p className="text-center text-xs text-muted-foreground">
                 Zaten hesabınız var mı?{' '}
                 <Link href="/auth/signin" className="font-semibold text-purple-600 hover:text-purple-500 transition-colors">
                   Giriş Yap
@@ -609,9 +616,9 @@ export default function SignUpPage() {
               </p>
               <Link
                 href="/"
-                className="flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center justify-center text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
                 Ana Sayfaya Dön
               </Link>
             </div>

@@ -81,6 +81,7 @@ export default function SignInPage() {
       }, 500);
     } catch (error: any) {
       const errorMessage = error?.message || 'Giriş yapılamadı';
+      
       toast.error(errorMessage, {
         duration: 6000,
         description: errorMessage.includes('şifre') || errorMessage.includes('e-posta') 

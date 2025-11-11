@@ -70,10 +70,33 @@ export const signUp = async (
       }
     }
 
-    // Attempt sign up
+    const metadata: Record<string, any> = {
+      username: trimmedUsername,
+    };
+
+    if (fullName?.trim()) {
+      metadata.full_name = fullName.trim();
+    }
+
+    if (normalizedPhone) {
+      metadata.phone = normalizedPhone;
+    }
+
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
+      (typeof window !== 'undefined' ? window.location.origin : '');
+
+    const emailRedirectTo = `${(siteUrl || 'http://localhost:3000')}/auth/callback`;
+
+    // Attempt sign up with optional email verification
+    // User can login immediately, but email verification is still sent
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password: password, // Don't trim password
+      options: {
+        emailRedirectTo,
+        data: metadata,
+      },
     });
 
     if (authError) {
@@ -224,23 +247,17 @@ export const signIn = async (email: string, password: string) => {
       const errorMessage = error.message?.toLowerCase() || '';
       const errorCode = error.status;
 
-      // Invalid credentials - most common error
+      // Invalid credentials
       if (
         errorMessage.includes('invalid login credentials') ||
         errorMessage.includes('invalid_credentials') ||
         errorMessage.includes('invalid email or password') ||
+        errorMessage.includes('email not confirmed') ||
+        errorMessage.includes('email_not_confirmed') ||
+        errorMessage.includes('email address not confirmed') ||
         (errorCode === 400 && errorMessage.includes('credentials'))
       ) {
         throw new Error('E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.');
-      }
-
-      // Email not confirmed
-      if (
-        errorMessage.includes('email not confirmed') ||
-        errorMessage.includes('email_not_confirmed') ||
-        errorMessage.includes('email address not confirmed')
-      ) {
-        throw new Error('E-posta adresiniz henüz doğrulanmamış. Lütfen e-posta kutunuzu kontrol edin ve doğrulama linkine tıklayın.');
       }
 
       // User not found

@@ -14,8 +14,9 @@ export const supabase = createClient(
       autoRefreshToken: true, // ✅ Auto-refresh tokens (Supabase handles this automatically)
       detectSessionInUrl: true, // ✅ Detect session in URL (for OAuth callbacks)
       storage: typeof window !== 'undefined' ? window.localStorage : undefined, // ✅ Use localStorage in browser
-      // Session duration: Supabase default is 1 hour, tokens auto-refresh before expiry
-      // No need to set custom timeout - Supabase handles it
+      storageKey: 'supabase.auth.token', // ✅ Consistent storage key
+      flowType: 'pkce', // ✅ Use PKCE flow for better security and stability
+      debug: process.env.NODE_ENV === 'development', // ✅ Enable debug in development
     },
     functions: {
       url: supabaseFunctionsUrl,
