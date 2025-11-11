@@ -158,7 +158,7 @@ export function Hero({ initialStats }: HeroProps) {
   return (
     <section 
       ref={containerRef} 
-      className="relative overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-28 md:pb-20 lg:pt-40 lg:pb-32 xl:pt-48 xl:pb-40"
+      className="relative overflow-hidden pt-48 pb-40"
       style={{ position: 'relative' }}
     >
       {/* Advanced Background Effects */}
@@ -185,9 +185,9 @@ export function Hero({ initialStats }: HeroProps) {
         />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-pink-500/20 blur-[100px]" />
         
-        {/* Floating Particles - Reduced for mobile performance */}
-        {isMounted && typeof window !== 'undefined' && window.innerWidth >= 768 && (
-          <div className="pointer-events-none absolute inset-0 hidden md:block">
+        {/* Floating Particles */}
+        {isMounted && (
+          <div className="pointer-events-none absolute inset-0 block">
             {PARTICLE_CONFIG.map((particle, index) => (
               <motion.div
                 key={index}
@@ -218,7 +218,7 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05, ease: "easeOut" }}
-            className="mb-4 text-3xl font-black leading-[1.1] tracking-tight sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl"
+            className="mb-4 text-8xl font-black leading-[1.1] tracking-tight"
           >
             <span className="relative inline-block">
               <span className="absolute -inset-1 block -skew-y-3 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-sky-500 opacity-30 blur-lg" />
@@ -239,7 +239,7 @@ export function Hero({ initialStats }: HeroProps) {
             transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="mx-auto mb-6 max-w-4xl"
           >
-            <p className="mb-4 text-base leading-relaxed text-foreground/80 sm:text-lg md:text-xl lg:text-2xl md:leading-relaxed">
+            <p className="mb-4 text-2xl leading-relaxed text-foreground/80">
               <span className="block text-balance mb-3">
                 <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 bg-clip-text font-semibold text-transparent">
                   Workflow automation ve yapay zeka destekli otomasyon çözümleri
@@ -278,11 +278,11 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.15 }}
-            className="mb-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 md:mb-12 lg:mb-16"
+            className="mb-16 flex flex-row items-center justify-center gap-4"
           >
             <Button
               size="lg"
-              className="group relative h-12 overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 px-6 text-base font-bold shadow-2xl shadow-purple-500/50 transition-all hover:scale-105 hover:shadow-purple-500/70 sm:h-14 sm:px-8 sm:text-lg"
+              className="group relative h-14 overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 px-8 text-lg font-bold shadow-2xl shadow-purple-500/50 transition-all hover:scale-105 hover:shadow-purple-500/70"
               asChild
             >
               <Link href="/automations">
@@ -296,7 +296,7 @@ export function Hero({ initialStats }: HeroProps) {
             <Button
               size="lg"
               variant="outline"
-              className="h-12 border-2 border-purple-500/50 bg-background/50 px-6 text-base font-bold backdrop-blur-sm transition-all hover:scale-105 hover:border-purple-500 hover:bg-purple-500/10 sm:h-14 sm:px-8 sm:text-lg"
+              className="h-14 border-2 border-purple-500/50 bg-background/50 px-8 text-lg font-bold backdrop-blur-sm transition-all hover:scale-105 hover:border-purple-500 hover:bg-purple-500/10"
               asChild
             >
               <Link href="/developer/register">
@@ -311,20 +311,20 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, scale: 0.9, rotateX: 20 }}
             animate={{ opacity: 1, scale: 1, rotateX: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="mb-12 perspective-[2000px] md:mb-16 lg:mb-20"
+            className="mb-20 perspective-[2000px]"
           >
             <div className="relative mx-auto max-w-5xl">
               <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 opacity-20 blur-3xl" />
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 p-1 shadow-2xl backdrop-blur-xl">
-                <div className="rounded-xl bg-transparent p-4 backdrop-blur-sm sm:p-6 md:p-8">
-                  <div className="grid gap-4 md:grid-cols-3">
+                <div className="rounded-xl bg-transparent p-8 backdrop-blur-sm">
+                  <div className="grid gap-4 grid-cols-3">
                     {primaryStats.map((stat, i) => (
                       <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
-                        className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${stat.bg} p-4 shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:shadow-2xl sm:p-5 md:p-6`}
+                        className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${stat.bg} p-6 shadow-lg backdrop-blur-sm transition-all hover:scale-105 hover:shadow-2xl`}
                       >
                         <motion.div
                           className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
@@ -333,8 +333,8 @@ export function Hero({ initialStats }: HeroProps) {
                           <div className={`mb-3 inline-flex rounded-lg bg-gradient-to-br ${stat.gradient} p-3 shadow-lg`}>
                             <stat.icon className="h-6 w-6 text-white" />
                           </div>
-                          <div className={`text-2xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent sm:text-3xl`}>{stat.value}</div>
-                          <div className="mt-1 text-xs font-medium text-foreground/70 sm:text-sm">{stat.label}</div>
+                          <div className={`text-3xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`}>{stat.value}</div>
+                          <div className="mt-1 text-sm font-medium text-foreground/70">{stat.label}</div>
                         </div>
                       </motion.div>
                     ))}
@@ -349,13 +349,13 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.25 }}
-            className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6 md:mb-12 lg:mb-16"
+            className="mb-16 grid grid-cols-3 gap-6"
           >
             {secondaryStats.map((stat, i) => (
               <motion.div
                 key={i}
                 whileHover={{ scale: 1.05, y: -5 }}
-                className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.bg} p-5 shadow-xl backdrop-blur-sm transition-all hover:shadow-2xl sm:p-6 md:p-8`}
+                className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.bg} p-8 shadow-xl backdrop-blur-sm transition-all hover:shadow-2xl`}
               >
                 <motion.div
                   className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
@@ -385,10 +385,10 @@ export function Hero({ initialStats }: HeroProps) {
                       className="h-2 w-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50"
                     />
                   </div>
-                  <div className={`mb-2 text-3xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent sm:text-4xl md:text-5xl`}>
+                  <div className={`mb-2 text-5xl font-black bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`}>
                     {stat.value}
                   </div>
-                  <div className="text-xs font-medium text-foreground/70 sm:text-sm">{stat.label}</div>
+                  <div className="text-sm font-medium text-foreground/70">{stat.label}</div>
                 </div>
               </motion.div>
             ))}
@@ -399,13 +399,13 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.6 }}
-            className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6"
+            className="grid grid-cols-3 gap-6"
           >
             {featureCards.map((feature, i) => (
               <motion.div
                 key={i}
                 whileHover={{ y: -5 }}
-                className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/5 p-4 text-left backdrop-blur-sm transition-all hover:border-white/20 sm:gap-4 sm:p-6"
+                className="flex items-start gap-4 rounded-xl border border-white/5 bg-white/5 p-6 text-left backdrop-blur-sm transition-all hover:border-white/20"
               >
                 <div className={`flex-shrink-0 rounded-xl bg-gradient-to-br from-${feature.color}-500/20 to-${feature.color}-500/10 p-3`}>
                   <feature.icon className={`h-6 w-6 text-${feature.color}-400`} />

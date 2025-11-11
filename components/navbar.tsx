@@ -159,7 +159,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-1">
+          <div className="flex items-center space-x-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
@@ -204,7 +204,7 @@ export function Navbar() {
           </div>
 
           {/* Right Side Actions */}
-          <div className="hidden md:flex md:items-center md:space-x-3">
+          <div className="flex items-center space-x-3">
             <ThemeToggle />
             
             {user && (
@@ -325,7 +325,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="hidden">
             <ThemeToggle />
             {user && (
               <Link href="/cart" prefetch={true} className="relative">
@@ -358,7 +358,7 @@ export function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background"
+            className="hidden py-6 space-y-2 border-t border-purple-500/20 bg-background"
           >
             {navLinks.map((link) => {
               const Icon = link.icon;

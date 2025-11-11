@@ -109,31 +109,6 @@
     font-family: var(--font-poppins), system-ui, sans-serif;
   }
 
-  /* Mobile optimizations */
-  @media (max-width: 768px) {
-    html {
-      font-size: 14px;
-    }
-    
-    /* Smooth scrolling on mobile */
-    * {
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    /* Better touch targets */
-    button, a, input, select, textarea {
-      touch-action: manipulation;
-    }
-    
-    /* Reduce animations on mobile for better performance */
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
 }
 
 @layer utilities {
@@ -175,17 +150,6 @@
     }
   }
   
-  /* Mobile optimizations */
-  @media (max-width: 768px) {
-    * {
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    /* Reduce animations on mobile */
-    [data-framer-motion] {
-      will-change: auto;
-    }
-  }
   
   /* Critical rendering path optimization */
   .critical-content {
