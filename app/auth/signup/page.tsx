@@ -41,7 +41,7 @@ export default function SignUpPage() {
     e.preventDefault();
 
     // Validate Turnstile token
-    if (turnstileSiteKey && !turnstileToken) {
+    if (!!turnstileSiteKey && !turnstileToken) {
       toast.error('Lütfen güvenlik doğrulamasını tamamlayın');
       return;
     }
@@ -468,7 +468,7 @@ export default function SignUpPage() {
               <Button
                 type="submit"
                 className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02]"
-                disabled={loading || oauthLoading !== null || (turnstileSiteKey && !turnstileToken)}
+                disabled={loading || oauthLoading !== null || (!!turnstileSiteKey && !turnstileToken)}
               >
                 {loading ? (
                   <span className="flex items-center">
