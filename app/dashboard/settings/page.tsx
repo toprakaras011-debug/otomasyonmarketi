@@ -1287,6 +1287,20 @@ export default function SettingsPage() {
                         />
                       </div>
 
+                      <div>
+                        <Label htmlFor="payment_company_name">Şirket / Ticari Ünvan</Label>
+                        <Input
+                          id="payment_company_name"
+                          value={paymentData.company_name}
+                          onChange={(e) => setPaymentData({ ...paymentData, company_name: e.target.value })}
+                          placeholder="Şirketiniz ya da adınız (opsiyonel)"
+                          className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                        />
+                        <p className="text-xs text-slate-500 dark:text-white/60 mt-1">
+                          Şirket adı veya ticari ünvanınız (bireysel kullanıcılar için boş bırakabilirsiniz)
+                        </p>
+                      </div>
+
                       <div className="grid gap-4 md:grid-cols-2">
                         <div>
                           <Label htmlFor="payment_tc_no">
