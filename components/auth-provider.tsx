@@ -36,6 +36,7 @@ export function AuthProvider({
   const [user, setUser] = useState<User | null>(initialUser);
   const [profile, setProfile] = useState<any>(initialProfile);
   const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true); // Track initial load separately
   const profileFetchRef = useRef<Map<string, Promise<any>>>(new Map());
   const lastPathnameRef = useRef<string>('');
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -120,7 +121,12 @@ export function AuthProvider({
           }
         }
       } catch (error) {
-        console.error('Session check error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Session check error:', error);
+        }
+      } finally {
+        // Mark initial load as complete
+        setInitialLoad(false);
       }
     };
     
@@ -133,7 +139,12 @@ export function AuthProvider({
       if (process.env.NODE_ENV === 'development') {
         console.log('Auth state changed:', event, session?.user?.id);
       }
-      setLoading(true);
+      
+      // Only show loading for significant auth events (sign in, sign out)
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        setLoading(true);
+      }
+      
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       
@@ -152,6 +163,7 @@ export function AuthProvider({
       }
       
       setLoading(false);
+      setInitialLoad(false); // Mark initial load as complete
     });
 
     return () => {
@@ -160,17 +172,32 @@ export function AuthProvider({
   }, [fetchUserProfile]);
 
   // Refresh profile on pathname change (only if pathname actually changed)
+  // DISABLED: This was causing constant profile fetches and loading states
+  // Profile is already cached and refreshed on auth state changes
+  // Only refresh if explicitly needed (e.g., after profile update)
   useEffect(() => {
+    // Skip if initial load is not complete
+    if (initialLoad) return;
+    
+    // Only refresh on specific pathname changes (e.g., profile settings)
+    // Don't refresh on every navigation
     if (user && pathname && pathname !== lastPathnameRef.current) {
       lastPathnameRef.current = pathname;
-      // Debounce profile refresh
-      const timeoutId = setTimeout(() => {
-        fetchUserProfile(user, false);
-      }, 100);
       
-      return () => clearTimeout(timeoutId);
+      // Only refresh if we're on a page that might have updated the profile
+      const profileRelatedPaths = ['/dashboard/settings', '/profile', '/developer/dashboard'];
+      const shouldRefresh = profileRelatedPaths.some(path => pathname.startsWith(path));
+      
+      if (shouldRefresh) {
+        // Debounce profile refresh
+        const timeoutId = setTimeout(() => {
+          fetchUserProfile(user, false);
+        }, 500); // Increased debounce time
+        
+        return () => clearTimeout(timeoutId);
+      }
     }
-  }, [pathname, user, fetchUserProfile]);
+  }, [pathname, user, fetchUserProfile, initialLoad]);
 
   // Inactivity detection and auto-logout
   // DISABLED: Supabase handles session management automatically with autoRefreshToken

@@ -237,7 +237,7 @@ function NavbarComponent() {
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium whitespace-nowrap">
-                      {authLoading ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}
+                      {(authLoading && !profile && !user?.email) ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Button>
@@ -252,7 +252,7 @@ function NavbarComponent() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-semibold">{profile?.username || user?.email?.split('@')[0] || 'Kullanıcı'}</p>
+                        <p className="text-sm font-semibold">{(authLoading && !profile && !user?.email) ? '...' : (profile?.username || user?.email?.split('@')[0] || 'Kullanıcı')}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
