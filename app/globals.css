@@ -54,6 +54,19 @@
     @apply border-border;
   }
 
+  /* Prevent layout shift and jank */
+  html {
+    overflow-y: scroll; /* Prevent scrollbar jumping */
+    scroll-behavior: smooth;
+  }
+
+  body {
+    overflow-x: hidden;
+    /* Prevent text resize causing layout shift */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   /* Prevent layout shift from images */
   img {
     max-width: 100%;
@@ -76,6 +89,19 @@
     min-height: 100vh;
     width: 100%;
     overflow-x: hidden;
+  }
+
+  /* Optimize animations and transitions */
+  * {
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Prevent layout shift from dropdowns and modals */
+  [data-radix-popper-content-wrapper] {
+    transform: translateZ(0);
+    will-change: transform;
   }
 
   /* Prevent layout shift from navbar */

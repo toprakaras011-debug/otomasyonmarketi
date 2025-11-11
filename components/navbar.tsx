@@ -242,7 +242,12 @@ function NavbarComponent() {
                     <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64 rounded-xl border-purple-500/20 bg-background/95 backdrop-blur-xl p-2">
+                <DropdownMenuContent 
+                  align="end" 
+                  sideOffset={8}
+                  className="w-64 rounded-xl border-purple-500/20 bg-background/95 backdrop-blur-xl p-2"
+                  style={{ willChange: 'transform, opacity' }}
+                >
                   <DropdownMenuLabel className="pb-2">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 ring-2 ring-purple-500/30">
