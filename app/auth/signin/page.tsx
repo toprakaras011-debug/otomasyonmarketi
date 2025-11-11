@@ -33,16 +33,42 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Client-side validation
+    if (!formData.email?.trim()) {
+      toast.error('E-posta adresi gereklidir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim().toLowerCase())) {
+      toast.error('Geçerli bir e-posta adresi giriniz', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      toast.error('Şifre en az 6 karakter olmalıdır', {
+        duration: 4000,
+      });
+      return;
+    }
+    
     // Validate Turnstile token
     if (!!turnstileSiteKey && !turnstileToken) {
-      toast.error('Lütfen güvenlik doğrulamasını tamamlayın');
+      toast.error('Lütfen güvenlik doğrulamasını tamamlayın', {
+        duration: 4000,
+      });
       return;
     }
     
     setLoading(true);
 
     try {
-      const result = await signIn(formData.email, formData.password);
+      const result = await signIn(formData.email.trim().toLowerCase(), formData.password);
       
       // Verify sign-in was successful
       if (!result || !result.user) {
@@ -53,7 +79,7 @@ export default function SignInPage() {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       toast.success('Giriş başarılı!', {
-        duration: 2000,
+        duration: 3000,
       });
       
       // Force page reload to ensure session is properly established
@@ -64,7 +90,7 @@ export default function SignInPage() {
     } catch (error: any) {
       const errorMessage = error?.message || 'Giriş yapılamadı';
       toast.error(errorMessage, {
-        duration: 5000,
+        duration: 6000,
         description: errorMessage.includes('şifre') || errorMessage.includes('e-posta') 
           ? 'Şifrenizi unuttuysanız "Şifremi Unuttum" linkine tıklayın.'
           : undefined,
@@ -79,21 +105,35 @@ export default function SignInPage() {
   };
 
   const handleGithubSignIn = async () => {
+    if (oauthLoading) return; // Prevent double clicks
+    
     setOauthLoading('github');
     try {
       await signInWithGithub();
+      // OAuth redirects, so we don't need to handle success here
     } catch (error: any) {
-      toast.error(error.message || 'GitHub ile giriş yapılamadı');
+      const errorMessage = error?.message || 'GitHub ile giriş yapılamadı';
+      toast.error(errorMessage, {
+        duration: 5000,
+        description: 'Lütfen tekrar deneyin veya e-posta ile giriş yapın.',
+      });
       setOauthLoading(null);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (oauthLoading) return; // Prevent double clicks
+    
     setOauthLoading('google');
     try {
       await signInWithGoogle();
+      // OAuth redirects, so we don't need to handle success here
     } catch (error: any) {
-      toast.error(error.message || 'Google ile giriş yapılamadı');
+      const errorMessage = error?.message || 'Google ile giriş yapılamadı';
+      toast.error(errorMessage, {
+        duration: 5000,
+        description: 'Lütfen tekrar deneyin veya e-posta ile giriş yapın.',
+      });
       setOauthLoading(null);
     }
   };

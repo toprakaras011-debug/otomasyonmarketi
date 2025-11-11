@@ -181,21 +181,35 @@ export default function SignUpPage() {
   };
 
   const handleGithubSignIn = async () => {
+    if (oauthLoading) return; // Prevent double clicks
+    
     setOauthLoading('github');
     try {
       await signInWithGithub();
+      // OAuth redirects, so we don't need to handle success here
     } catch (error: any) {
-      toast.error(error.message || 'GitHub ile kayıt yapılamadı');
+      const errorMessage = error?.message || 'GitHub ile kayıt yapılamadı';
+      toast.error(errorMessage, {
+        duration: 5000,
+        description: 'Lütfen tekrar deneyin veya e-posta ile kayıt olun.',
+      });
       setOauthLoading(null);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (oauthLoading) return; // Prevent double clicks
+    
     setOauthLoading('google');
     try {
       await signInWithGoogle();
+      // OAuth redirects, so we don't need to handle success here
     } catch (error: any) {
-      toast.error(error.message || 'Google ile kayıt yapılamadı');
+      const errorMessage = error?.message || 'Google ile kayıt yapılamadı';
+      toast.error(errorMessage, {
+        duration: 5000,
+        description: 'Lütfen tekrar deneyin veya e-posta ile kayıt olun.',
+      });
       setOauthLoading(null);
     }
   };
