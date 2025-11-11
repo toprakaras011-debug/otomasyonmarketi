@@ -366,16 +366,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+  background: transparent;
   /* Reserve space to prevent shift */
-  border-left: 1px solid transparent;
+  border-left: none;
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #8B5CF6, #3B82F6);
   border-radius: 10px;
   /* Prevent thumb from causing layout shift */
-  border: 2px solid hsl(var(--background));
+  border: none;
   background-clip: padding-box;
 }
 
