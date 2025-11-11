@@ -282,10 +282,10 @@ function HeroComponent({ initialStats }: HeroProps) {
           >
             <Button
               size="lg"
-              className="group relative h-12 overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 px-6 text-base font-bold shadow-2xl shadow-purple-500/50 transition-all hover:scale-105 hover:shadow-purple-500/70 sm:h-14 sm:px-8 sm:text-lg"
+              className="group relative h-12 min-h-[56px] overflow-hidden bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 px-6 text-base font-bold shadow-2xl shadow-purple-500/50 transition-all hover:scale-105 hover:shadow-purple-500/70 sm:h-14 sm:px-8 sm:text-lg touch-manipulation"
               asChild
             >
-              <Link href="/automations">
+              <Link href="/automations" className="touch-manipulation">
                 <span className="relative z-10 flex items-center">
                   Mağazayı Keşfet
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -296,10 +296,10 @@ function HeroComponent({ initialStats }: HeroProps) {
             <Button
               size="lg"
               variant="outline"
-              className="h-12 border-2 border-purple-500/50 bg-background/50 px-6 text-base font-bold backdrop-blur-sm transition-all hover:scale-105 hover:border-purple-500 hover:bg-purple-500/10 sm:h-14 sm:px-8 sm:text-lg"
+              className="h-12 min-h-[56px] border-2 border-purple-500/50 bg-background/50 px-6 text-base font-bold backdrop-blur-sm transition-all hover:scale-105 hover:border-purple-500 hover:bg-purple-500/10 sm:h-14 sm:px-8 sm:text-lg touch-manipulation"
               asChild
             >
-              <Link href="/developer/register">
+              <Link href="/developer/register" className="touch-manipulation">
                 <Rocket className="mr-2 h-5 w-5" />
                 Geliştirici Ol
               </Link>

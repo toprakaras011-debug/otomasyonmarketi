@@ -63,6 +63,13 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://otomasyonmagazasi.com'),
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: 'cover',
+  },
   title: {
     default: 'Otomasyon Mağazası - Workflow Automation & İş Süreçlerinizi Otomatikleştirin | Türkiye\'nin En Büyük Workflow Platformu',
     template: '%s | Otomasyon Mağazası'

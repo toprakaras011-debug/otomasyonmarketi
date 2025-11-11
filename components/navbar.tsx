@@ -171,7 +171,7 @@ function NavbarComponent() {
                   className="group relative"
                 >
                   <motion.div
-                    className={`relative px-4 py-2 text-sm font-semibold transition-all rounded-xl overflow-hidden ${
+                    className={`relative px-4 py-2 text-sm font-semibold transition-all rounded-xl overflow-hidden min-h-[44px] min-w-[44px] flex items-center justify-center ${
                       isActive ? 'text-white' : 'text-muted-foreground'
                     }`}
                     whileHover={{ scale: 1.05 }}
@@ -229,7 +229,7 @@ function NavbarComponent() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="group relative h-11 gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20 min-w-[140px]">
+                  <Button variant="ghost" className="group relative h-11 min-h-[44px] gap-2 rounded-xl hover:bg-purple-500/10 border border-purple-500/20 min-w-[140px] touch-manipulation">
                     <Avatar className="h-8 w-8 ring-2 ring-purple-500/30 group-hover:ring-purple-500/60 transition-all">
                       <AvatarImage src={profile?.avatar_url} />
                       <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-sm font-semibold">
@@ -301,13 +301,13 @@ function NavbarComponent() {
             ) : (
               <>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="ghost" asChild className="rounded-xl font-semibold hover:bg-purple-500/10">
-                    <Link href="/auth/signin" prefetch={true}>Giriş Yap</Link>
+                  <Button variant="ghost" asChild className="rounded-xl font-semibold hover:bg-purple-500/10 min-h-[44px] touch-manipulation">
+                    <Link href="/auth/signin" prefetch={true} className="touch-manipulation">Giriş Yap</Link>
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button asChild className="relative rounded-xl font-semibold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 shadow-lg shadow-purple-500/50 overflow-hidden group">
-                    <Link href="/auth/signup" prefetch={true}>
+                  <Button asChild className="relative rounded-xl font-semibold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700 shadow-lg shadow-purple-500/50 overflow-hidden group min-h-[44px] touch-manipulation">
+                    <Link href="/auth/signup" prefetch={true} className="touch-manipulation">
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 opacity-0 group-hover:opacity-30"
                         animate={{
