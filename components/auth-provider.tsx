@@ -57,6 +57,13 @@ export function AuthProvider({
         
         if (error) {
           console.error('Profile fetch error:', error);
+          // ✅ Admin hesapları için özel hata yönetimi
+          if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
+            // Profile bulunamadı - bu normal olabilir, null döndür
+            setProfile(null);
+            return null;
+          }
+          // Diğer hatalar için de null döndür ama log'la
           setProfile(null);
           return null;
         } else {
