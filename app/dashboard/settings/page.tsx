@@ -822,7 +822,7 @@ export default function SettingsPage() {
                       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-white/70">
                         <div className="flex items-center gap-3">
                           <Sparkles className="h-5 w-5 text-purple-500 dark:text-purple-200" />
-                          <span>Profilinizi tamamlayarak otomatik faturalandırma sürecini hızlandırın.</span>
+                          <span>Profilinizi ve Ödeme Bilgilerinizi tamamlayarak otomatik faturalandırma sürecini hızlandırın.</span>
                         </div>
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-700 shadow-sm dark:bg-white/10 dark:text-white/80">
                           %{profileCompletion}
