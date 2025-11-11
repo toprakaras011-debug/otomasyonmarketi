@@ -35,7 +35,6 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getBankNameFromIban, validateIban } from '@/lib/utils/iban-bank';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TURKEY_CITIES, getDistrictsByCity } from '@/lib/utils/turkey-cities';
 
 type ProfileFormData = {
