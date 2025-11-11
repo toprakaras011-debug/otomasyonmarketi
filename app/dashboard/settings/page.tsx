@@ -252,8 +252,13 @@ export default function SettingsPage() {
         }
         // Kolon yoksa daha açıklayıcı hata mesajı
         if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
-          toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.', {
-            duration: 8000,
+          // Extract column name from error message if possible
+          const columnMatch = error.message?.match(/column "?(\w+)"?/i);
+          const columnName = columnMatch ? columnMatch[1] : 'bilinmeyen';
+          
+          toast.error(`Veritabanı kolonu eksik: "${columnName}". Lütfen SQL migration dosyasını çalıştırın.`, {
+            duration: 10000,
+            description: 'supabase-migration-complete-profile-fields.sql dosyasını Supabase SQL Editor\'de çalıştırın.',
           });
         } else if (error.code === '23505' || error.message?.includes('unique')) {
           toast.error('Bu bilgiler zaten kullanılıyor. Lütfen farklı bilgiler giriniz.');
@@ -525,8 +530,13 @@ export default function SettingsPage() {
         
         // More specific error handling
         if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
-          toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.', {
-            duration: 8000,
+          // Extract column name from error message if possible
+          const columnMatch = error.message?.match(/column "?(\w+)"?/i);
+          const columnName = columnMatch ? columnMatch[1] : 'bilinmeyen';
+          
+          toast.error(`Veritabanı kolonu eksik: "${columnName}". Lütfen SQL migration dosyasını çalıştırın.`, {
+            duration: 10000,
+            description: 'supabase-migration-complete-profile-fields.sql dosyasını Supabase SQL Editor\'de çalıştırın.',
           });
         } else if (error.code === '23505' || error.message?.includes('unique')) {
           toast.error('Bu bilgiler zaten kullanılıyor. Lütfen farklı bilgiler giriniz.');
