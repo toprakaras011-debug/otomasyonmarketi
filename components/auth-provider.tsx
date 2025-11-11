@@ -79,16 +79,40 @@ export function AuthProvider({
     return fetchPromise;
   }, [pathname]);
 
-  // Initialize with server data
+  // Initialize with server data and check for existing session
   useEffect(() => {
     setUser(initialUser);
     setProfile(initialProfile);
     lastPathnameRef.current = pathname;
-  }, []);
+    
+    // ✅ Check for existing session on mount (in case server data is stale)
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!error && session?.user) {
+          // If we have a session but no initial user, update state
+          if (!initialUser && session.user) {
+            setUser(session.user);
+            await fetchUserProfile(session.user, true);
+          }
+          // If we have both, ensure they match
+          else if (initialUser && session.user && initialUser.id !== session.user.id) {
+            setUser(session.user);
+            await fetchUserProfile(session.user, true);
+          }
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
+      }
+    };
+    
+    checkSession();
+  }, [initialUser, fetchUserProfile]);
 
   // Auth state change listener
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
       setLoading(true);
       const currentUser = session?.user ?? null;
       setUser(currentUser);

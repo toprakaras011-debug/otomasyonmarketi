@@ -9,6 +9,12 @@ export const supabase = createClient(
   supabaseUrl,
   supabaseAnonKey,
   {
+    auth: {
+      persistSession: true, // ✅ Explicitly enable session persistence
+      autoRefreshToken: true, // ✅ Auto-refresh tokens
+      detectSessionInUrl: true, // ✅ Detect session in URL (for OAuth callbacks)
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined, // ✅ Use localStorage in browser
+    },
     functions: {
       url: supabaseFunctionsUrl,
     },
