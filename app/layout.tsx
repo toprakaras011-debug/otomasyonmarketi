@@ -406,7 +406,10 @@ export default async function RootLayout({
                     duration: 4000,
                   }}
                   style={{
-                    zIndex: 9999,
+                    zIndex: 99999,
+                    position: 'fixed',
+                    bottom: '1.5rem',
+                    right: '1.5rem',
                   }}
                 />
                 <SpeedInsights />

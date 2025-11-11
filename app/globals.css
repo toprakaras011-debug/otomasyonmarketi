@@ -445,13 +445,26 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* Sonner Toast Styles - Alert-like appearance */
-[data-sonner-toaster] {
+/* Sonner Toast Styles - Alert-like appearance - FIXED VIEWPORT POSITION */
+/* CRITICAL: These styles ensure toasts are always visible in viewport, not page content */
+[data-sonner-toaster],
+.sonner-toaster {
   z-index: 99999 !important;
   position: fixed !important;
   pointer-events: auto !important;
-  bottom: 1rem !important;
-  right: 1rem !important;
+  bottom: 1.5rem !important;
+  right: 1.5rem !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  /* Force viewport positioning - always visible regardless of scroll */
+  inset: auto 1.5rem 1.5rem auto !important;
+  /* Prevent any parent from affecting position */
+  isolation: isolate !important;
+  /* Ensure it's always on top */
+  will-change: transform !important;
 }
 
 [data-sonner-toast],
@@ -570,23 +583,13 @@ body {
   height: 1.25rem !important;
 }
 
-/* Toast visibility and positioning - Fixed bottom-right corner */
-[data-sonner-toaster],
-.sonner-toaster {
-  z-index: 9999 !important;
+/* Additional toast container fixes - ensure viewport positioning */
+[data-sonner-toaster] > div,
+.sonner-toaster > div {
   position: fixed !important;
   bottom: 1.5rem !important;
   right: 1.5rem !important;
   top: auto !important;
   left: auto !important;
-  transform: none !important;
-}
-
-[data-sonner-toast],
-.sonner-toast {
-  z-index: 9999 !important;
-  position: relative !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  margin-bottom: 0.5rem !important;
+  z-index: 99999 !important;
 }
