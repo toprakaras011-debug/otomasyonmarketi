@@ -333,6 +333,9 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Preconnect to Vercel Analytics */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+        {/* Preconnect to Cloudflare Turnstile */}
+        <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
+        <link rel="preconnect" href="https://challenges.cloudflare.com" />
         
         {/* Critical inline script - must run before render (non-blocking) */}
         <script
@@ -364,6 +367,12 @@ export default async function RootLayout({
         />
         
         {/* Icons and manifest - Managed by metadata API */}
+        {/* Cloudflare Turnstile Script */}
+        <script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          async
+          defer
+        />
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
         <ErrorBoundary>

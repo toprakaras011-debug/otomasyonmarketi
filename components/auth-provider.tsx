@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -18,6 +18,9 @@ const AuthContext = createContext<AuthContextType>({
   loading: true 
 });
 
+// Inactivity timeout: 2 minutes (120000 ms)
+const INACTIVITY_TIMEOUT = 120000;
+
 export function AuthProvider({ 
   children, 
   initialUser, 
@@ -28,11 +31,14 @@ export function AuthProvider({
   initialProfile: any 
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(initialUser);
   const [profile, setProfile] = useState<any>(initialProfile);
   const [loading, setLoading] = useState(false);
   const profileFetchRef = useRef<Map<string, Promise<any>>>(new Map());
   const lastPathnameRef = useRef<string>('');
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActivityRef = useRef<number>(Date.now());
 
   const fetchUserProfile = useCallback(async (user: User, force = false) => {
     // Prevent duplicate fetches
@@ -115,6 +121,75 @@ export function AuthProvider({
       return () => clearTimeout(timeoutId);
     }
   }, [pathname, user, fetchUserProfile]);
+
+  // Inactivity detection and auto-logout
+  useEffect(() => {
+    if (!user) {
+      // Clear timer if user is not logged in
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      return;
+    }
+
+    // Reset activity timestamp
+    const resetInactivityTimer = () => {
+      lastActivityRef.current = Date.now();
+      
+      // Clear existing timer
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+
+      // Set new timer
+      inactivityTimerRef.current = setTimeout(async () => {
+        const timeSinceLastActivity = Date.now() - lastActivityRef.current;
+        
+        // Double-check: if more than 2 minutes have passed, logout
+        if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {
+          try {
+            await supabase.auth.signOut();
+            setUser(null);
+            setProfile(null);
+            profileFetchRef.current.clear();
+            
+            // Redirect to home page
+            if (pathname && !pathname.startsWith('/auth')) {
+              router.push('/');
+            }
+          } catch (error) {
+            console.error('Auto-logout error:', error);
+          }
+        }
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    // Track user activity events
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const handleActivity = () => {
+      resetInactivityTimer();
+    };
+
+    // Initialize timer
+    resetInactivityTimer();
+
+    // Add event listeners
+    activityEvents.forEach(event => {
+      document.addEventListener(event, handleActivity, { passive: true });
+    });
+
+    // Cleanup
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      activityEvents.forEach(event => {
+        document.removeEventListener(event, handleActivity);
+      });
+    };
+  }, [user, pathname, router]);
 
   const value = useMemo(() => ({ user, profile, loading }), [user, profile, loading]);
 

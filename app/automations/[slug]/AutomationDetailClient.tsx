@@ -376,11 +376,16 @@ export default function AutomationDetailClient({
               className="rounded-2xl bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 p-8 shadow-xl backdrop-blur-sm"
             >
               <div className="mb-6">
-                <h1 className="mb-4 text-4xl font-black md:text-5xl">
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="mb-4 text-5xl font-black md:text-6xl lg:text-7xl"
+                >
                   <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
                     {automation.title}
                   </span>
-                </h1>
+                </motion.h1>
                 {(() => {
                   const category = Array.isArray(automation.category) ? automation.category[0] : automation.category;
                   return category && (

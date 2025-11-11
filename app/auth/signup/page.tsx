@@ -13,11 +13,13 @@ import { Separator } from '@/components/ui/separator';
 import { signUp, signInWithGithub, signInWithGoogle } from '@/lib/auth';
 import { toast } from 'sonner';
 import { Zap, Github, ArrowLeft, Sparkles, Shield } from 'lucide-react';
+import { Turnstile } from '@/components/turnstile';
 
 export default function SignUpPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -33,8 +35,16 @@ export default function SignUpPage() {
     newsletter: false,
   });
 
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate Turnstile token
+    if (turnstileSiteKey && !turnstileToken) {
+      toast.error('Lütfen güvenlik doğrulamasını tamamlayın');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('Şifreler eşleşmiyor');
@@ -76,6 +86,7 @@ export default function SignUpPage() {
       router.push('/auth/signin');
     } catch (error: any) {
       toast.error(error.message || 'Kayıt oluşturulamadı');
+      setTurnstileToken(null); // Reset Turnstile on error
     } finally {
       setLoading(false);
     }
@@ -434,10 +445,30 @@ export default function SignUpPage() {
                 </div>
               </div>
 
+              {/* Cloudflare Turnstile */}
+              {turnstileSiteKey && (
+                <div className="py-2">
+                  <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onVerify={(token) => setTurnstileToken(token)}
+                    onError={() => {
+                      setTurnstileToken(null);
+                      toast.error('Güvenlik doğrulaması başarısız. Lütfen tekrar deneyin.');
+                    }}
+                    onExpire={() => {
+                      setTurnstileToken(null);
+                      toast.warning('Güvenlik doğrulaması süresi doldu. Lütfen tekrar doğrulayın.');
+                    }}
+                    theme="auto"
+                    size="normal"
+                  />
+                </div>
+              )}
+
               <Button
                 type="submit"
                 className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02]"
-                disabled={loading || oauthLoading !== null}
+                disabled={loading || oauthLoading !== null || (turnstileSiteKey && !turnstileToken)}
               >
                 {loading ? (
                   <span className="flex items-center">
