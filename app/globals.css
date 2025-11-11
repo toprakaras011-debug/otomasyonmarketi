@@ -95,10 +95,14 @@
     /* Performance optimizations */
     contain: layout style paint;
     /* Prevent layout shift */
-    scrollbar-gutter: stable;
+    scrollbar-gutter: auto;
     overflow-x: hidden;
     min-height: 100vh;
     position: relative;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -337,18 +341,24 @@
 html {
   scroll-behavior: smooth;
   /* Prevent layout shift from scrollbar */
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
   overflow-y: scroll;
   /* Prevent horizontal scroll */
   overflow-x: hidden;
   /* Prevent content flash */
   visibility: visible;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Body - Prevent layout shift */
 body {
   /* Reserve space for scrollbar */
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
   /* Prevent horizontal overflow */
   overflow-x: hidden;
   /* Prevent layout shift during load */
@@ -359,10 +369,11 @@ body {
 
 /* Custom scrollbar - Prevent layout shift */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-  /* Always show scrollbar to prevent layout shift */
+  width: 0px;
+  height: 0px;
+  /* Hide scrollbar completely */
   -webkit-appearance: none;
+  display: none;
 }
 
 ::-webkit-scrollbar-track {
