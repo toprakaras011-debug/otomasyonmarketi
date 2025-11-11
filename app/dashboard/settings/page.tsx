@@ -884,60 +884,56 @@ export default function SettingsPage() {
                       <div className="grid gap-6 md:grid-cols-3">
                         <div className="space-y-2">
                           <Label htmlFor="city" className="text-slate-700 dark:text-white/80">İl *</Label>
-                          <Select
-                            value={profileData.city}
-                            onValueChange={(value) => {
-                              setProfileData({ ...profileData, city: value, district: '' }); // İl değişince ilçeyi sıfırla
-                              setAvailableDistricts(getDistrictsByCity(value));
-                            }}
-                          >
-                            <SelectTrigger className="border-slate-200 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-white">
-                              <SelectValue placeholder="İl seçiniz" />
-                            </SelectTrigger>
-                            <SelectContent 
-                              position="popper" 
-                              side="bottom" 
-                              align="start"
-                              sideOffset={4}
-                              avoidCollisions={false}
-                              collisionPadding={0}
-                              className="z-[9999] max-h-[300px] w-[var(--radix-select-trigger-width)]"
-                            >
+                          <div className="relative">
+                            <Input
+                              id="city"
+                              list="city-list"
+                              value={profileData.city}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setProfileData({ ...profileData, city: value, district: '' }); // İl değişince ilçeyi sıfırla
+                                if (value) {
+                                  const matchedCity = TURKEY_CITIES.find(c => c.name.toLowerCase() === value.toLowerCase());
+                                  if (matchedCity) {
+                                    setAvailableDistricts(getDistrictsByCity(matchedCity.name));
+                                  } else {
+                                    setAvailableDistricts([]);
+                                  }
+                                } else {
+                                  setAvailableDistricts([]);
+                                }
+                              }}
+                              placeholder="İl adını yazın veya seçin"
+                              required
+                              className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40"
+                            />
+                            <datalist id="city-list">
                               {TURKEY_CITIES.map((city) => (
-                                <SelectItem key={city.code} value={city.name}>
-                                  {city.name}
-                                </SelectItem>
+                                <option key={city.code} value={city.name} />
                               ))}
-                            </SelectContent>
-                          </Select>
+                            </datalist>
+                          </div>
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="district" className="text-slate-700 dark:text-white/80">İlçe *</Label>
-                          <Select
-                            value={profileData.district}
-                            onValueChange={(value) => setProfileData({ ...profileData, district: value })}
-                            disabled={!profileData.city || availableDistricts.length === 0}
-                          >
-                            <SelectTrigger className="border-slate-200 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-white disabled:opacity-50">
-                              <SelectValue placeholder={profileData.city ? "İlçe seçiniz" : "Önce il seçiniz"} />
-                            </SelectTrigger>
-                            <SelectContent 
-                              position="popper" 
-                              side="bottom" 
-                              align="start"
-                              sideOffset={4}
-                              avoidCollisions={false}
-                              collisionPadding={0}
-                              className="z-[9999] max-h-[300px] w-[var(--radix-select-trigger-width)]"
-                            >
+                          <div className="relative">
+                            <Input
+                              id="district"
+                              list="district-list"
+                              value={profileData.district}
+                              onChange={(e) => setProfileData({ ...profileData, district: e.target.value })}
+                              disabled={!profileData.city || availableDistricts.length === 0}
+                              placeholder={profileData.city ? "İlçe adını yazın veya seçin" : "Önce il seçiniz"}
+                              required
+                              className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/40 disabled:opacity-50"
+                            />
+                            <datalist id="district-list">
                               {availableDistricts.map((district, index) => (
-                                <SelectItem key={`${district}-${index}`} value={district}>
-                                  {district}
-                                </SelectItem>
+                                <option key={`${district}-${index}`} value={district} />
                               ))}
-                            </SelectContent>
-                          </Select>
+                            </datalist>
+                          </div>
                         </div>
 
                         <div className="space-y-2">
