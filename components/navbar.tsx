@@ -281,7 +281,11 @@ function NavbarComponent() {
                   align="end" 
                   sideOffset={8}
                   className="w-64 rounded-xl border-purple-500/20 bg-background/95 backdrop-blur-xl p-2"
-                  style={{ willChange: 'transform, opacity' }}
+                  style={{ 
+                    willChange: 'transform, opacity',
+                    zIndex: 9999,
+                    position: 'fixed'
+                  }}
                 >
                   <DropdownMenuLabel className="pb-2">
                     <div className="flex items-center gap-3">

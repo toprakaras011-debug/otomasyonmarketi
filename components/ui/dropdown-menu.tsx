@@ -67,7 +67,7 @@ const DropdownMenuContent = React.forwardRef<
       collisionPadding={8}
       avoidCollisions={true}
       className={cn(
-        'z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
+        'z-[9999] min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
         // Faster, smoother animations
         'will-change-[opacity,transform]',
         'data-[state=open]:animate-in data-[state=closed]:animate-out',
