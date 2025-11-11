@@ -225,16 +225,15 @@ export default function SettingsPage() {
         billing_address: paymentData.billing_address.trim(),
       };
 
-      // Only update company_name if it exists
+      // Only update company_name if it exists and is not empty
       if (paymentData.company_name?.trim()) {
         updateData.company_name = paymentData.company_name.trim();
-      } else {
-        updateData.company_name = null;
       }
+      // Don't set to null if empty - just omit it from update
       
       // Filter out undefined and null values to avoid 400 errors
       const cleanUpdateData = Object.fromEntries(
-        Object.entries(updateData).filter(([_, value]) => value !== undefined)
+        Object.entries(updateData).filter(([_, value]) => value !== undefined && value !== null)
       );
 
       const { data, error } = await supabase
