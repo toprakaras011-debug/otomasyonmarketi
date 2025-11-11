@@ -899,13 +899,9 @@ export default function SettingsPage() {
                               side="bottom" 
                               align="start"
                               sideOffset={4}
-                              avoidCollisions={true}
-                              collisionPadding={8}
+                              avoidCollisions={false}
+                              collisionPadding={0}
                               className="z-[9999] max-h-[300px] w-[var(--radix-select-trigger-width)]"
-                              style={{ 
-                                position: 'fixed',
-                                transform: 'none'
-                              }}
                             >
                               {TURKEY_CITIES.map((city) => (
                                 <SelectItem key={city.code} value={city.name}>
@@ -931,13 +927,9 @@ export default function SettingsPage() {
                               side="bottom" 
                               align="start"
                               sideOffset={4}
-                              avoidCollisions={true}
-                              collisionPadding={8}
+                              avoidCollisions={false}
+                              collisionPadding={0}
                               className="z-[9999] max-h-[300px] w-[var(--radix-select-trigger-width)]"
-                              style={{ 
-                                position: 'fixed',
-                                transform: 'none'
-                              }}
                             >
                               {availableDistricts.map((district, index) => (
                                 <SelectItem key={`${district}-${index}`} value={district}>
