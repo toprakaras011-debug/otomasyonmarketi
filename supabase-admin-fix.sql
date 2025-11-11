@@ -70,7 +70,6 @@ USING (
 SELECT 
   id,
   username,
-  email,
   is_admin,
   role,
   is_developer,
@@ -81,7 +80,7 @@ WHERE id = auth.uid();
 -- 6. Test: Tüm admin hesaplarını listele
 SELECT 
   u.id,
-  u.email,
+  u.email as user_email,
   p.username,
   p.is_admin,
   p.role,
