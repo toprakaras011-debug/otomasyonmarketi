@@ -42,32 +42,109 @@ export default function SignUpPage() {
 
     // Validate Turnstile token
     if (!!turnstileSiteKey && !turnstileToken) {
-      toast.error('Lütfen güvenlik doğrulamasını tamamlayın');
+      toast.error('Lütfen güvenlik doğrulamasını tamamlayın', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Client-side validation
+    if (!formData.email?.trim()) {
+      toast.error('E-posta adresi gereklidir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim().toLowerCase())) {
+      toast.error('Geçerli bir e-posta adresi giriniz', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (!formData.username?.trim()) {
+      toast.error('Kullanıcı adı gereklidir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (formData.username.trim().length < 3) {
+      toast.error('Kullanıcı adı en az 3 karakter olmalıdır', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (formData.username.trim().length > 30) {
+      toast.error('Kullanıcı adı en fazla 30 karakter olabilir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Username format validation
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!usernameRegex.test(formData.username.trim())) {
+      toast.error('Kullanıcı adı sadece harf, rakam, alt çizgi ve tire içerebilir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      toast.error('Şifre en az 6 karakter olmalıdır', {
+        duration: 4000,
+      });
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Şifreler eşleşmiyor');
+      toast.error('Şifreler eşleşmiyor', {
+        duration: 4000,
+      });
       return;
     }
 
+    // Phone validation (if provided)
+    if (formData.phone?.trim()) {
+      const phoneDigits = formData.phone.replace(/\D/g, '');
+      if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
+        toast.error('Geçerli bir telefon numarası giriniz (10 veya 11 haneli)', {
+          duration: 4000,
+        });
+        return;
+      }
+    }
+
     if (!formData.terms) {
-      toast.error('Kullanım Koşulları\'nı kabul etmelisiniz');
+      toast.error('Kullanım Koşulları\'nı kabul etmelisiniz', {
+        duration: 4000,
+      });
       return;
     }
 
     if (!formData.kvkk) {
-      toast.error('KVKK Aydınlatma Metni\'ni okumalişınız');
+      toast.error('KVKK Aydınlatma Metni\'ni okumalısınız', {
+        duration: 4000,
+      });
       return;
     }
 
     if (formData.role === 'developer') {
       if (!formData.developerTerms) {
-        toast.error('Geliştirici Sözleşmesi\'ni kabul etmelisiniz');
+        toast.error('Geliştirici Sözleşmesi\'ni kabul etmelisiniz', {
+          duration: 4000,
+        });
         return;
       }
       if (!formData.commission) {
-        toast.error('%15 komisyon sistemini kabul etmelisiniz');
+        toast.error('%15 komisyon sistemini kabul etmelisiniz', {
+          duration: 4000,
+        });
         return;
       }
     }
@@ -76,16 +153,27 @@ export default function SignUpPage() {
 
     try {
       await signUp(
-        formData.email,
+        formData.email.trim().toLowerCase(),
         formData.password,
-        formData.username,
-        formData.fullName,
-        formData.phone
+        formData.username.trim(),
+        formData.fullName?.trim() || undefined,
+        formData.phone?.trim() || undefined
       );
-      toast.success('Hesabınız oluşturuldu! Giriş yapabilirsiniz.');
-      router.push('/auth/signin');
+      toast.success('Hesabınız başarıyla oluşturuldu! Giriş yapabilirsiniz.', {
+        duration: 4000,
+      });
+      // Wait a moment for toast to be visible
+      setTimeout(() => {
+        router.push('/auth/signin');
+      }, 500);
     } catch (error: any) {
-      toast.error(error.message || 'Kayıt oluşturulamadı');
+      const errorMessage = error?.message || 'Kayıt oluşturulamadı';
+      toast.error(errorMessage, {
+        duration: 6000,
+        description: errorMessage.includes('e-posta') || errorMessage.includes('kullanıcı adı')
+          ? 'Lütfen farklı bir e-posta veya kullanıcı adı deneyin.'
+          : undefined,
+      });
       setTurnstileToken(null); // Reset Turnstile on error
     } finally {
       setLoading(false);
@@ -255,8 +343,16 @@ export default function SignUpPage() {
                   type="tel"
                   placeholder="05xx xxx xx xx"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  required
+                  onChange={(e) => {
+                    // Only allow digits, spaces, and dashes
+                    const value = e.target.value.replace(/[^\d\s-]/g, '');
+                    setFormData({ ...formData, phone: value });
+                  }}
+                  onBlur={(e) => {
+                    // Trim on blur
+                    setFormData({ ...formData, phone: e.target.value.trim() });
+                  }}
+                  autoComplete="tel"
                   className="h-11"
                 />
               </div>
@@ -271,7 +367,9 @@ export default function SignUpPage() {
                   placeholder="ornek@email.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                   required
+                  autoComplete="email"
                   className="h-11"
                 />
               </div>

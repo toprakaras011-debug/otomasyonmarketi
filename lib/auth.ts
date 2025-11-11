@@ -7,26 +7,191 @@ export const signUp = async (
   fullName?: string,
   phone?: string
 ) => {
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+  try {
+    // Validate inputs
+    if (!email || typeof email !== 'string') {
+      throw new Error('E-posta adresi gereklidir.');
+    }
+    if (!password || typeof password !== 'string') {
+      throw new Error('Şifre gereklidir.');
+    }
+    if (!username || typeof username !== 'string') {
+      throw new Error('Kullanıcı adı gereklidir.');
+    }
 
-  if (authError) throw authError;
-  if (!authData.user) throw new Error('Failed to create user');
+    // Trim and normalize email
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      throw new Error('E-posta adresi boş olamaz.');
+    }
 
-  const { error: profileError } = await supabase
-    .from('user_profiles')
-    .insert({
-      id: authData.user.id,
-      username,
-      full_name: fullName,
-      phone,
+    const normalizedEmail = trimmedEmail.toLowerCase();
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      throw new Error('Geçerli bir e-posta adresi giriniz.');
+    }
+
+    // Password validation
+    if (password.length < 6) {
+      throw new Error('Şifre en az 6 karakter olmalıdır.');
+    }
+
+    // Username validation
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
+      throw new Error('Kullanıcı adı boş olamaz.');
+    }
+    if (trimmedUsername.length < 3) {
+      throw new Error('Kullanıcı adı en az 3 karakter olmalıdır.');
+    }
+    if (trimmedUsername.length > 30) {
+      throw new Error('Kullanıcı adı en fazla 30 karakter olabilir.');
+    }
+    // Username should only contain alphanumeric characters, underscores, and hyphens
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!usernameRegex.test(trimmedUsername)) {
+      throw new Error('Kullanıcı adı sadece harf, rakam, alt çizgi ve tire içerebilir.');
+    }
+
+    // Phone validation (if provided)
+    let normalizedPhone = phone?.trim() || null;
+    if (normalizedPhone) {
+      // Remove all non-digit characters
+      normalizedPhone = normalizedPhone.replace(/\D/g, '');
+      // Turkish phone numbers should be 10 digits (without country code) or 11 digits (with leading 0)
+      if (normalizedPhone.length !== 10 && normalizedPhone.length !== 11) {
+        throw new Error('Geçerli bir telefon numarası giriniz (10 veya 11 haneli).');
+      }
+      // If 11 digits and starts with 0, remove the leading 0
+      if (normalizedPhone.length === 11 && normalizedPhone.startsWith('0')) {
+        normalizedPhone = normalizedPhone.substring(1);
+      }
+    }
+
+    // Attempt sign up
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password: password, // Don't trim password
     });
 
-  if (profileError) throw profileError;
+    if (authError) {
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Sign up error:', {
+          message: authError.message,
+          status: authError.status,
+          name: authError.name,
+        });
+      }
 
-  return authData;
+      // Check for specific error codes and messages
+      const errorMessage = authError.message?.toLowerCase() || '';
+      const errorCode = authError.status;
+
+      // Email already exists
+      if (
+        errorMessage.includes('user already registered') ||
+        errorMessage.includes('already registered') ||
+        errorMessage.includes('email already exists') ||
+        errorCode === 422
+      ) {
+        throw new Error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.');
+      }
+
+      // Invalid email
+      if (errorMessage.includes('invalid email') || errorMessage.includes('email format')) {
+        throw new Error('Geçerli bir e-posta adresi giriniz.');
+      }
+
+      // Weak password
+      if (errorMessage.includes('password') && errorMessage.includes('weak')) {
+        throw new Error('Şifre çok zayıf. Daha güçlü bir şifre seçin.');
+      }
+
+      // Too many requests
+      if (errorCode === 429 || errorMessage.includes('too many requests') || errorMessage.includes('rate limit')) {
+        throw new Error('Çok fazla deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.');
+      }
+
+      // Network errors
+      if (
+        errorMessage.includes('network') ||
+        errorMessage.includes('fetch') ||
+        errorMessage.includes('failed to fetch')
+      ) {
+        throw new Error('Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.');
+      }
+
+      // Generic error
+      throw new Error(authError.message || 'Kayıt oluşturulamadı. Lütfen tekrar deneyin.');
+    }
+
+    if (!authData.user) {
+      throw new Error('Kullanıcı oluşturulamadı. Lütfen tekrar deneyin.');
+    }
+
+    // Create user profile
+    const { error: profileError } = await supabase
+      .from('user_profiles')
+      .insert({
+        id: authData.user.id,
+        username: trimmedUsername,
+        full_name: fullName?.trim() || null,
+        phone: normalizedPhone || null,
+      });
+
+    if (profileError) {
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Profile creation error:', profileError);
+      }
+
+      // Check for specific errors
+      const errorMessage = profileError.message?.toLowerCase() || '';
+      const errorCode = profileError.code;
+
+      // Username already exists
+      if (
+        errorCode === '23505' ||
+        errorMessage.includes('unique') ||
+        errorMessage.includes('duplicate') ||
+        errorMessage.includes('already exists')
+      ) {
+        throw new Error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
+      }
+
+      // Generic profile error
+      throw new Error('Profil oluşturulamadı. Lütfen tekrar deneyin.');
+    }
+
+    return authData;
+  } catch (error: any) {
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Sign up exception:', {
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack,
+      });
+    }
+
+    // If it's already a user-friendly error message, re-throw it
+    if (error?.message && typeof error.message === 'string') {
+      const technicalTerms = ['AuthApiError', 'Supabase', 'API', 'JWT', 'token', 'PostgresError'];
+      const isTechnicalError = technicalTerms.some(term => 
+        error.message.includes(term)
+      );
+
+      if (!isTechnicalError) {
+        throw error; // Re-throw user-friendly errors as-is
+      }
+    }
+
+    // Otherwise, provide a generic error
+    throw new Error(error?.message || 'Kayıt oluşturulamadı. Lütfen tekrar deneyin.');
+  }
 };
 
 export const signIn = async (email: string, password: string) => {

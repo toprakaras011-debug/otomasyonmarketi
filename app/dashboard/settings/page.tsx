@@ -243,7 +243,9 @@ export default function SettingsPage() {
       timeoutCleared = true;
 
       if (error) {
-        console.error('Payment save error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Payment save error:', error);
+        }
         // Kolon yoksa daha açıklayıcı hata mesajı
         if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
           toast.error('Veritabanı kolonları eksik. Lütfen SQL migration dosyasını çalıştırın.', {
@@ -287,7 +289,9 @@ export default function SettingsPage() {
     } catch (error: any) {
       clearTimeout(timeoutId);
       timeoutCleared = true;
-      console.error('Payment save exception:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Payment save exception:', error);
+      }
       toast.error(error?.message || 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.', {
         duration: 5000,
       });
@@ -504,7 +508,9 @@ export default function SettingsPage() {
       timeoutCleared = true;
 
       if (error) {
-        console.error('Profile update error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Profile update error:', error);
+        }
         
         // More specific error handling
         if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
@@ -543,7 +549,9 @@ export default function SettingsPage() {
     } catch (error: any) {
       clearTimeout(timeoutId);
       timeoutCleared = true;
-      console.error('Profile update exception:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Profile update exception:', error);
+      }
       toast.error(error?.message || 'Güncelleme başarısız. Lütfen tekrar deneyin.', {
         duration: 5000,
       });
@@ -599,7 +607,9 @@ export default function SettingsPage() {
         duration: 3000,
       });
     } catch (error: any) {
-      console.error('Notification save error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Notification save error:', error);
+      }
       toast.error(error?.message || 'Tercihler kaydedilemedi');
     } finally {
       setNotificationSaving(false);
@@ -627,7 +637,9 @@ export default function SettingsPage() {
       });
 
       if (error) {
-        console.error('Password update error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Password update error:', error);
+        }
         toast.error(error.message || 'Şifre güncellenemedi');
         setSaving(false);
         return;
@@ -642,7 +654,9 @@ export default function SettingsPage() {
         confirmPassword: '',
       });
     } catch (error: any) {
-      console.error('Password update exception:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Password update exception:', error);
+      }
       toast.error(error?.message || 'Şifre güncellenemedi');
     } finally {
       setSaving(false);
