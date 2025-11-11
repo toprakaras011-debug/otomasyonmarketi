@@ -369,17 +369,16 @@ body {
 
 /* Custom scrollbar - Prevent layout shift */
 ::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
-  /* Hide scrollbar completely */
+  width: 8px;
+  height: 8px;
+  /* Show scrollbar */
   -webkit-appearance: none;
-  display: none;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
   /* Reserve space to prevent shift */
-  border-left: none;
+  border: none;
 }
 
 ::-webkit-scrollbar-thumb {
