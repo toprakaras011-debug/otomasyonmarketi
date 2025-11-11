@@ -786,7 +786,7 @@ export default function SettingsPage() {
                             <SelectTrigger className="border-slate-200 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-white">
                               <SelectValue placeholder="İl seçiniz" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent position="popper" side="bottom" sideOffset={5}>
                               {TURKEY_CITIES.map((city) => (
                                 <SelectItem key={city.code} value={city.name}>
                                   {city.name}
@@ -806,9 +806,9 @@ export default function SettingsPage() {
                             <SelectTrigger className="border-slate-200 bg-white text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-white disabled:opacity-50">
                               <SelectValue placeholder={profileData.city ? "İlçe seçiniz" : "Önce il seçiniz"} />
                             </SelectTrigger>
-                            <SelectContent>
-                              {availableDistricts.map((district) => (
-                                <SelectItem key={district} value={district}>
+                            <SelectContent position="popper" side="bottom" sideOffset={5}>
+                              {availableDistricts.map((district, index) => (
+                                <SelectItem key={`${district}-${index}`} value={district}>
                                   {district}
                                 </SelectItem>
                               ))}
