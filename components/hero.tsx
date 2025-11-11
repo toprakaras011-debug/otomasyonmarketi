@@ -278,7 +278,7 @@ export function Hero({ initialStats }: HeroProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.15 }}
-            className="mb-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4 md:mb-12 lg:mb-16"
+            className="mb-10 flex flex-row items-center justify-center gap-4 md:mb-12 lg:mb-16"
           >
             <Button
               size="lg"
