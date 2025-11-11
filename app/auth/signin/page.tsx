@@ -45,56 +45,22 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Client-side validation - basic checks only
-    const trimmedEmail = formData.email?.trim() || '';
-    if (!trimmedEmail) {
-      toast.error('E-posta adresi gereklidir', {
-        duration: 4000,
-      });
-      return;
-    }
-
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const normalizedEmail = trimmedEmail.toLowerCase();
-    if (!emailRegex.test(normalizedEmail)) {
-      toast.error('Geçerli bir e-posta adresi giriniz', {
-        duration: 4000,
-      });
-      return;
-    }
-
-    if (!formData.password || formData.password.trim().length === 0) {
-      toast.error('Şifre gereklidir', {
-        duration: 4000,
-      });
-      return;
-    }
-
-    // Password length check - but allow if it's just whitespace (let server handle it)
-    if (formData.password.trim().length > 0 && formData.password.trim().length < 6) {
-      toast.error('Şifre en az 6 karakter olmalıdır', {
-        duration: 4000,
-      });
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      toast.error('E-posta ve şifre gereklidir');
       return;
     }
     
     // Validate Turnstile token - only if site key is configured
     if (turnstileSiteKey && !turnstileToken) {
-      toast.error('Lütfen güvenlik doğrulamasını tamamlayın', {
-        duration: 4000,
-      });
+      toast.error('Lütfen güvenlik doğrulamasını tamamlayın');
       return;
     }
     
     setLoading(true);
 
     try {
-      // Normalize email before sending
-      const emailToSend = formData.email.trim().toLowerCase();
-      const passwordToSend = formData.password; // Don't trim password - preserve original
-      
-      const result = await signIn(emailToSend, passwordToSend);
+      const result = await signIn(formData.email, formData.password);
       
       // Verify sign-in was successful
       if (!result || !result.user) {

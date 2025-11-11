@@ -196,43 +196,18 @@ export const signUp = async (
 
 export const signIn = async (email: string, password: string) => {
   try {
-    // Validate inputs - more robust validation
-    if (!email || typeof email !== 'string') {
-      throw new Error('E-posta adresi gereklidir.');
-    }
-    if (!password || typeof password !== 'string') {
-      throw new Error('Şifre gereklidir.');
+    // Basic validation
+    if (!email || !password) {
+      throw new Error('E-posta ve şifre gereklidir.');
     }
 
-    // Trim and normalize email (but preserve original for error messages)
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      throw new Error('E-posta adresi boş olamaz.');
-    }
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
 
-    // Normalize email to lowercase (Supabase stores emails in lowercase)
-    const normalizedEmail = trimmedEmail.toLowerCase();
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedEmail)) {
-      throw new Error('Geçerli bir e-posta adresi giriniz.');
-    }
-
-    // Password validation - check minimum length (don't trim - spaces might be intentional)
-    // Only validate if password is not empty
-    if (password.length === 0) {
-      throw new Error('Şifre gereklidir.');
-    }
-    // Minimum length check - but be lenient (let Supabase handle strict validation)
-    if (password.length > 0 && password.length < 6) {
-      throw new Error('Şifre en az 6 karakter olmalıdır.');
-    }
-
-    // Attempt sign in
+    // Attempt sign in - let Supabase handle validation
     const { data, error } = await supabase.auth.signInWithPassword({
       email: normalizedEmail,
-      password: password, // Don't trim password - spaces might be intentional
+      password: password,
     });
 
     if (error) {
