@@ -112,7 +112,9 @@ export function AuthProvider({
   // Auth state change listener
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Auth state changed:', event, session?.user?.id);
+      }
       setLoading(true);
       const currentUser = session?.user ?? null;
       setUser(currentUser);
