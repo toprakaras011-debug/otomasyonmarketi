@@ -116,8 +116,17 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    await supabase.auth.exchangeCodeForSession(code);
-    await ensureUserProfile(supabase);
+    try {
+      await supabase.auth.exchangeCodeForSession(code);
+      await ensureUserProfile(supabase);
+    } catch (error) {
+      // Log error in development only
+      if (process.env.NODE_ENV === 'development') {
+        console.error('OAuth callback error:', error);
+      }
+      // Redirect to signin with error parameter
+      return NextResponse.redirect(new URL('/auth/signin?error=oauth_failed', request.url));
+    }
   }
 
   // URL to redirect to after sign in process completes
