@@ -173,10 +173,10 @@ function NavbarComponent() {
           </Link>
 
           {/* Desktop Navigation - Hidden on tablet, show mobile menu */}
-          <div className="hidden lg:flex lg:items-center lg:space-x-1">
+          <div className="hidden lg:flex lg:items-center lg:space-x-2">
             {navLinks.map((link) => {
               const Icon = link.icon;
-              const isActive = pathname === link.href;
+              const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
               return (
                 <Link
                   key={link.href}
@@ -185,31 +185,52 @@ function NavbarComponent() {
                   className="group relative"
                 >
                   <motion.div
-                    className={`relative px-4 py-2 text-sm font-semibold transition-all rounded-xl overflow-hidden min-h-[44px] min-w-[44px] flex items-center justify-center ${
-                      isActive ? 'text-white' : 'text-muted-foreground'
-                    }`}
+                    className="relative px-5 py-2.5 text-sm font-semibold transition-all rounded-xl overflow-hidden min-h-[44px] flex items-center justify-center"
                     whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.97 }}
                   >
-                    {/* Active background */}
+                    {/* Active state - vibrant gradient with glow */}
                     {isActive && (
-                      <motion.div
-                        layoutId="navbar-active"
-                        className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                      />
+                      <>
+                        <motion.div
+                          layoutId="navbar-active-desktop"
+                          className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-xl shadow-lg shadow-purple-500/40"
+                          transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                        />
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 rounded-xl opacity-50 blur-xl"
+                          animate={{ opacity: [0.3, 0.5, 0.3] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        />
+                      </>
                     )}
                     
-                    {/* Hover effect */}
+                    {/* Hover effect - elegant glow and border */}
                     {!isActive && (
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600/0 to-blue-600/0 opacity-0 group-hover:from-purple-600/10 group-hover:to-blue-600/10 group-hover:opacity-100 transition-all duration-200" />
+                      <>
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-blue-500/0 opacity-0 group-hover:from-purple-500/10 group-hover:via-pink-500/10 group-hover:to-blue-500/10 group-hover:opacity-100 transition-all duration-300" />
+                        <div className="absolute inset-0 rounded-xl border border-purple-500/0 group-hover:border-purple-500/30 transition-all duration-300" />
+                        {/* Shine effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/0 to-transparent group-hover:via-white/10"
+                          animate={{ x: ['-200%', '200%'] }}
+                          transition={{ duration: 0, repeat: 0 }}
+                          style={{ width: '50%' }}
+                        />
+                      </>
                     )}
                     
-                    <div className="relative flex items-center gap-2 z-10">
-                      <Icon className={`h-4 w-4 transition-transform group-hover:scale-110 ${
-                        isActive ? 'text-white' : 'text-purple-400'
+                    <div className={`relative flex items-center gap-2.5 z-10 transition-all duration-300 ${
+                      isActive ? 'text-white' : 'text-muted-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400'
+                    }`}>
+                      <Icon className={`h-4 w-4 transition-all duration-300 group-hover:scale-110 ${
+                        isActive ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'text-purple-400 group-hover:text-purple-500'
                       }`} />
-                      {link.label}
+                      <span className={`font-medium transition-all duration-300 ${
+                        isActive ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]' : ''
+                      }`}>
+                        {link.label}
+                      </span>
                     </div>
                   </motion.div>
                 </Link>
