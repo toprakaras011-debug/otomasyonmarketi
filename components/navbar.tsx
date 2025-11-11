@@ -45,9 +45,23 @@ function NavbarComponent() {
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
+    // Prevent body scroll on mobile menu open
     const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    
+    // Calculate scrollbar width
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
+    // Add padding to prevent shift
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = originalOverflow; };
+    
+    return () => { 
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+    };
   }, [mobileMenuOpen]);
 
   useEffect(() => {

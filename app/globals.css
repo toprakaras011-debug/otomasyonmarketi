@@ -56,8 +56,11 @@
 
   /* Prevent layout shift and jank */
   html {
-    overflow-y: scroll; /* Prevent scrollbar jumping */
+    /* Force scrollbar to always be visible (prevents horizontal shift) */
+    overflow-y: scroll;
     scroll-behavior: smooth;
+    /* Calculate scrollbar width and reserve space */
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -65,6 +68,9 @@
     /* Prevent text resize causing layout shift */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    /* Ensure body doesn't shift when modals/dropdowns open */
+    width: 100%;
+    position: relative;
   }
 
   /* Prevent layout shift from images */
@@ -102,6 +108,14 @@
   [data-radix-popper-content-wrapper] {
     transform: translateZ(0);
     will-change: transform;
+  }
+
+  /* Prevent horizontal scroll when dropdown opens */
+  @media (min-width: 768px) {
+    html, body {
+      overflow-x: hidden;
+      width: 100vw;
+    }
   }
 
   /* Prevent layout shift from navbar */
