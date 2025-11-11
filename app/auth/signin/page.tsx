@@ -27,8 +27,20 @@ export default function SignInPage() {
 
   const redirectTo = searchParams.get('redirect') || '/dashboard';
   const isFromCart = redirectTo === '/cart';
+  const oauthError = searchParams.get('error');
   
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+
+  // Show OAuth error if present
+  useEffect(() => {
+    if (oauthError === 'oauth_failed') {
+      toast.error('OAuth girişi başarısız oldu. Lütfen tekrar deneyin.', {
+        duration: 6000,
+      });
+      // Clean URL
+      router.replace('/auth/signin');
+    }
+  }, [oauthError, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
