@@ -407,7 +407,7 @@ export default function SettingsPage() {
     setSaving(true);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .update({
           // Username is not updatable - set during signup
@@ -418,16 +418,28 @@ export default function SettingsPage() {
           district: profileData.district,
           postal_code: profileData.postal_code,
         })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile update error:', error);
+        throw error;
+      }
 
-      toast.success('Profil bilgileriniz güncellendi', {
-        duration: 3000,
-      });
-      setProfile({ ...profile, ...profileData });
+      if (data) {
+        setProfile({ ...profile, ...data });
+        toast.success('Profil bilgileriniz güncellendi', {
+          duration: 3000,
+        });
+      } else {
+        toast.error('Güncelleme başarısız. Veri döndürülmedi.');
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Güncelleme başarısız');
+      console.error('Profile update exception:', error);
+      toast.error(error?.message || 'Güncelleme başarısız', {
+        duration: 5000,
+      });
     } finally {
       setSaving(false);
     }

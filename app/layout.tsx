@@ -1,5 +1,5 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { CartProvider } from '@/components/cart-context';
@@ -61,15 +61,16 @@ const poppins = Poppins({
   adjustFontFallback: true,
 });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://otomasyonmagazasi.com'),
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-    viewportFit: 'cover',
-  },
   title: {
     default: 'Otomasyon Mağazası - Workflow Automation & İş Süreçlerinizi Otomatikleştirin | Türkiye\'nin En Büyük Workflow Platformu',
     template: '%s | Otomasyon Mağazası'
