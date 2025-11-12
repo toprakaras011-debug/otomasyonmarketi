@@ -236,12 +236,21 @@ export default function SettingsPage() {
         Object.entries(updateData).filter(([_, value]) => value !== undefined && value !== null)
       );
 
+      // Use upsert instead of update to handle cases where profile doesn't exist
+      // This prevents "cannot coerce the result to a single JSON object" error
       const { data, error } = await supabase
         .from('user_profiles')
-        .update(cleanUpdateData)
-        .eq('id', user.id)
+        .upsert(
+          {
+            id: user.id,
+            ...cleanUpdateData,
+          },
+          {
+            onConflict: 'id',
+          }
+        )
         .select()
-        .single();
+        .maybeSingle();
 
       clearTimeout(timeoutId);
       timeoutCleared = true;
@@ -262,6 +271,10 @@ export default function SettingsPage() {
           });
         } else if (error.code === '23505' || error.message?.includes('unique')) {
           toast.error('Bu bilgiler zaten kullanılıyor. Lütfen farklı bilgiler giriniz.');
+        } else if (error.message?.includes('cannot coerce') || error.message?.includes('PGRST116')) {
+          // Handle "cannot coerce" error
+          toast.error('Ödeme bilgileri kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+          console.error('Coerce error:', error);
         } else {
           toast.error(error.message || 'Kayıt başarısız. Lütfen tekrar deneyin.', {
             duration: 5000,
@@ -513,12 +526,21 @@ export default function SettingsPage() {
         Object.entries(updateData).filter(([_, value]) => value !== undefined && value !== null)
       );
 
+      // Use upsert instead of update to handle cases where profile doesn't exist
+      // This prevents "cannot coerce the result to a single JSON object" error
       const { data, error } = await supabase
         .from('user_profiles')
-        .update(cleanUpdateData)
-        .eq('id', user.id)
+        .upsert(
+          {
+            id: user.id,
+            ...cleanUpdateData,
+          },
+          {
+            onConflict: 'id',
+          }
+        )
         .select()
-        .single();
+        .maybeSingle();
 
       clearTimeout(timeoutId);
       timeoutCleared = true;
@@ -540,6 +562,10 @@ export default function SettingsPage() {
           });
         } else if (error.code === '23505' || error.message?.includes('unique')) {
           toast.error('Bu bilgiler zaten kullanılıyor. Lütfen farklı bilgiler giriniz.');
+        } else if (error.message?.includes('cannot coerce') || error.message?.includes('PGRST116')) {
+          // Handle "cannot coerce" error by retrying with maybeSingle
+          toast.error('Profil güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
+          console.error('Coerce error, retrying with maybeSingle:', error);
         } else {
           toast.error(error.message || 'Güncelleme başarısız. Lütfen tekrar deneyin.', {
             duration: 5000,
