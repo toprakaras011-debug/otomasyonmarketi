@@ -12,7 +12,21 @@ export type HeroStats = {
 
 const fetchHeroStats = async (): Promise<HeroStats> => {
   try {
-    const supabase = getSupabaseAdmin();
+    let supabase;
+    try {
+      supabase = getSupabaseAdmin();
+    } catch (adminError) {
+      console.error('Supabase admin client error:', adminError);
+      // Return fallback if admin client fails
+      return {
+        automations: 1,
+        developers: 3,
+        users: 1,
+        integrations: 1,
+        estimatedHours: 60,
+        efficiencyMultiplier: 8,
+      };
+    }
 
     const [automationsResponse, developersResponse, usersResponse, integrationsResponse] = await Promise.all([
       supabase

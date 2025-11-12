@@ -20,7 +20,21 @@ const Footer = dynamic(() => import('@/components/footer').then(mod => ({ defaul
 });
 
 export default async function Home() {
-  const heroStats = await getHeroStats();
+  let heroStats;
+  try {
+    heroStats = await getHeroStats();
+  } catch (error) {
+    console.error('Error fetching hero stats:', error);
+    // Fallback stats if fetch fails
+    heroStats = {
+      automations: 1,
+      developers: 3,
+      users: 1,
+      integrations: 1,
+      estimatedHours: 60,
+      efficiencyMultiplier: 8,
+    };
+  }
 
   const jsonLd = {
     '@context': 'https://schema.org',

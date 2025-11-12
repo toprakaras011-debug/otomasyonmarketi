@@ -6,7 +6,20 @@
     "dev": "next dev",
     "build": "next build",
     "export": "next export",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:e2e:critical": "playwright test e2e/critical",
+    "test:e2e:fast": "playwright test --project=chromium",
+    "test:e2e:critical:fast": "playwright test e2e/critical --project=chromium",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e:critical"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -84,7 +97,14 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.0.1",
-    "supabase": "^2.51.0"
+    "@playwright/test": "^1.48.0",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/coverage-v8": "^1.1.0",
+    "jsdom": "^23.0.1",
+    "supabase": "^2.51.0",
+    "vitest": "^1.1.0"
   },
   "description": "Türkiye'nin ilk otomasyon marketplace platformu. E-ticaret, sosyal medya ve veri analitiği için hazır otomasyon çözümlerini keşfedin.",
   "main": "next.config.js",
