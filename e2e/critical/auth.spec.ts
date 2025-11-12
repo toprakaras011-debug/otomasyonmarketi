@@ -16,6 +16,9 @@ test.describe('🚨 Critical: Authentication Flow', () => {
     await navigateTo(page, '/auth/signup');
     await dismissCookieConsent(page);
     
+    // Sayfa yüklendikten sonra form'un hazır olmasını bekle
+    await page.waitForSelector('input[name="email"]', { state: 'visible', timeout: 10000 });
+    
     const email = `test-${Date.now()}@example.com`;
     const password = 'Test123456!';
     const fullName = 'Test User';
@@ -42,6 +45,9 @@ test.describe('🚨 Critical: Authentication Flow', () => {
     await navigateTo(page, '/auth/signin');
     await dismissCookieConsent(page);
     
+    // Sayfa yüklendikten sonra form'un hazır olmasını bekle
+    await page.waitForSelector('input[name="email"]', { state: 'visible', timeout: 10000 });
+    
     const email = 'test@example.com';
     const password = 'Test123456!';
     
@@ -55,6 +61,9 @@ test.describe('🚨 Critical: Authentication Flow', () => {
   test('kritik: şifre sıfırlama formu çalışıyor', async ({ page }) => {
     await navigateTo(page, '/auth/forgot-password');
     await dismissCookieConsent(page);
+    
+    // Sayfa yüklendikten sonra form'un hazır olmasını bekle
+    await page.waitForSelector('input[name="email"]', { state: 'visible', timeout: 10000 });
     
     const email = 'test@example.com';
     await fillFormField(page, 'email', email);
