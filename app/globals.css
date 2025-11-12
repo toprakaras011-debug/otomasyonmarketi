@@ -503,4 +503,110 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* Sonner Toast - Original styles (minimal customization) */
+/* Sonner Toast - Enhanced styles with better contrast */
+[data-sonner-toaster] {
+  z-index: 9999 !important;
+  position: fixed !important;
+  bottom: 1rem !important;
+  right: 1rem !important;
+}
+
+[data-sonner-toast] {
+  min-width: 300px !important;
+  max-width: 400px !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  font-weight: 500 !important;
+}
+
+/* Success toast - Green background, white text */
+[data-sonner-toast][data-type="success"] {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-title],
+[data-sonner-toast][data-type="success"] [data-description] {
+  color: #ffffff !important;
+}
+
+/* Error toast - Red background, white text */
+[data-sonner-toast][data-type="error"] {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-title],
+[data-sonner-toast][data-type="error"] [data-description] {
+  color: #ffffff !important;
+}
+
+/* Info toast - Blue background, white text */
+[data-sonner-toast][data-type="info"] {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-title],
+[data-sonner-toast][data-type="info"] [data-description] {
+  color: #ffffff !important;
+}
+
+/* Warning toast - Yellow/Orange background, dark text */
+[data-sonner-toast][data-type="warning"] {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-title],
+[data-sonner-toast][data-type="warning"] [data-description] {
+  color: #ffffff !important;
+}
+
+/* Default toast - Dark background, white text */
+[data-sonner-toast]:not([data-type]) {
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-sonner-toast]:not([data-type]) [data-title],
+[data-sonner-toast]:not([data-type]) [data-description] {
+  color: #ffffff !important;
+}
+
+/* Toast title - Always white, bold */
+[data-sonner-toast] [data-title] {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 15px !important;
+}
+
+/* Toast description - Always white, slightly lighter */
+[data-sonner-toast] [data-description] {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-size: 13px !important;
+  margin-top: 4px !important;
+}
+
+/* Toast close button - White with semi-transparent background */
+[data-sonner-toast] [data-close-button] {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 0.375rem !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Toast icon - Always white */
+[data-sonner-toast] [data-icon] {
+  color: #ffffff !important;
+}
