@@ -28,7 +28,7 @@ export async function signUp(
   await page.check('input[type="checkbox"][name="kvkk"]');
   
   // Wait for Turnstile if present (might not be loaded in test environment)
-  const turnstileFrame = page.frameLocator('iframe[title*="Turnstile"]');
+  const turnstileFrame = page.locator('iframe[title*="Turnstile"]');
   if (await turnstileFrame.count() > 0) {
     // Wait a bit for Turnstile to complete
     await page.waitForTimeout(2000);
