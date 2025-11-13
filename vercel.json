@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "buildCommand": "cd project && npm run build",
+  "outputDirectory": "project/.next",
+  "installCommand": "cd project && npm install",
+  "framework": "nextjs",
+  "rootDirectory": "project",
+  "functions": {
+    "project/app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
