@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -30,6 +30,59 @@ export default function SignInPage() {
   const isFromCart = redirectTo === '/cart';
   
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+
+  // Check for error messages from URL parameters (OAuth errors, etc.)
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const message = searchParams.get('message');
+    const verified = searchParams.get('verified');
+
+    console.log('[DEBUG] signin/page.tsx - URL parameters check', {
+      error,
+      message,
+      verified,
+    });
+
+    // Show email verification success message
+    if (verified === 'true') {
+      toast.success('E-posta adresiniz başarıyla doğrulandı!', {
+        duration: 6000,
+        description: 'Artık giriş yapabilirsiniz.',
+      });
+      // Clean URL after showing message
+      const timer = setTimeout(() => {
+        router.replace('/auth/signin');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+
+    // Show OAuth or other error messages
+    if (error && message) {
+      const decodedMessage = decodeURIComponent(message);
+      console.log('[DEBUG] signin/page.tsx - Showing error from URL', {
+        error,
+        decodedMessage,
+      });
+
+      if (error === 'oauth_failed') {
+        toast.error('OAuth Girişi Başarısız', {
+          duration: 8000,
+          description: decodedMessage,
+        });
+      } else {
+        toast.error('Giriş Hatası', {
+          duration: 6000,
+          description: decodedMessage,
+        });
+      }
+
+      // Clean URL after showing message
+      const timer = setTimeout(() => {
+        router.replace('/auth/signin');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
