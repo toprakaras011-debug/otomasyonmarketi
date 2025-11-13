@@ -803,8 +803,8 @@ export default function SignUpPage() {
               </Button>
             </form>
 
-            <div className="space-y-3 pt-3 border-t">
-              <p className="text-center text-xs text-muted-foreground">
+            <div className="space-y-4 pt-4 border-t">
+              <p className="text-center text-sm text-muted-foreground">
                 Zaten hesabınız var mı?{' '}
                 <Link href="/auth/signin" className="font-semibold text-purple-600 hover:text-purple-500 transition-colors">
                   Giriş Yap
@@ -812,9 +812,9 @@ export default function SignUpPage() {
               </p>
               <Link
                 href="/"
-                className="flex items-center justify-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Ana Sayfaya Dön
               </Link>
             </div>
