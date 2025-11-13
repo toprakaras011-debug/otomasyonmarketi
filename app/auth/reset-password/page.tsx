@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -9,27 +9,145 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { updatePassword } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Lock, ArrowLeft } from 'lucide-react';
+import { Lock, ArrowLeft, AlertCircle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
   });
 
+  // Check if we have a valid recovery token from hash
+  useEffect(() => {
+    const checkRecoveryToken = async () => {
+      try {
+        // Check URL hash for recovery token
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+
+        // Also check query params (fallback)
+        const code = searchParams.get('code');
+        const error = searchParams.get('error');
+        const errorDescription = searchParams.get('error_description');
+
+        // If there's an error in URL, show it
+        if (error) {
+          console.error('Password reset error from URL:', {
+            error,
+            errorDescription,
+          });
+          
+          if (error === 'access_denied' || error === 'otp_expired') {
+            setIsValidToken(false);
+            toast.error('Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş', {
+              duration: 8000,
+              description: 'Lütfen yeni bir şifre sıfırlama isteği gönderin.',
+            });
+            return;
+          }
+        }
+
+        // If we have access_token in hash, it's a valid recovery link
+        if (accessToken && type === 'recovery') {
+          // Verify the session is valid
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError || !session) {
+            // Try to set the session from the hash
+            const { error: setSessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: hashParams.get('refresh_token') || '',
+            });
+
+            if (setSessionError) {
+              console.error('Set session error:', setSessionError);
+              setIsValidToken(false);
+              toast.error('Şifre sıfırlama bağlantısı geçersiz', {
+                duration: 6000,
+              });
+              return;
+            }
+          }
+
+          setIsValidToken(true);
+        } else if (code) {
+          // If we have a code, exchange it for session
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (exchangeError) {
+            console.error('Exchange code error:', exchangeError);
+            setIsValidToken(false);
+            toast.error('Şifre sıfırlama bağlantısı geçersiz', {
+              duration: 6000,
+            });
+            return;
+          }
+
+          setIsValidToken(true);
+        } else {
+          // No token found - check if user is already authenticated
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (session) {
+            setIsValidToken(true);
+          } else {
+            setIsValidToken(false);
+            toast.error('Şifre sıfırlama bağlantısı bulunamadı', {
+              duration: 6000,
+              description: 'Lütfen e-postanızdaki bağlantıyı kullanın.',
+            });
+          }
+        }
+      } catch (error: any) {
+        console.error('Check recovery token error:', error);
+        setIsValidToken(false);
+        toast.error('Bir hata oluştu', {
+          duration: 6000,
+        });
+      }
+    };
+
+    checkRecoveryToken();
+  }, [searchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidToken) {
+      toast.error('Şifre sıfırlama bağlantısı geçersiz', {
+        duration: 6000,
+        description: 'Lütfen yeni bir şifre sıfırlama isteği gönderin.',
+      });
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('Şifreler eşleşmiyor');
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Şifre en az 6 karakter olmalıdır');
+    if (formData.password.length < 8) {
+      toast.error('Şifre en az 8 karakter olmalıdır');
+      return;
+    }
+
+    // Strong password validation
+    const hasUpperCase = /[A-Z]/.test(formData.password);
+    const hasLowerCase = /[a-z]/.test(formData.password);
+    const hasNumber = /[0-9]/.test(formData.password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      toast.error('Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir', {
+        duration: 6000,
+      });
       return;
     }
 
@@ -37,10 +155,24 @@ export default function ResetPasswordPage() {
 
     try {
       await updatePassword(formData.password);
-      toast.success('Şifreniz başarıyla güncellendi!');
-      router.push('/auth/signin');
+      toast.success('Şifreniz başarıyla güncellendi!', {
+        duration: 5000,
+        description: 'Yeni şifrenizle giriş yapabilirsiniz.',
+      });
+      
+      // Clear the hash from URL
+      window.history.replaceState(null, '', '/auth/reset-password');
+      
+      // Redirect to signin after a short delay
+      setTimeout(() => {
+        router.push('/auth/signin');
+      }, 2000);
     } catch (error: any) {
-      toast.error(error.message || 'Şifre güncellenemedi');
+      console.error('Update password error:', error);
+      toast.error(error.message || 'Şifre güncellenemedi', {
+        duration: 6000,
+        description: 'Lütfen tekrar deneyin veya yeni bir şifre sıfırlama isteği gönderin.',
+      });
     } finally {
       setLoading(false);
     }
@@ -94,7 +226,41 @@ export default function ResetPasswordPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {isValidToken === false && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-lg border border-red-500/20 bg-red-500/10 p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                      Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş
+                    </p>
+                    <p className="text-xs text-red-500/80 dark:text-red-400/80 mt-1">
+                      Lütfen yeni bir şifre sıfırlama isteği gönderin.
+                    </p>
+                    <Link
+                      href="/auth/forgot-password"
+                      className="mt-3 inline-block text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
+                    >
+                      Yeni şifre sıfırlama isteği gönder →
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {isValidToken === null && (
+              <div className="text-center py-4">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"></div>
+                <p className="mt-2 text-sm text-muted-foreground">Bağlantı kontrol ediliyor...</p>
+              </div>
+            )}
+
+            {isValidToken === true && (
+              <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium">
                   Yeni Şifre
@@ -102,11 +268,11 @@ export default function ResetPasswordPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="En az 6 karakter"
+                  placeholder="En az 8 karakter"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
-                  minLength={6}
+                  minLength={8}
                   className="h-11"
                 />
               </div>
@@ -122,16 +288,19 @@ export default function ResetPasswordPage() {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   required
-                  minLength={6}
+                  minLength={8}
                   className="h-11"
                 />
               </div>
 
               <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">Şifre Gereksinimleri:</p>
+                <p className="font-medium text-foreground mb-2">Şifre Gereksinimleri:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>En az 6 karakter uzunluğunda olmalı</li>
-                  <li>Güvenli bir şifre seçin</li>
+                  <li>En az 8 karakter uzunluğunda olmalı</li>
+                  <li>En az bir büyük harf (A-Z)</li>
+                  <li>En az bir küçük harf (a-z)</li>
+                  <li>En az bir rakam (0-9)</li>
+                  <li>En az bir özel karakter (!@#$%^&*...)</li>
                 </ul>
               </div>
 
@@ -153,6 +322,7 @@ export default function ResetPasswordPage() {
                 )}
               </Button>
             </form>
+            )}
 
             <div className="space-y-4 pt-4 border-t">
               <Link
