@@ -372,10 +372,23 @@ export async function GET(request: NextRequest) {
         const errorMessage = exchangeError.message?.toLowerCase() || '';
         let userFriendlyMessage = 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
         
-        if (errorMessage.includes('expired') || errorMessage.includes('invalid')) {
-          userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
-        } else if (errorMessage.includes('already used')) {
-          userFriendlyMessage = 'Bu giriş bağlantısı zaten kullanılmış. Lütfen tekrar deneyin.';
+        // Check if user might already exist (code already used or expired but user created)
+        // This can happen if OAuth provider created the user but code exchange failed
+        const isCodeExpiredOrUsed = 
+          errorMessage.includes('expired') || 
+          errorMessage.includes('invalid') || 
+          errorMessage.includes('already used');
+        
+        if (isCodeExpiredOrUsed) {
+          // Try to check if user exists by attempting to get user info from OAuth provider
+          // Note: We can't directly check auth.users without a valid session
+          // But we can provide a helpful message
+          console.log('[DEBUG] callback/route.ts - Code expired/used, checking if user might exist', {
+            errorMessage,
+            suggestion: 'User might already be registered via OAuth',
+          });
+          
+          userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Hesabınız zaten oluşturulmuş olabilir. Lütfen normal giriş yapmayı deneyin veya OAuth ile tekrar giriş yapın.';
         } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
           userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
         }
