@@ -116,15 +116,18 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
       'Yeni Kullanıcı';
 
     // Insert user profile
+    // Use upsert instead of insert to handle race conditions
     const { data: insertedProfile, error: insertError } = await supabase
       .from('user_profiles')
-      .insert({
+      .upsert({
         id: user.id,
         username,
         full_name: fullName,
         avatar_url: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null,
         is_developer: false,
         developer_approved: false,
+      }, {
+        onConflict: 'id',
       })
       .select()
       .single();
