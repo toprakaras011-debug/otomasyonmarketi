@@ -165,12 +165,19 @@ Detaylı bilgi için `.env.example` dosyasına bakın.
 
 ## 💻 Geliştirme
 
+### Kurulum
+
+```bash
+cd project
+npm install
+npm run dev
+```
+
+> Not: Bu dosya 13 Kasım 2025 dağıtım onayı için güncellendi.
+
 ### Scripts
 
 ```bash
-# Development server
-npm run dev
-
 # Production build
 npm run build
 
