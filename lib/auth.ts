@@ -120,23 +120,32 @@ export const signUp = async (
         errorMessage.includes('email already exists') ||
         errorCode === 422
       ) {
-        // Check if profile exists - if not, we can try to create it
+        // Check if profile exists - if not, this might be an orphaned account
         try {
-          const { data: profileCheck } = await supabase
+          // Try to get profile by username
+          const { data: profileByUsername } = await supabase
             .from('user_profiles')
-            .select('id')
+            .select('id, username')
             .eq('username', trimmedUsername)
             .maybeSingle();
 
-          // If profile doesn't exist but user does, suggest password reset or contact support
-          if (!profileCheck) {
-            throw new Error('Bu e-posta adresi kayıtlı görünüyor ancak profil bulunamadı. Lütfen şifre sıfırlama sayfasını kullanın veya destek ekibiyle iletişime geçin.');
+          // Profile exists - username conflict
+          if (profileByUsername && profileByUsername.username === trimmedUsername) {
+            throw new Error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
           }
+
+          // If username is available but email is registered, it's likely an orphaned account
+          // (user exists in auth.users but not in user_profiles)
+          // This happens when account is deleted but auth record remains
+          // We can't create profile here because we don't have the user's auth token
+          // Provide helpful message
+          throw new Error('Bu e-posta adresi kayıtlı görünüyor ancak profil bulunamadı. Bu durum genellikle hesap silme işleminden sonra oluşur. Lütfen giriş yapın veya şifre sıfırlama sayfasını kullanın. Eğer sorun devam ederse destek ekibiyle iletişime geçin.');
         } catch (profileError: any) {
-          // If profile check fails, just throw the original error
-          if (profileError.message && !profileError.message.includes('Bu e-posta')) {
+          // If profile check fails, check if it's our custom error
+          if (profileError.message && (profileError.message.includes('Bu e-posta') || profileError.message.includes('Bu kullanıcı'))) {
             throw profileError;
           }
+          // Otherwise, continue with default error
         }
 
         throw new Error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin veya şifrenizi sıfırlayın.');

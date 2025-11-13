@@ -371,8 +371,11 @@ export default function SettingsPage() {
       }
 
       toast.dismiss(loadingToast);
-      toast.success('Hesabınız başarıyla silindi. Yönlendiriliyorsunuz...', {
-        duration: 3000,
+      
+      // Important: Inform user that auth account still exists
+      toast.success('Profil bilgileriniz silindi. Yönlendiriliyorsunuz...', {
+        duration: 5000,
+        description: 'Not: E-posta adresiniz auth sisteminde hala kayıtlı. Aynı e-posta ile tekrar kayıt olmak için önce giriş yapıp hesabı tamamen silmeniz gerekir.',
       });
 
       // Redirect to home page after a short delay
