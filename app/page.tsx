@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic';
 import { Navbar } from '@/components/navbar';
 import { Hero } from '@/components/hero';
 import { getHeroStats } from '@/lib/data/hero-stats';
+import { AuthRedirectHandler } from '@/components/auth-redirect-handler';
 
 // Lazy load non-critical components for better initial page load
 const CategoriesSection = dynamic(() => import('@/components/categories-section').then(mod => ({ default: mod.CategoriesSection })), {
@@ -107,6 +108,7 @@ export default async function Home() {
         defer
       />
       <main className="min-h-screen pt-0 w-full overflow-x-hidden">
+        <AuthRedirectHandler />
         <Navbar />
         <Hero initialStats={heroStats} />
         <CategoriesSection />
