@@ -43,54 +43,117 @@ const buildUsernameCandidates = (params: {
 };
 
 const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>) => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  if (!user) return;
+    if (userError) {
+      console.error('OAuth callback - Get user error:', userError);
+      throw userError;
+    }
 
-  const { data: existingProfile } = await supabase
-    .from('user_profiles')
-    .select('id')
-    .eq('id', user.id)
-    .maybeSingle();
+    if (!user) {
+      console.warn('OAuth callback - No user found');
+      return;
+    }
 
-  if (existingProfile) return;
-
-  const candidates = buildUsernameCandidates({
-    email: user.email,
-    metadata: user.user_metadata ?? {},
-  });
-
-  let username = candidates[0];
-  for (const candidate of candidates) {
-    const { data: sameUsername } = await supabase
+    // Check if profile already exists
+    const { data: existingProfile, error: profileCheckError } = await supabase
       .from('user_profiles')
       .select('id')
-      .eq('username', candidate)
+      .eq('id', user.id)
       .maybeSingle();
 
-    if (!sameUsername) {
-      username = candidate;
-      break;
+    if (profileCheckError) {
+      console.error('OAuth callback - Profile check error:', profileCheckError);
+      throw profileCheckError;
     }
+
+    if (existingProfile) {
+      console.log('OAuth callback - Profile already exists for user:', user.id);
+      return;
+    }
+
+    // Build username candidates
+    const candidates = buildUsernameCandidates({
+      email: user.email,
+      metadata: user.user_metadata ?? {},
+    });
+
+    // Find available username
+    let username = candidates[0];
+    for (const candidate of candidates) {
+      const { data: sameUsername, error: usernameCheckError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('username', candidate)
+        .maybeSingle();
+
+      if (usernameCheckError) {
+        console.error('OAuth callback - Username check error:', usernameCheckError);
+        // Continue to next candidate
+        continue;
+      }
+
+      if (!sameUsername) {
+        username = candidate;
+        break;
+      }
+    }
+
+    if (!username) {
+      // Fallback username if all candidates are taken
+      username = `kullanici-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+
+    const fullName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.user_metadata?.user_name ||
+      user.email?.split('@')[0] ||
+      'Yeni Kullanıcı';
+
+    // Insert user profile
+    const { data: insertedProfile, error: insertError } = await supabase
+      .from('user_profiles')
+      .insert({
+        id: user.id,
+        username,
+        full_name: fullName,
+        avatar_url: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null,
+        is_developer: false,
+        developer_approved: false,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('OAuth callback - Profile insert error:', {
+        error: insertError,
+        userId: user.id,
+        username,
+        fullName,
+      });
+      throw insertError;
+    }
+
+    console.log('OAuth callback - Profile created successfully:', {
+      userId: user.id,
+      username,
+      profileId: insertedProfile?.id,
+    });
+  } catch (error: any) {
+    console.error('OAuth callback - ensureUserProfile error:', {
+      message: error?.message,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+    });
+    // Re-throw to be caught by the calling function
+    throw error;
   }
-
-  const fullName =
-    user.user_metadata?.full_name ||
-    user.user_metadata?.name ||
-    user.user_metadata?.user_name ||
-    user.email?.split('@')[0] ||
-    'Yeni Kullanıcı';
-
-  await supabase.from('user_profiles').insert({
-    id: user.id,
-    username,
-    full_name: fullName,
-    avatar_url: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null,
-    is_developer: false,
-    developer_approved: false,
-  });
 };
 
 export async function GET(request: NextRequest) {
@@ -117,13 +180,33 @@ export async function GET(request: NextRequest) {
       }
     );
     try {
-      await supabase.auth.exchangeCodeForSession(code);
-      await ensureUserProfile(supabase);
-    } catch (error) {
-      // Log error in development only
-      if (process.env.NODE_ENV === 'development') {
-        console.error('OAuth callback error:', error);
+      // Exchange code for session
+      const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      
+      if (exchangeError) {
+        console.error('OAuth callback - Exchange code error:', exchangeError);
+        throw exchangeError;
       }
+
+      console.log('OAuth callback - Session exchanged successfully:', {
+        userId: sessionData?.user?.id,
+        email: sessionData?.user?.email,
+      });
+
+      // Ensure user profile exists
+      await ensureUserProfile(supabase);
+      
+      console.log('OAuth callback - Process completed successfully');
+    } catch (error: any) {
+      // Log error in all environments for debugging
+      console.error('OAuth callback error:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      });
+      
       // Redirect to signin with error parameter
       return NextResponse.redirect(new URL('/auth/signin?error=oauth_failed', request.url));
     }
