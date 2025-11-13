@@ -20,6 +20,12 @@ export type CategoryWithStats = {
  */
 export async function getCategoriesWithStats() {
   try {
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.warn('Supabase environment variables not set. Returning empty categories.');
+      return [];
+    }
+
     // Fetch all data in parallel for better performance
     const [categoriesResult, automationsResult] = await Promise.all([
       supabase.from('categories').select('*').order('name'),
@@ -30,7 +36,23 @@ export async function getCategoriesWithStats() {
         .eq('admin_approved', true)
     ]);
 
-    if (categoriesResult.error) throw categoriesResult.error;
+    if (categoriesResult.error) {
+      console.error('Categories fetch error:', {
+        message: categoriesResult.error.message,
+        code: categoriesResult.error.code,
+        details: categoriesResult.error.details,
+        hint: categoriesResult.error.hint,
+      });
+      throw categoriesResult.error;
+    }
+
+    if (automationsResult.error) {
+      console.error('Automations fetch error:', {
+        message: automationsResult.error.message,
+        code: automationsResult.error.code,
+      });
+      // Continue with empty automations array if this fails
+    }
 
     const categories = categoriesResult.data || [];
     const automations = automationsResult.data || [];
@@ -65,8 +87,16 @@ export async function getCategoriesWithStats() {
     });
 
     return stats;
-  } catch (error) {
-    console.error('Error fetching categories with stats:', error);
+  } catch (error: any) {
+    console.error('Error fetching categories with stats:', {
+      message: error?.message || 'Unknown error',
+      name: error?.name,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+    });
+    // Return empty array on error to prevent UI crashes
     return [];
   }
 }

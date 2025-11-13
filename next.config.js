@@ -56,7 +56,6 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days cache for better performance
     dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com; sandbox;",
     // Device sizes for responsive images
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     // Image sizes for different breakpoints
@@ -79,7 +78,7 @@ const nextConfig = {
       'recharts',
       'date-fns'
     ],
-    optimizeCss: true,
+    optimizeCss: false, // Disabled - requires 'critters' package
     // Optimize server components
     serverActions: {
       bodySizeLimit: '100mb',
@@ -90,11 +89,7 @@ const nextConfig = {
   // Turbopack configuration (Next.js 16+)
   // Turbopack automatically handles code splitting and optimization
   // No need for manual webpack config - Turbopack is faster and handles this automatically
-  turbopack: {
-    // Turbopack automatically optimizes bundle splitting
-    // Framework, UI libraries, and vendor code are automatically separated
-    root: process.cwd(), // Set root to silence workspace warning
-  },
+  // Note: Turbopack root is automatically detected from package.json location
   // Enable route prefetching
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
@@ -145,6 +140,10 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.supabase.co https://*.supabase.in https://va.vercel-scripts.com; connect-src 'self' https://*.supabase.co https://*.supabase.in https://vitals.vercel-insights.com https://va.vercel-scripts.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com;"
           }
         ]
       },
@@ -171,10 +170,8 @@ const nextConfig = {
   // CSS and JS optimization is handled automatically by Next.js 16 + Turbopack
   // Critical CSS is automatically inlined, non-critical is deferred
   // JavaScript is automatically code-split and optimized
-  // Bundle analyzer - enabled for optimization
-  bundleAnalyzer: {
-    enabled: process.env.ANALYZE === 'true',
-  },
+  // Bundle analyzer configuration moved to separate plugin
+  // Use: npm run analyze to enable bundle analysis
 };
 
 module.exports = nextConfig;

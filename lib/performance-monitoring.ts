@@ -52,12 +52,14 @@ class PerformanceMonitoring {
 
   private initializeWebVitals(): void {
     // Dynamic import to avoid SSR issues
-    import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB }) => {
-      onCLS(this.handleWebVital.bind(this));
-      onFID(this.handleWebVital.bind(this));
-      onFCP(this.handleWebVital.bind(this));
-      onLCP(this.handleWebVital.bind(this));
-      onTTFB(this.handleWebVital.bind(this));
+    // @ts-ignore - web-vitals types may not be available during build
+    import('web-vitals').then((webVitals: any) => {
+      const { onCLS, onFID, onFCP, onLCP, onTTFB } = webVitals;
+      if (onCLS) onCLS(this.handleWebVital.bind(this));
+      if (onFID) onFID(this.handleWebVital.bind(this));
+      if (onFCP) onFCP(this.handleWebVital.bind(this));
+      if (onLCP) onLCP(this.handleWebVital.bind(this));
+      if (onTTFB) onTTFB(this.handleWebVital.bind(this));
     }).catch(error => {
       console.warn('Failed to load web-vitals:', error);
     });

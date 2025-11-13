@@ -593,10 +593,65 @@ export const resetPassword = async (email: string) => {
 };
 
 export const updatePassword = async (newPassword: string) => {
-  const { data, error } = await supabase.auth.updateUser({
-    password: newPassword,
-  });
+  try {
+    // Validate password
+    if (!newPassword || typeof newPassword !== 'string') {
+      throw new Error('Şifre gereklidir.');
+    }
 
-  if (error) throw error;
-  return data;
+    if (newPassword.length < 8) {
+      throw new Error('Şifre en az 8 karakter olmalıdır.');
+    }
+
+    // Strong password validation
+    const hasUpperCase = /[A-Z]/.test(newPassword);
+    const hasLowerCase = /[a-z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      throw new Error('Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.');
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      console.error('Update password error:', {
+        message: error.message,
+        status: error.status,
+        name: error.name,
+      });
+
+      // Provide user-friendly error messages
+      const errorMessage = error.message?.toLowerCase() || '';
+      
+      if (errorMessage.includes('session') || errorMessage.includes('token') || errorMessage.includes('expired')) {
+        throw new Error('Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş. Lütfen yeni bir şifre sıfırlama isteği gönderin.');
+      } else if (errorMessage.includes('weak') || errorMessage.includes('password')) {
+        throw new Error('Şifre çok zayıf. Daha güçlü bir şifre seçin.');
+      } else if (errorMessage.includes('rate limit') || error.status === 429) {
+        throw new Error('Çok fazla deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.');
+      }
+
+      throw new Error(error.message || 'Şifre güncellenemedi. Lütfen tekrar deneyin.');
+    }
+
+    return data;
+  } catch (error: any) {
+    // Re-throw user-friendly errors
+    if (error?.message && typeof error.message === 'string') {
+      const technicalTerms = ['AuthApiError', 'Supabase', 'API', 'JWT', 'token', 'PostgresError'];
+      const isTechnicalError = technicalTerms.some(term => 
+        error.message.includes(term)
+      );
+
+      if (!isTechnicalError) {
+        throw error; // Re-throw user-friendly errors as-is
+      }
+    }
+
+    throw new Error(error?.message || 'Şifre güncellenemedi. Lütfen tekrar deneyin.');
+  }
 };

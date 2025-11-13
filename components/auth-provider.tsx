@@ -59,10 +59,22 @@ export function AuthProvider({
           .maybeSingle(); // ✅ Use maybeSingle instead of single to handle missing profiles gracefully
         
         if (error) {
-          console.error('Profile fetch error:', error);
+          console.error('Profile fetch error:', {
+            message: error.message || 'Unknown error',
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+            name: error.name,
+          });
           // ✅ Admin hesapları için özel hata yönetimi
           if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
             // Profile bulunamadı - bu normal olabilir, null döndür
+            setProfile(null);
+            return null;
+          }
+          // Invalid API key hatası
+          if (error.message?.includes('Invalid API key') || error.code === 'PGRST301') {
+            console.warn('Supabase API key invalid. Check .env.local file.');
             setProfile(null);
             return null;
           }
@@ -73,8 +85,13 @@ export function AuthProvider({
           setProfile(data);
           return data;
         }
-      } catch (error) {
-        console.error('Profile fetch exception:', error);
+      } catch (error: any) {
+        console.error('Profile fetch exception:', {
+          message: error?.message || 'Unknown error',
+          name: error?.name,
+          code: error?.code,
+          stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+        });
         setProfile(null);
         return null;
       } finally {
