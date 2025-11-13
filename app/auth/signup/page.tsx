@@ -95,9 +95,23 @@ export default function SignUpPage() {
       return;
     }
 
-    if (!formData.password || formData.password.length < 6) {
-      toast.error('Şifre en az 6 karakter olmalıdır', {
+    // Strong password validation
+    if (!formData.password || formData.password.length < 8) {
+      toast.error('Şifre en az 8 karakter olmalıdır', {
         duration: 4000,
+      });
+      return;
+    }
+
+    // Check for strong password requirements
+    const hasUpperCase = /[A-Z]/.test(formData.password);
+    const hasLowerCase = /[a-z]/.test(formData.password);
+    const hasNumber = /[0-9]/.test(formData.password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+      toast.error('Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir', {
+        duration: 5000,
       });
       return;
     }
@@ -435,19 +449,44 @@ export default function SignUpPage() {
                     Telefon Numarası
                     <span className="text-xs text-muted-foreground">(Opsiyonel)</span>
                   </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="0555 123 45 67"
-                    value={formData.phone}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d\s-]/g, '');
-                      setFormData({ ...formData, phone: value });
-                    }}
-                    onBlur={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
-                    autoComplete="tel"
-                    className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
-                  />
+                  <div className="flex gap-2">
+                    <div className="flex items-center rounded-lg border border-input bg-background px-3 text-sm text-muted-foreground">
+                      <span className="text-xs font-medium">🇹🇷 +90</span>
+                    </div>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="555 123 45 67"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        // Remove all non-digit characters
+                        const value = e.target.value.replace(/\D/g, '');
+                        // Format: 5XX XXX XX XX (max 10 digits)
+                        let formatted = value;
+                        if (value.length > 0) {
+                          formatted = value.slice(0, 10);
+                          if (formatted.length > 3) {
+                            formatted = `${formatted.slice(0, 3)} ${formatted.slice(3)}`;
+                          }
+                          if (formatted.length > 7) {
+                            formatted = `${formatted.slice(0, 7)} ${formatted.slice(7)}`;
+                          }
+                          if (formatted.length > 10) {
+                            formatted = `${formatted.slice(0, 10)} ${formatted.slice(10, 12)}`;
+                          }
+                        }
+                        setFormData({ ...formData, phone: formatted });
+                      }}
+                      onBlur={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        setFormData({ ...formData, phone: digits });
+                      }}
+                      autoComplete="tel"
+                      maxLength={13}
+                      className="h-10 flex-1 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Türkiye (+90) - 10 haneli numara</p>
                 </div>
               </div>
 
@@ -473,14 +512,41 @@ export default function SignUpPage() {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required
-                        minLength={6}
+                        minLength={8}
                         className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       />
-                      {formData.password && formData.password.length >= 6 && (
-                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-                      )}
+                      {formData.password && (() => {
+                        const hasUpperCase = /[A-Z]/.test(formData.password);
+                        const hasLowerCase = /[a-z]/.test(formData.password);
+                        const hasNumber = /[0-9]/.test(formData.password);
+                        const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password);
+                        const isStrong = formData.password.length >= 8 && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+                        return isStrong ? (
+                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        ) : null;
+                      })()}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">Min. 6 karakter</p>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-muted-foreground">Min. 8 karakter</p>
+                      <div className="grid grid-cols-2 gap-1 text-[9px]">
+                        <div className={`flex items-center gap-1 ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-muted-foreground'}`}>
+                          <span>{/[A-Z]/.test(formData.password) ? '✓' : '○'}</span>
+                          <span>Büyük harf</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${/[a-z]/.test(formData.password) ? 'text-green-600' : 'text-muted-foreground'}`}>
+                          <span>{/[a-z]/.test(formData.password) ? '✓' : '○'}</span>
+                          <span>Küçük harf</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${/[0-9]/.test(formData.password) ? 'text-green-600' : 'text-muted-foreground'}`}>
+                          <span>{/[0-9]/.test(formData.password) ? '✓' : '○'}</span>
+                          <span>Rakam</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'text-green-600' : 'text-muted-foreground'}`}>
+                          <span>{/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '○'}</span>
+                          <span>Özel karakter</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="space-y-1.5">
@@ -497,7 +563,7 @@ export default function SignUpPage() {
                         value={formData.confirmPassword}
                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         required
-                        minLength={6}
+                        minLength={8}
                         className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       />
                       {formData.confirmPassword && formData.password === formData.confirmPassword && (
@@ -521,14 +587,14 @@ export default function SignUpPage() {
                   <h3 className="text-sm font-semibold text-foreground">Hesap Türü Seçimi</h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <motion.label 
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all duration-300 ${
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`relative cursor-pointer overflow-hidden rounded-lg border-2 p-2.5 transition-all duration-300 ${
                       formData.role === 'user' 
-                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10 shadow-lg shadow-purple-500/20' 
-                        : 'border-border hover:border-purple-500/50 hover:shadow-md'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10 shadow-md shadow-purple-500/20' 
+                        : 'border-border hover:border-purple-500/50 hover:shadow-sm'
                     }`}
                   >
                     <input
@@ -542,42 +608,42 @@ export default function SignUpPage() {
                     {formData.role === 'user' && (
                       <motion.div 
                         layoutId="activeRole"
-                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/5 rounded-xl"
+                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/5 rounded-lg"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <div className="relative flex flex-col items-center gap-2">
-                      <div className={`rounded-xl p-2.5 transition-all duration-300 ${
+                    <div className="relative flex items-center gap-2">
+                      <div className={`rounded-lg p-1.5 transition-all duration-300 ${
                         formData.role === 'user' 
-                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg' 
+                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-md' 
                           : 'bg-muted'
                       }`}>
-                        <ShoppingBag className={`h-5 w-5 transition-colors ${
+                        <ShoppingBag className={`h-3.5 w-3.5 transition-colors ${
                           formData.role === 'user' ? 'text-white' : 'text-muted-foreground'
                         }`} />
                       </div>
-                      <div className="text-center space-y-0.5">
-                        <span className="text-sm font-bold block">Kullanıcı</span>
-                        <span className="text-[11px] text-muted-foreground block">Otomasyonları satın al</span>
+                      <div className="text-left space-y-0">
+                        <span className="text-xs font-semibold block leading-tight">Kullanıcı</span>
+                        <span className="text-[10px] text-muted-foreground block leading-tight">Otomasyonları satın al</span>
                       </div>
                       {formData.role === 'user' && (
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1"
+                          className="absolute -top-0.5 -right-0.5 bg-purple-500 rounded-full p-0.5"
                         >
-                          <CheckCircle2 className="h-3 w-3 text-white" />
+                          <CheckCircle2 className="h-2.5 w-2.5 text-white" />
                         </motion.div>
                       )}
                     </div>
                   </motion.label>
                   <motion.label 
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all duration-300 ${
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`relative cursor-pointer overflow-hidden rounded-lg border-2 p-2.5 transition-all duration-300 ${
                       formData.role === 'developer' 
-                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10 shadow-lg shadow-purple-500/20' 
-                        : 'border-border hover:border-purple-500/50 hover:shadow-md'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10 shadow-md shadow-purple-500/20' 
+                        : 'border-border hover:border-purple-500/50 hover:shadow-sm'
                     }`}
                   >
                     <input
@@ -591,31 +657,31 @@ export default function SignUpPage() {
                     {formData.role === 'developer' && (
                       <motion.div 
                         layoutId="activeRole"
-                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/5 rounded-xl"
+                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/5 rounded-lg"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <div className="relative flex flex-col items-center gap-2">
-                      <div className={`rounded-xl p-2.5 transition-all duration-300 ${
+                    <div className="relative flex items-center gap-2">
+                      <div className={`rounded-lg p-1.5 transition-all duration-300 ${
                         formData.role === 'developer' 
-                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg' 
+                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-md' 
                           : 'bg-muted'
                       }`}>
-                        <Code2 className={`h-5 w-5 transition-colors ${
+                        <Code2 className={`h-3.5 w-3.5 transition-colors ${
                           formData.role === 'developer' ? 'text-white' : 'text-muted-foreground'
                         }`} />
                       </div>
-                      <div className="text-center space-y-0.5">
-                        <span className="text-sm font-bold block">Geliştirici</span>
-                        <span className="text-[11px] text-muted-foreground block">Otomasyonları sat</span>
+                      <div className="text-left space-y-0">
+                        <span className="text-xs font-semibold block leading-tight">Geliştirici</span>
+                        <span className="text-[10px] text-muted-foreground block leading-tight">Otomasyonları sat</span>
                       </div>
                       {formData.role === 'developer' && (
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1"
+                          className="absolute -top-0.5 -right-0.5 bg-purple-500 rounded-full p-0.5"
                         >
-                          <CheckCircle2 className="h-3 w-3 text-white" />
+                          <CheckCircle2 className="h-2.5 w-2.5 text-white" />
                         </motion.div>
                       )}
                     </div>
