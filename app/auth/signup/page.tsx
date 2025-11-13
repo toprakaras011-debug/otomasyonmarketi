@@ -362,11 +362,6 @@ export default function SignUpPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Personal Information Section */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <User className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-base font-semibold text-foreground">Kişisel Bilgiler</h3>
-                </div>
-                
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2 group">
                     <Label htmlFor="username" className="text-sm font-medium flex items-center gap-1.5">
@@ -388,10 +383,10 @@ export default function SignUpPage() {
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                       )}
                     </div>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                      <Shield className="h-3.5 w-3.5" />
-                      <span>Kalıcıdır, değiştirilemez</span>
-                    </p>
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 border border-amber-200 dark:border-amber-800/50">
+                      <Shield className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                      <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Kalıcıdır, değiştirilemez</span>
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
@@ -414,11 +409,6 @@ export default function SignUpPage() {
 
               {/* Contact Information Section */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <Mail className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-base font-semibold text-foreground">İletişim Bilgileri</h3>
-                </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium flex items-center gap-1.5">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -492,11 +482,6 @@ export default function SignUpPage() {
 
               {/* Security Section */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <Lock className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-base font-semibold text-foreground">Güvenlik</h3>
-                </div>
-                
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-sm font-medium flex items-center gap-1.5">
