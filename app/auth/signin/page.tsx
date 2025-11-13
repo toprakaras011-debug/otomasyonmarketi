@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { signIn, signInWithGithub, signInWithGoogle } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Zap, Github, Mail, ArrowLeft, Sparkles } from 'lucide-react';
+import { Zap, Github, Mail, ArrowLeft, Loader2 } from 'lucide-react';
 import { Turnstile } from '@/components/turnstile';
 
 export default function SignInPage() {
@@ -28,39 +29,64 @@ export default function SignInPage() {
   const redirectTo = searchParams.get('redirect') || '/dashboard';
   const isFromCart = redirectTo === '/cart';
   const oauthError = searchParams.get('error');
+  const oauthErrorDescription = searchParams.get('error_description');
   
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
   // Show OAuth error if present
   useEffect(() => {
     if (oauthError === 'oauth_failed') {
-      toast.error('OAuth girişi başarısız oldu. Lütfen tekrar deneyin.', {
+      const errorMsg = oauthErrorDescription || 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
+      toast.error(errorMsg, {
         duration: 6000,
       });
       // Clean URL
       router.replace('/auth/signin');
     }
-  }, [oauthError, router]);
+  }, [oauthError, oauthErrorDescription, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.email || !formData.password) {
-      toast.error('E-posta ve şifre gereklidir');
+    if (!formData.email?.trim()) {
+      toast.error('E-posta adresi gereklidir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (!formData.password) {
+      toast.error('Şifre gereklidir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim().toLowerCase())) {
+      toast.error('Geçerli bir e-posta adresi giriniz', {
+        duration: 4000,
+      });
       return;
     }
     
     // Validate Turnstile token - only if site key is configured
     if (turnstileSiteKey && !turnstileToken) {
-      toast.error('Lütfen güvenlik doğrulamasını tamamlayın');
+      toast.error('Lütfen güvenlik doğrulamasını tamamlayın', {
+        duration: 4000,
+      });
       return;
     }
     
     setLoading(true);
 
     try {
-      const result = await signIn(formData.email, formData.password);
+      const normalizedEmail = formData.email.trim().toLowerCase();
+      
+      // Sign in
+      const result = await signIn(normalizedEmail, formData.password);
       
       // Verify sign-in was successful
       if (!result || !result.user) {
@@ -68,8 +94,30 @@ export default function SignInPage() {
       }
 
       // Wait for session to be established
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
+      // Get user profile to check admin status
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('role, is_admin')
+        .eq('id', result.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+      }
+
+      // Determine redirect based on user role
+      let finalRedirect = redirectTo;
+      
+      // If user is admin, redirect to admin dashboard
+      if (profile && (profile.role === 'admin' || profile.is_admin)) {
+        finalRedirect = '/admin/dashboard';
+      } else if (redirectTo === '/dashboard') {
+        // Normal user goes to dashboard
+        finalRedirect = '/dashboard';
+      }
+
       toast.success('Giriş başarılı!', {
         duration: 3000,
       });
@@ -77,7 +125,7 @@ export default function SignInPage() {
       // Force page reload to ensure session is properly established
       // This is especially important for admin accounts
       setTimeout(() => {
-        window.location.href = redirectTo;
+        window.location.href = finalRedirect;
       }, 500);
     } catch (error: any) {
       const errorMessage = error?.message || 'Giriş yapılamadı';
@@ -186,37 +234,55 @@ export default function SignInPage() {
                 variant="outline"
                 className="w-full h-12 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
                 onClick={handleGithubSignIn}
-                disabled={oauthLoading !== null}
+                disabled={oauthLoading !== null || loading}
               >
-                <Github className="mr-2 h-5 w-5" />
-                {oauthLoading === 'github' ? 'Yönlendiriliyor...' : 'GitHub ile Giriş Yap'}
+                {oauthLoading === 'github' ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Yönlendiriliyor...
+                  </>
+                ) : (
+                  <>
+                    <Github className="mr-2 h-5 w-5" />
+                    GitHub ile Giriş Yap
+                  </>
+                )}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 className="w-full h-12 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
                 onClick={handleGoogleSignIn}
-                disabled={oauthLoading !== null}
+                disabled={oauthLoading !== null || loading}
               >
-                <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                </svg>
-                {oauthLoading === 'google' ? 'Yönlendiriliyor...' : 'Google ile Giriş Yap'}
+                {oauthLoading === 'google' ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Yönlendiriliyor...
+                  </>
+                ) : (
+                  <>
+                    <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+                      <path
+                        fill="currentColor"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      />
+                    </svg>
+                    Google ile Giriş Yap
+                  </>
+                )}
               </Button>
             </div>
 
@@ -232,7 +298,8 @@ export default function SignInPage() {
             {/* Email/Password Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
+                <Label htmlFor="email" className="text-sm font-medium flex items-center gap-1.5">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
                   E-posta
                 </Label>
                 <Input
@@ -245,6 +312,7 @@ export default function SignInPage() {
                   required
                   autoComplete="email"
                   className="h-11"
+                  disabled={loading}
                 />
               </div>
               <div className="space-y-2">
@@ -254,11 +322,13 @@ export default function SignInPage() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                   autoComplete="current-password"
                   className="h-11"
+                  disabled={loading}
                 />
                 <div className="flex justify-end">
                   <Link
@@ -297,10 +367,7 @@ export default function SignInPage() {
               >
                 {loading ? (
                   <span className="flex items-center">
-                    <svg className="mr-2 h-5 w-5 animate-spin" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Giriş yapılıyor...
                   </span>
                 ) : (
@@ -317,7 +384,7 @@ export default function SignInPage() {
                 </Link>
               </p>
               
-              {/* Guest Checkout Option - Only show if coming from cart (has items) */}
+              {/* Guest Checkout Option - Only show if coming from cart */}
               {isFromCart && (
                 <Button
                   asChild

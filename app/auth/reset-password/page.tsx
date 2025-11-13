@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { updatePassword } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Lock, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Lock, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -23,33 +23,72 @@ export default function ResetPasswordPage() {
     confirmPassword: '',
   });
 
-  // Check if we have a valid recovery token from hash
+  // ============================================
+  // STEP 1: Check for OAuth errors FIRST
+  // ============================================
+  // OAuth errors should NEVER reach this page
+  useEffect(() => {
+    const error = searchParams.get('error');
+    
+    // If there's an error and it's not a recovery-specific error, redirect to signin
+    if (error && typeof window !== 'undefined') {
+      // Check if this is an OAuth error (not a recovery error)
+      const isOAuthError = 
+        error === 'oauth_failed' ||
+        error === 'access_denied' ||
+        (error === 'invalid_token' && !window.location.hash.includes('access_token'));
+      
+      // Check referrer to see if we came from OAuth callback
+      const referrer = document.referrer;
+      const isFromOAuthCallback = referrer.includes('/auth/callback');
+      
+      if (isOAuthError || isFromOAuthCallback) {
+        console.log('OAuth error detected on reset-password page, redirecting to signin');
+        router.replace('/auth/signin?error=oauth_failed');
+        return;
+      }
+    }
+  }, [searchParams, router]);
+
+  // ============================================
+  // STEP 2: Check for recovery token
+  // ============================================
   useEffect(() => {
     const checkRecoveryToken = async () => {
       try {
-        // FIRST: Check for errors in URL (priority)
+        // Skip if we already detected an OAuth error
         const error = searchParams.get('error');
-        const errorDescription = searchParams.get('error_description');
-        
-        // Check URL hash for errors too
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const hashError = hashParams.get('error');
-        const hashErrorDescription = hashParams.get('error_description');
+        if (error === 'oauth_failed' || error === 'access_denied') {
+          return; // Will be handled by previous useEffect
+        }
 
-        // If there's an error in URL, handle it immediately
-        if (error || hashError) {
-          const errorCode = error || hashError;
-          const desc = errorDescription || hashErrorDescription;
+        // Check URL hash for recovery token (most common for password reset)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+        const hashError = hashParams.get('error');
+
+        // Check query params for code (server-side handled)
+        const code = searchParams.get('code');
+
+        // If we have code parameter, it should have been handled by callback
+        // But if we're here, redirect to callback to handle it
+        if (code) {
+          console.log('Code parameter found, redirecting to callback:', code);
+          router.replace(`/auth/callback?code=${code}&type=recovery`);
+          return;
+        }
+
+        // If there's an error in hash, handle it
+        if (hashError) {
+          const errorCode = hashError;
           
-          console.error('Password reset error from URL:', {
+          console.error('Password reset error from hash:', {
             error: errorCode,
-            errorDescription: desc,
           });
           
-          // Set invalid token immediately
           setIsValidToken(false);
           
-          // Show appropriate error message
           if (errorCode === 'access_denied' || errorCode === 'otp_expired' || errorCode === 'invalid_token') {
             toast.error('Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş', {
               duration: 8000,
@@ -58,27 +97,13 @@ export default function ResetPasswordPage() {
           } else {
             toast.error('Şifre sıfırlama bağlantısında hata var', {
               duration: 6000,
-              description: desc || 'Lütfen yeni bir şifre sıfırlama isteği gönderin.',
+              description: 'Lütfen yeni bir şifre sıfırlama isteği gönderin.',
             });
           }
           return;
         }
 
-        // Check URL hash for recovery token (most common for password reset)
-        const accessToken = hashParams.get('access_token');
-        const type = hashParams.get('type');
-
-        // Also check query params
-        const code = searchParams.get('code');
-
-        // If we have code parameter, redirect to callback to handle it server-side
-        if (code) {
-          console.log('Code parameter found, redirecting to callback:', code);
-          router.replace(`/auth/callback?code=${code}&type=recovery`);
-          return;
-        }
-
-        // If we have access_token in hash, it's a valid recovery link
+        // If we have access_token in hash with type=recovery, it's a valid recovery link
         if (accessToken && type === 'recovery') {
           console.log('Recovery token found in hash');
           
@@ -112,8 +137,11 @@ export default function ResetPasswordPage() {
 
           console.log('Recovery session set successfully');
           setIsValidToken(true);
+          
+          // Clear hash from URL for security
+          window.history.replaceState(null, '', '/auth/reset-password');
         } else {
-          // No token found - check if user is already authenticated
+          // No token found - check if user is already authenticated (might have valid session)
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (sessionError) {
@@ -121,7 +149,7 @@ export default function ResetPasswordPage() {
           }
           
           if (session) {
-            console.log('User already has a session');
+            console.log('User already has a session - allowing password reset');
             setIsValidToken(true);
           } else {
             console.log('No recovery token or session found');
@@ -142,7 +170,9 @@ export default function ResetPasswordPage() {
       }
     };
 
-    checkRecoveryToken();
+    // Small delay to ensure OAuth check runs first
+    const timer = setTimeout(checkRecoveryToken, 100);
+    return () => clearTimeout(timer);
   }, [router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,6 +284,7 @@ export default function ResetPasswordPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {/* Error State */}
             {isValidToken === false && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -261,7 +292,7 @@ export default function ResetPasswordPage() {
                 className="rounded-lg border border-red-500/20 bg-red-500/10 p-4"
               >
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-red-600 dark:text-red-400">
                       Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş
@@ -280,76 +311,77 @@ export default function ResetPasswordPage() {
               </motion.div>
             )}
 
+            {/* Loading State */}
             {isValidToken === null && (
-              <div className="text-center py-4">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"></div>
-                <p className="mt-2 text-sm text-muted-foreground">Bağlantı kontrol ediliyor...</p>
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Bağlantı kontrol ediliyor...</p>
               </div>
             )}
 
+            {/* Form State */}
             {isValidToken === true && (
               <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Yeni Şifre
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="En az 8 karakter"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  minLength={8}
-                  className="h-11"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    Yeni Şifre
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="En az 8 karakter"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    minLength={8}
+                    className="h-11"
+                    disabled={loading}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                  Yeni Şifre (Tekrar)
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Şifrenizi tekrar girin"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  required
-                  minLength={8}
-                  className="h-11"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                    Yeni Şifre (Tekrar)
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Şifrenizi tekrar girin"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    required
+                    minLength={8}
+                    className="h-11"
+                    disabled={loading}
+                  />
+                </div>
 
-              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-2">Şifre Gereksinimleri:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>En az 8 karakter uzunluğunda olmalı</li>
-                  <li>En az bir büyük harf (A-Z)</li>
-                  <li>En az bir küçük harf (a-z)</li>
-                  <li>En az bir rakam (0-9)</li>
-                  <li>En az bir özel karakter (!@#$%^&*...)</li>
-                </ul>
-              </div>
+                <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground mb-2">Şifre Gereksinimleri:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>En az 8 karakter uzunluğunda olmalı</li>
+                    <li>En az bir büyük harf (A-Z)</li>
+                    <li>En az bir küçük harf (a-z)</li>
+                    <li>En az bir rakam (0-9)</li>
+                    <li>En az bir özel karakter (!@#$%^&*...)</li>
+                  </ul>
+                </div>
 
-              <Button
-                type="submit"
-                className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02]"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="flex items-center">
-                    <svg className="mr-2 h-5 w-5 animate-spin" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Güncelleniyor...
-                  </span>
-                ) : (
-                  'Şifreyi Güncelle'
-                )}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02]"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="flex items-center">
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Güncelleniyor...
+                    </span>
+                  ) : (
+                    'Şifreyi Güncelle'
+                  )}
+                </Button>
+              </form>
             )}
 
             <div className="space-y-4 pt-4 border-t">

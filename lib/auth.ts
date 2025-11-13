@@ -439,27 +439,59 @@ export const getUserProfile = async (userId: string) => {
 };
 
 export const signInWithGithub = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'github',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
+  try {
+    if (typeof window === 'undefined') {
+      throw new Error('OAuth sadece tarayıcıda çalışır');
+    }
 
-  if (error) throw error;
-  return data;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      console.error('GitHub OAuth error:', error);
+      throw new Error(error.message || 'GitHub ile giriş yapılamadı');
+    }
+
+    return data;
+  } catch (error: any) {
+    // Re-throw user-friendly errors
+    if (error?.message && !error.message.includes('OAuth')) {
+      throw error;
+    }
+    throw new Error(error?.message || 'GitHub ile giriş yapılamadı');
+  }
 };
 
 export const signInWithGoogle = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
+  try {
+    if (typeof window === 'undefined') {
+      throw new Error('OAuth sadece tarayıcıda çalışır');
+    }
 
-  if (error) throw error;
-  return data;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      console.error('Google OAuth error:', error);
+      throw new Error(error.message || 'Google ile giriş yapılamadı');
+    }
+
+    return data;
+  } catch (error: any) {
+    // Re-throw user-friendly errors
+    if (error?.message && !error.message.includes('OAuth')) {
+      throw error;
+    }
+    throw new Error(error?.message || 'Google ile giriş yapılamadı');
+  }
 };
 
 export const resetPassword = async (email: string) => {

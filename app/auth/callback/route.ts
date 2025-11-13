@@ -93,7 +93,6 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
 
       if (usernameCheckError) {
         console.error('OAuth callback - Username check error:', usernameCheckError);
-        // Continue to next candidate
         continue;
       }
 
@@ -104,7 +103,6 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     }
 
     if (!username) {
-      // Fallback username if all candidates are taken
       username = `kullanici-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     }
 
@@ -115,8 +113,7 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
       user.email?.split('@')[0] ||
       'Yeni Kullanıcı';
 
-    // Insert user profile
-    // Use upsert instead of insert to handle race conditions
+    // Use upsert to handle race conditions
     const { data: insertedProfile, error: insertError } = await supabase
       .from('user_profiles')
       .upsert({
@@ -154,7 +151,6 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
       details: error?.details,
       hint: error?.hint,
     });
-    // Re-throw to be caught by the calling function
     throw error;
   }
 };
@@ -162,8 +158,34 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const type = requestUrl.searchParams.get('type'); // Check if this is a recovery (password reset)
+  const type = requestUrl.searchParams.get('type'); // 'recovery' for password reset
+  const error = requestUrl.searchParams.get('error');
+  const errorDescription = requestUrl.searchParams.get('error_description');
 
+  // ============================================
+  // STEP 1: Handle OAuth errors (NO CODE)
+  // ============================================
+  // If there's an error parameter but no code, this is an OAuth error
+  // (user cancelled, access denied, etc.)
+  if (error && !code) {
+    console.error('OAuth error in callback (no code):', {
+      error,
+      errorDescription,
+      url: requestUrl.toString(),
+    });
+    
+    // Always redirect to signin for OAuth errors
+    const signinUrl = new URL('/auth/signin', request.url);
+    signinUrl.searchParams.set('error', 'oauth_failed');
+    if (errorDescription) {
+      signinUrl.searchParams.set('error_description', errorDescription);
+    }
+    return NextResponse.redirect(signinUrl);
+  }
+
+  // ============================================
+  // STEP 2: Handle code exchange (OAuth or Recovery)
+  // ============================================
   if (code) {
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -183,31 +205,91 @@ export async function GET(request: NextRequest) {
         },
       }
     );
+
     try {
       // Exchange code for session
       const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
       
       if (exchangeError) {
-        console.error('Callback - Exchange code error:', exchangeError);
-        throw exchangeError;
+        console.error('Callback - Exchange code error:', {
+          error: exchangeError,
+          code: code.substring(0, 10) + '...',
+          type,
+        });
+        
+        // If this is a recovery type, redirect to reset-password with error
+        if (type === 'recovery') {
+          console.log('Recovery callback error - redirecting to reset-password');
+          return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
+        }
+        
+        // For OAuth errors, redirect to signin
+        const signinUrl = new URL('/auth/signin', request.url);
+        signinUrl.searchParams.set('error', 'oauth_failed');
+        return NextResponse.redirect(signinUrl);
+      }
+
+      if (!sessionData?.user) {
+        console.error('Callback - No user in session data');
+        
+        if (type === 'recovery') {
+          return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
+        }
+        
+        const signinUrl = new URL('/auth/signin', request.url);
+        signinUrl.searchParams.set('error', 'oauth_failed');
+        return NextResponse.redirect(signinUrl);
       }
 
       console.log('Callback - Session exchanged successfully:', {
-        userId: sessionData?.user?.id,
-        email: sessionData?.user?.email,
+        userId: sessionData.user.id,
+        email: sessionData.user.email,
         type: type || 'oauth',
       });
 
-      // If this is a password reset (recovery), redirect to reset-password page
+      // ============================================
+      // STEP 3: Handle Password Reset (Recovery)
+      // ============================================
       if (type === 'recovery') {
         console.log('Password reset callback - redirecting to reset-password');
+        // Redirect to reset-password page - it will handle the session
         return NextResponse.redirect(new URL('/auth/reset-password', request.url));
       }
 
-      // For OAuth, ensure user profile exists
-      await ensureUserProfile(supabase);
+      // ============================================
+      // STEP 4: Handle OAuth (Google/GitHub)
+      // ============================================
+      // Ensure user profile exists
+      try {
+        await ensureUserProfile(supabase);
+      } catch (profileError: any) {
+        console.error('OAuth callback - Profile creation failed:', profileError);
+        // Continue anyway - profile might already exist
+      }
       
-      console.log('OAuth callback - Process completed successfully');
+      // Get user profile to check admin status for redirect
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role, is_admin')
+        .eq('id', sessionData.user.id)
+        .maybeSingle();
+
+      // Determine redirect based on user role
+      let redirectUrl = '/dashboard';
+      
+      // If user is admin, redirect to admin dashboard
+      if (profile && (profile.role === 'admin' || profile.is_admin === true)) {
+        redirectUrl = '/admin/dashboard';
+      }
+      
+      console.log('OAuth callback - Process completed successfully', {
+        userId: sessionData.user.id,
+        email: sessionData.user.email,
+        isAdmin: profile?.role === 'admin' || profile?.is_admin === true,
+        redirectTo: redirectUrl,
+      });
+      
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
     } catch (error: any) {
       // Log error in all environments for debugging
       console.error('Callback error:', {
@@ -215,19 +297,32 @@ export async function GET(request: NextRequest) {
         code: error?.code,
         details: error?.details,
         hint: error?.hint,
+        type,
         stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       });
       
       // If recovery type, redirect to reset-password with error
       if (type === 'recovery') {
+        console.log('Recovery callback error - redirecting to reset-password');
         return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
       }
       
-      // Redirect to signin with error parameter
-      return NextResponse.redirect(new URL('/auth/signin?error=oauth_failed', request.url));
+      // For OAuth errors, ALWAYS redirect to signin (never reset-password)
+      console.log('OAuth callback error - redirecting to signin');
+      const signinUrl = new URL('/auth/signin', request.url);
+      signinUrl.searchParams.set('error', 'oauth_failed');
+      if (error?.message) {
+        signinUrl.searchParams.set('error_description', error.message);
+      }
+      return NextResponse.redirect(signinUrl);
     }
   }
 
-  // URL to redirect to after sign in process completes
+  // ============================================
+  // STEP 5: Fallback (No code, no error)
+  // ============================================
+  // If no code and no error, redirect to dashboard
+  // This should rarely happen
+  console.warn('Callback - No code and no error, redirecting to dashboard');
   return NextResponse.redirect(new URL('/dashboard', request.url));
 }
