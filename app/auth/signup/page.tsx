@@ -290,44 +290,44 @@ export default function SignUpPage() {
         className="relative z-10 w-full max-w-md"
       >
         <Card className="border-border/50 bg-card/80 backdrop-blur-xl shadow-2xl">
-          <CardHeader className="space-y-2 text-center pb-4">
+          <CardHeader className="space-y-4 text-center">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", duration: 0.6 }}
-              className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/50"
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/50"
             >
-              <Zap className="h-6 w-6 text-white" />
+              <Zap className="h-8 w-8 text-white" />
             </motion.div>
             <div>
-              <CardTitle className="text-2xl font-bold">Hesap Oluşturun</CardTitle>
-              <CardDescription className="mt-1 text-sm">
+              <CardTitle className="text-3xl font-bold">Hesap Oluşturun</CardTitle>
+              <CardDescription className="mt-2 text-base">
                 Otomasyonlarınızı yönetmeye başlayın
               </CardDescription>
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {/* OAuth Buttons */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
+                className="w-full h-12 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
                 onClick={handleGithubSignIn}
                 disabled={oauthLoading !== null}
               >
-                <Github className="mr-2 h-4 w-4" />
+                <Github className="mr-2 h-5 w-5" />
                 {oauthLoading === 'github' ? 'Yönlendiriliyor...' : 'GitHub ile Kayıt Ol'}
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-10 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
+                className="w-full h-12 border-2 hover:bg-accent transition-all hover:scale-[1.02]"
                 onClick={handleGoogleSignIn}
                 disabled={oauthLoading !== null}
               >
-                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -382,7 +382,7 @@ export default function SignUpPage() {
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         required
-                        className="h-10 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        className="h-11 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       />
                       {formData.username && formData.username.length >= 3 && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
@@ -406,7 +406,7 @@ export default function SignUpPage() {
                       placeholder="Adınız Soyadınız"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      className="h-11 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                     />
                   </div>
                 </div>
@@ -483,7 +483,7 @@ export default function SignUpPage() {
                       }}
                       autoComplete="tel"
                       maxLength={13}
-                      className="h-10 flex-1 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      className="h-11 flex-1 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                     />
                   </div>
                   <p className="text-[10px] text-muted-foreground">Türkiye (+90) - 10 haneli numara</p>
@@ -513,7 +513,7 @@ export default function SignUpPage() {
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required
                         minLength={8}
-                        className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        className="h-11 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       />
                       {formData.password && (() => {
                         const hasUpperCase = /[A-Z]/.test(formData.password);
@@ -564,7 +564,7 @@ export default function SignUpPage() {
                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         required
                         minLength={8}
-                        className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        className="h-11 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       />
                       {formData.confirmPassword && formData.password === formData.confirmPassword && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
