@@ -27,24 +27,28 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const checkRecoveryToken = async () => {
       try {
-        // Check URL hash for recovery token
+        // Check URL hash for recovery token (most common for password reset)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
+        const hashError = hashParams.get('error');
 
-        // Also check query params (fallback)
+        // Also check query params
         const code = searchParams.get('code');
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
 
         // If there's an error in URL, show it
-        if (error) {
+        if (error || hashError) {
+          const errorCode = error || hashError;
+          const desc = errorDescription || hashParams.get('error_description');
+          
           console.error('Password reset error from URL:', {
-            error,
-            errorDescription,
+            error: errorCode,
+            errorDescription: desc,
           });
           
-          if (error === 'access_denied' || error === 'otp_expired') {
+          if (errorCode === 'access_denied' || errorCode === 'otp_expired') {
             setIsValidToken(false);
             toast.error('Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş', {
               duration: 8000,
@@ -54,50 +58,60 @@ export default function ResetPasswordPage() {
           }
         }
 
+        // If we have code parameter, redirect to callback to handle it server-side
+        if (code) {
+          console.log('Code parameter found, redirecting to callback:', code);
+          router.replace(`/auth/callback?code=${code}&type=recovery`);
+          return;
+        }
+
         // If we have access_token in hash, it's a valid recovery link
         if (accessToken && type === 'recovery') {
-          // Verify the session is valid
+          console.log('Recovery token found in hash');
+          
+          // Try to set the session from the hash
+          const { data: sessionData, error: setSessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: hashParams.get('refresh_token') || '',
+          });
+
+          if (setSessionError) {
+            console.error('Set session error:', setSessionError);
+            setIsValidToken(false);
+            toast.error('Şifre sıfırlama bağlantısı geçersiz', {
+              duration: 6000,
+              description: 'Lütfen yeni bir şifre sıfırlama isteği gönderin.',
+            });
+            return;
+          }
+
+          // Verify session was set
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (sessionError || !session) {
-            // Try to set the session from the hash
-            const { error: setSessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: hashParams.get('refresh_token') || '',
-            });
-
-            if (setSessionError) {
-              console.error('Set session error:', setSessionError);
-              setIsValidToken(false);
-              toast.error('Şifre sıfırlama bağlantısı geçersiz', {
-                duration: 6000,
-              });
-              return;
-            }
-          }
-
-          setIsValidToken(true);
-        } else if (code) {
-          // If we have a code, exchange it for session
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (exchangeError) {
-            console.error('Exchange code error:', exchangeError);
+            console.error('Session verification failed:', sessionError);
             setIsValidToken(false);
-            toast.error('Şifre sıfırlama bağlantısı geçersiz', {
+            toast.error('Oturum oluşturulamadı', {
               duration: 6000,
             });
             return;
           }
 
+          console.log('Recovery session set successfully');
           setIsValidToken(true);
         } else {
           // No token found - check if user is already authenticated
-          const { data: { session } } = await supabase.auth.getSession();
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) {
+            console.error('Get session error:', sessionError);
+          }
           
           if (session) {
+            console.log('User already has a session');
             setIsValidToken(true);
           } else {
+            console.log('No recovery token or session found');
             setIsValidToken(false);
             toast.error('Şifre sıfırlama bağlantısı bulunamadı', {
               duration: 6000,
@@ -110,12 +124,13 @@ export default function ResetPasswordPage() {
         setIsValidToken(false);
         toast.error('Bir hata oluştu', {
           duration: 6000,
+          description: error?.message || 'Lütfen tekrar deneyin.',
         });
       }
     };
 
     checkRecoveryToken();
-  }, [searchParams]);
+  }, [router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

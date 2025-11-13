@@ -162,6 +162,7 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const type = requestUrl.searchParams.get('type'); // Check if this is a recovery (password reset)
 
   if (code) {
     const cookieStore = await cookies();
@@ -187,28 +188,40 @@ export async function GET(request: NextRequest) {
       const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
       
       if (exchangeError) {
-        console.error('OAuth callback - Exchange code error:', exchangeError);
+        console.error('Callback - Exchange code error:', exchangeError);
         throw exchangeError;
       }
 
-      console.log('OAuth callback - Session exchanged successfully:', {
+      console.log('Callback - Session exchanged successfully:', {
         userId: sessionData?.user?.id,
         email: sessionData?.user?.email,
+        type: type || 'oauth',
       });
 
-      // Ensure user profile exists
+      // If this is a password reset (recovery), redirect to reset-password page
+      if (type === 'recovery') {
+        console.log('Password reset callback - redirecting to reset-password');
+        return NextResponse.redirect(new URL('/auth/reset-password', request.url));
+      }
+
+      // For OAuth, ensure user profile exists
       await ensureUserProfile(supabase);
       
       console.log('OAuth callback - Process completed successfully');
     } catch (error: any) {
       // Log error in all environments for debugging
-      console.error('OAuth callback error:', {
+      console.error('Callback error:', {
         message: error?.message,
         code: error?.code,
         details: error?.details,
         hint: error?.hint,
         stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       });
+      
+      // If recovery type, redirect to reset-password with error
+      if (type === 'recovery') {
+        return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
+      }
       
       // Redirect to signin with error parameter
       return NextResponse.redirect(new URL('/auth/signin?error=oauth_failed', request.url));
