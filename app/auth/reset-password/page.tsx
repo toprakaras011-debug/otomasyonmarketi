@@ -42,9 +42,13 @@ export default function ResetPasswordPage() {
       const referrer = document.referrer;
       const isFromOAuthCallback = referrer.includes('/auth/callback');
       
-      if (isOAuthError || isFromOAuthCallback) {
+      // Additional check: if URL contains oauth-related parameters
+      const hasOAuthParams = window.location.search.includes('code=') && 
+                           !window.location.search.includes('type=recovery');
+      
+      if (isOAuthError || isFromOAuthCallback || hasOAuthParams) {
         console.log('OAuth error detected on reset-password page, redirecting to signin');
-        router.replace('/auth/signin?error=oauth_failed');
+        router.replace('/auth/signin?error=oauth_failed&message=OAuth girişi başarısız oldu. Lütfen tekrar deneyin.');
         return;
       }
     }

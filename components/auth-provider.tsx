@@ -142,14 +142,9 @@ export function AuthProvider({
         }
         // Same user - check if we need to refresh profile
         else {
-          // Always refresh profile for admin accounts to ensure latest permissions
-          if (initialProfile?.is_admin || initialProfile?.role === 'admin') {
-            await fetchUserProfile(sessionUser, true);
-          }
-          // For regular users, only refresh if profile is missing
-          else if (!initialProfile) {
-            await fetchUserProfile(sessionUser, true);
-          }
+          // Always refresh profile to ensure latest permissions (especially for admin)
+          // This ensures admin status changes are reflected immediately
+          await fetchUserProfile(sessionUser, true);
         }
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {

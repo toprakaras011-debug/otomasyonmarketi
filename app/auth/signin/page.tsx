@@ -36,14 +36,19 @@ export default function SignInPage() {
   // Show OAuth error if present
   useEffect(() => {
     if (oauthError === 'oauth_failed') {
-      const errorMsg = oauthErrorDescription || 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
+      const message = searchParams.get('message');
+      const errorMsg = message || oauthErrorDescription || 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
       toast.error(errorMsg, {
-        duration: 6000,
+        duration: 8000,
+        description: 'Lütfen tekrar deneyin veya e-posta ile giriş yapın.',
       });
-      // Clean URL
-      router.replace('/auth/signin');
+      // Clean URL after showing error
+      const timer = setTimeout(() => {
+        router.replace('/auth/signin');
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [oauthError, oauthErrorDescription, router]);
+  }, [oauthError, oauthErrorDescription, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,12 +172,18 @@ export default function SignInPage() {
     
     setOauthLoading('google');
     try {
+      // Clear any existing errors from URL
+      if (window.location.search.includes('error=')) {
+        window.history.replaceState({}, '', '/auth/signin');
+      }
+      
       await signInWithGoogle();
       // OAuth redirects, so we don't need to handle success here
     } catch (error: any) {
+      console.error('Google OAuth signin error:', error);
       const errorMessage = error?.message || 'Google ile giriş yapılamadı';
       toast.error(errorMessage, {
-        duration: 5000,
+        duration: 8000,
         description: 'Lütfen tekrar deneyin veya e-posta ile giriş yapın.',
       });
       setOauthLoading(null);

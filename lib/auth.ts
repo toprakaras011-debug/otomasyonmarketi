@@ -472,10 +472,17 @@ export const signInWithGoogle = async () => {
       throw new Error('OAuth sadece tarayıcıda çalışır');
     }
 
+    // Clear any existing session first to prevent conflicts
+    await supabase.auth.signOut();
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     });
 
@@ -486,6 +493,7 @@ export const signInWithGoogle = async () => {
 
     return data;
   } catch (error: any) {
+    console.error('Google OAuth function error:', error);
     // Re-throw user-friendly errors
     if (error?.message && !error.message.includes('OAuth')) {
       throw error;

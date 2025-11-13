@@ -11,6 +11,26 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // ============================================
+  // STEP 1: Handle OAuth redirect issues
+  // ============================================
+  const url = request.nextUrl;
+  
+  // Prevent OAuth errors from reaching reset-password page
+  if (url.pathname === '/auth/reset-password') {
+    const error = url.searchParams.get('error');
+    const code = url.searchParams.get('code');
+    const type = url.searchParams.get('type');
+    
+    // If there's an OAuth error or code without recovery type, redirect to signin
+    if ((error && error !== 'invalid_token') || (code && type !== 'recovery')) {
+      const signinUrl = new URL('/auth/signin', request.url);
+      signinUrl.searchParams.set('error', 'oauth_failed');
+      signinUrl.searchParams.set('message', 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.');
+      return NextResponse.redirect(signinUrl);
+    }
+  }
+
   // Create Supabase client for session management
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

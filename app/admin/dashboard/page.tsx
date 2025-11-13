@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
 import AdminAutomationList from '@/components/admin/AdminAutomationList';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 import { Loader2, Package, Users, TrendingUp, DollarSign, Shield } from 'lucide-react';
 
 type StatSummary = {
@@ -44,12 +45,18 @@ export default function AdminDashboardPage() {
 
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('role')
+        .select('role, is_admin')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (profile?.role !== 'admin') {
-        router.replace('/');
+      // Check both role and is_admin for admin access
+      const isAdmin = profile?.role === 'admin' || profile?.is_admin === true;
+      
+      if (!isAdmin) {
+        toast.error('Bu sayfaya erişim yetkiniz yok.', {
+          duration: 4000,
+        });
+        router.replace('/dashboard');
         return;
       }
 

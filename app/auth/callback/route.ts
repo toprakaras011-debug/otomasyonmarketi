@@ -162,6 +162,14 @@ export async function GET(request: NextRequest) {
   const error = requestUrl.searchParams.get('error');
   const errorDescription = requestUrl.searchParams.get('error_description');
 
+  console.log('OAuth Callback - Request details:', {
+    code: code ? `${code.substring(0, 10)}...` : null,
+    type,
+    error,
+    errorDescription,
+    url: requestUrl.toString(),
+  });
+
   // ============================================
   // STEP 1: Handle OAuth errors (NO CODE)
   // ============================================
@@ -174,12 +182,10 @@ export async function GET(request: NextRequest) {
       url: requestUrl.toString(),
     });
     
-    // Always redirect to signin for OAuth errors
+    // NEVER redirect to reset-password for OAuth errors
     const signinUrl = new URL('/auth/signin', request.url);
     signinUrl.searchParams.set('error', 'oauth_failed');
-    if (errorDescription) {
-      signinUrl.searchParams.set('error_description', errorDescription);
-    }
+    signinUrl.searchParams.set('message', errorDescription || 'OAuth girişi başarısız oldu');
     return NextResponse.redirect(signinUrl);
   }
 
@@ -223,9 +229,10 @@ export async function GET(request: NextRequest) {
           return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
         }
         
-        // For OAuth errors, redirect to signin
+        // For OAuth errors, redirect to signin with detailed error
         const signinUrl = new URL('/auth/signin', request.url);
         signinUrl.searchParams.set('error', 'oauth_failed');
+        signinUrl.searchParams.set('message', 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.');
         return NextResponse.redirect(signinUrl);
       }
 

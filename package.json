@@ -19,11 +19,19 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e:critical"
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e:critical",
+    "analyze": "ANALYZE=true npm run build",
+    "analyze:server": "BUNDLE_ANALYZE=server npm run build",
+    "analyze:browser": "BUNDLE_ANALYZE=browser npm run build",
+    "performance:audit": "lighthouse http://localhost:3000 --output=html --output-path=./performance-audit.html",
+    "security:audit": "npm audit --audit-level=moderate",
+    "optimize": "npm run analyze && npm run performance:audit && npm run security:audit",
+    "vercel-build": "next build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@next/swc-wasm-nodejs": "13.5.1",
+    "web-vitals": "^3.5.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",

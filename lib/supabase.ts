@@ -25,6 +25,13 @@ export const supabase = createClient(
     global: {
       headers: {
         'x-client-info': 'otomasyonmagazasi-web',
+        'x-application-name': 'otomasyonmagazasi',
+      },
+    },
+    // Realtime options for better connection stability
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
       },
     },
   } as any
