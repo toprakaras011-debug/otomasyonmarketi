@@ -212,14 +212,29 @@ export default function SignUpPage() {
       });
 
       const errorMessage = error?.message || 'Kayıt oluşturulamadı';
-      toast.error(errorMessage, {
-        duration: 6000,
-        description: errorMessage.includes('e-posta') || errorMessage.includes('kullanıcı adı')
-          ? 'Lütfen farklı bir e-posta veya kullanıcı adı deneyin.'
-          : errorMessage.includes('kolonu') || errorMessage.includes('veritabanı')
-          ? 'Lütfen yöneticiye bildirin.'
-          : undefined,
-      });
+      
+      // Special handling for "already registered" errors
+      if (errorMessage.includes('zaten kayıtlı') || errorMessage.includes('already registered')) {
+        toast.error(errorMessage, {
+          duration: 8000,
+          description: 'Bu e-posta ile giriş yapmayı deneyin veya şifrenizi sıfırlayın.',
+          action: {
+            label: 'Giriş Yap',
+            onClick: () => router.push('/auth/signin'),
+          },
+        });
+      } else {
+        toast.error(errorMessage, {
+          duration: 6000,
+          description: errorMessage.includes('e-posta') || errorMessage.includes('kullanıcı adı')
+            ? 'Lütfen farklı bir e-posta veya kullanıcı adı deneyin.'
+            : errorMessage.includes('kolonu') || errorMessage.includes('veritabanı')
+            ? 'Lütfen yöneticiye bildirin.'
+            : errorMessage.includes('profil bulunamadı')
+            ? 'Lütfen şifre sıfırlama sayfasını kullanın veya destek ekibiyle iletişime geçin.'
+            : undefined,
+        });
+      }
       setTurnstileToken(null); // Reset Turnstile on error
     } finally {
       setLoading(false);

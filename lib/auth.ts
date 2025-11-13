@@ -101,27 +101,45 @@ export const signUp = async (
     });
 
     if (authError) {
-      // Only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Sign up error:', {
-          message: authError.message,
-          status: authError.status,
-          name: authError.name,
-        });
-      }
+      // Log error in all environments for debugging
+      console.error('Sign up error:', {
+        message: authError.message,
+        status: authError.status,
+        name: authError.name,
+        code: authError.code,
+      });
 
       // Check for specific error codes and messages
       const errorMessage = authError.message?.toLowerCase() || '';
       const errorCode = authError.status;
 
-      // Email already exists
+      // Email already exists - but check if profile exists
       if (
         errorMessage.includes('user already registered') ||
         errorMessage.includes('already registered') ||
         errorMessage.includes('email already exists') ||
         errorCode === 422
       ) {
-        throw new Error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.');
+        // Check if profile exists - if not, we can try to create it
+        try {
+          const { data: profileCheck } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('username', trimmedUsername)
+            .maybeSingle();
+
+          // If profile doesn't exist but user does, suggest password reset or contact support
+          if (!profileCheck) {
+            throw new Error('Bu e-posta adresi kayıtlı görünüyor ancak profil bulunamadı. Lütfen şifre sıfırlama sayfasını kullanın veya destek ekibiyle iletişime geçin.');
+          }
+        } catch (profileError: any) {
+          // If profile check fails, just throw the original error
+          if (profileError.message && !profileError.message.includes('Bu e-posta')) {
+            throw profileError;
+          }
+        }
+
+        throw new Error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin veya şifrenizi sıfırlayın.');
       }
 
       // Invalid email
