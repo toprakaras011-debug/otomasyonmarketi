@@ -5,7 +5,8 @@ export const signUp = async (
   password: string,
   username: string,
   fullName?: string,
-  phone?: string
+  phone?: string,
+  role?: 'user' | 'developer'
 ) => {
   try {
     // Validate inputs
@@ -156,20 +157,37 @@ export const signUp = async (
     }
 
     // Create user profile
+    const profileData: any = {
+      id: authData.user.id,
+      username: trimmedUsername,
+      full_name: fullName?.trim() || null,
+      phone: normalizedPhone || null,
+    };
+
+    // Add role if provided (default is 'user')
+    if (role) {
+      // If developer, set developer flags
+      if (role === 'developer') {
+        profileData.is_developer = true;
+      }
+    }
+
+    // Use upsert instead of insert to handle potential race conditions
+    // This prevents errors if profile already exists
     const { error: profileError } = await supabase
       .from('user_profiles')
-      .insert({
-        id: authData.user.id,
-        username: trimmedUsername,
-        full_name: fullName?.trim() || null,
-        phone: normalizedPhone || null,
+      .upsert(profileData, {
+        onConflict: 'id',
       });
 
     if (profileError) {
-      // Only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Profile creation error:', profileError);
-      }
+      // Log error in all environments for debugging
+      console.error('Profile creation error:', {
+        message: profileError.message,
+        code: profileError.code,
+        details: profileError.details,
+        hint: profileError.hint,
+      });
 
       // Check for specific errors
       const errorMessage = profileError.message?.toLowerCase() || '';
@@ -185,8 +203,19 @@ export const signUp = async (
         throw new Error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
       }
 
-      // Generic profile error
-      throw new Error('Profil oluşturulamadı. Lütfen tekrar deneyin.');
+      // Column doesn't exist error
+      if (
+        errorCode === '42703' ||
+        errorMessage.includes('column') ||
+        errorMessage.includes('does not exist')
+      ) {
+        throw new Error('Veritabanı hatası: Profil kolonu bulunamadı. Lütfen yöneticiye bildirin.');
+      }
+
+      // Generic profile error with more details
+      throw new Error(
+        profileError.message || 'Profil oluşturulamadı. Lütfen tekrar deneyin.'
+      );
     }
 
     return authData;

@@ -2,6 +2,7 @@ import { Page, expect } from '@playwright/test';
 
 /**
  * Fast form field fill with optimized waiting
+ * Supports both name and id attributes
  */
 export async function fillFormField(
   page: Page,
@@ -9,10 +10,19 @@ export async function fillFormField(
   value: string,
   fieldType: 'input' | 'textarea' | 'select' = 'input'
 ) {
-  const selector = `${fieldType}[name="${fieldName}"]`;
-  // Wait for field to be ready, but with shorter timeout
-  await page.waitForSelector(selector, { state: 'visible', timeout: 5000 });
-  await page.fill(selector, value, { timeout: 5000 });
+  // Try name attribute first, then fallback to id
+  const nameSelector = `${fieldType}[name="${fieldName}"]`;
+  const idSelector = `${fieldType}#${fieldName}`;
+  
+  // Wait for either selector to be available
+  try {
+    await page.waitForSelector(nameSelector, { state: 'visible', timeout: 2000 });
+    await page.fill(nameSelector, value, { timeout: 5000 });
+  } catch {
+    // Fallback to id selector
+    await page.waitForSelector(idSelector, { state: 'visible', timeout: 5000 });
+    await page.fill(idSelector, value, { timeout: 5000 });
+  }
 }
 
 export async function selectOption(

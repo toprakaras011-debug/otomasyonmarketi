@@ -154,13 +154,31 @@ export default function SignUpPage() {
     try {
       const normalizedEmail = formData.email.trim().toLowerCase();
 
-      await signUp(
+      // Log signup attempt in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Signup attempt:', {
+          email: normalizedEmail,
+          username: formData.username.trim(),
+          role: formData.role,
+        });
+      }
+
+      const result = await signUp(
         normalizedEmail,
         formData.password,
         formData.username.trim(),
         formData.fullName?.trim() || undefined,
-        formData.phone?.trim() || undefined
+        formData.phone?.trim() || undefined,
+        formData.role
       );
+
+      // Log success in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Signup successful:', {
+          userId: result?.user?.id,
+          email: result?.user?.email,
+        });
+      }
       
       toast.success('Hesabınız başarıyla oluşturuldu!', {
         duration: 5000,
@@ -172,11 +190,20 @@ export default function SignUpPage() {
         router.push('/auth/signin');
       }, 2000);
     } catch (error: any) {
+      // Log error in all environments for debugging
+      console.error('Signup error:', {
+        message: error?.message,
+        name: error?.name,
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      });
+
       const errorMessage = error?.message || 'Kayıt oluşturulamadı';
       toast.error(errorMessage, {
         duration: 6000,
         description: errorMessage.includes('e-posta') || errorMessage.includes('kullanıcı adı')
           ? 'Lütfen farklı bir e-posta veya kullanıcı adı deneyin.'
+          : errorMessage.includes('kolonu') || errorMessage.includes('veritabanı')
+          ? 'Lütfen yöneticiye bildirin.'
           : undefined,
       });
       setTurnstileToken(null); // Reset Turnstile on error
