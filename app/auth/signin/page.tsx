@@ -65,10 +65,32 @@ export default function SignInPage() {
       });
 
       if (error === 'oauth_failed') {
-        toast.error('OAuth Girişi Başarısız', {
-          duration: 8000,
-          description: decodedMessage,
-        });
+        // Check if message suggests user might already exist
+        const suggestsUserExists = decodedMessage.includes('zaten oluşturulmuş') || 
+                                   decodedMessage.includes('already') ||
+                                   decodedMessage.includes('oluşturulmuş olabilir');
+        
+        if (suggestsUserExists) {
+          toast.error('OAuth Girişi Başarısız', {
+            duration: 10000,
+            description: decodedMessage,
+            action: {
+              label: 'Normal Giriş Yap',
+              onClick: () => {
+                // Focus email input if available
+                const emailInput = document.getElementById('email') as HTMLInputElement;
+                if (emailInput) {
+                  emailInput.focus();
+                }
+              },
+            },
+          });
+        } else {
+          toast.error('OAuth Girişi Başarısız', {
+            duration: 8000,
+            description: decodedMessage,
+          });
+        }
       } else {
         toast.error('Giriş Hatası', {
           duration: 6000,
