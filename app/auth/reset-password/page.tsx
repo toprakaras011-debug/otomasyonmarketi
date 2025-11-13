@@ -27,36 +27,49 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const checkRecoveryToken = async () => {
       try {
-        // Check URL hash for recovery token (most common for password reset)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const type = hashParams.get('type');
-        const hashError = hashParams.get('error');
-
-        // Also check query params
-        const code = searchParams.get('code');
+        // FIRST: Check for errors in URL (priority)
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
+        
+        // Check URL hash for errors too
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const hashError = hashParams.get('error');
+        const hashErrorDescription = hashParams.get('error_description');
 
-        // If there's an error in URL, show it
+        // If there's an error in URL, handle it immediately
         if (error || hashError) {
           const errorCode = error || hashError;
-          const desc = errorDescription || hashParams.get('error_description');
+          const desc = errorDescription || hashErrorDescription;
           
           console.error('Password reset error from URL:', {
             error: errorCode,
             errorDescription: desc,
           });
           
-          if (errorCode === 'access_denied' || errorCode === 'otp_expired') {
-            setIsValidToken(false);
+          // Set invalid token immediately
+          setIsValidToken(false);
+          
+          // Show appropriate error message
+          if (errorCode === 'access_denied' || errorCode === 'otp_expired' || errorCode === 'invalid_token') {
             toast.error('Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş', {
               duration: 8000,
               description: 'Lütfen yeni bir şifre sıfırlama isteği gönderin.',
             });
-            return;
+          } else {
+            toast.error('Şifre sıfırlama bağlantısında hata var', {
+              duration: 6000,
+              description: desc || 'Lütfen yeni bir şifre sıfırlama isteği gönderin.',
+            });
           }
+          return;
         }
+
+        // Check URL hash for recovery token (most common for password reset)
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+
+        // Also check query params
+        const code = searchParams.get('code');
 
         // If we have code parameter, redirect to callback to handle it server-side
         if (code) {
