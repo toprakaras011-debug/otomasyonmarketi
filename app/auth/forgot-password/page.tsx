@@ -18,14 +18,43 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Client-side validation
+    if (!email?.trim()) {
+      toast.error('E-posta adresi gereklidir', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim().toLowerCase())) {
+      toast.error('Geçerli bir e-posta adresi giriniz', {
+        duration: 4000,
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await resetPassword(email);
+      await resetPassword(email.trim().toLowerCase());
       setEmailSent(true);
-      toast.success('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi!');
+      toast.success('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi!', {
+        duration: 6000,
+        description: 'E-postanızı kontrol edin. Spam klasörünü de kontrol etmeyi unutmayın.',
+      });
     } catch (error: any) {
-      toast.error(error.message || 'E-posta gönderilemedi');
+      console.error('Forgot password error:', error);
+      toast.error(error?.message || 'E-posta gönderilemedi', {
+        duration: 6000,
+        description: error?.message?.includes('bulunamadı')
+          ? 'Bu e-posta adresi ile kayıtlı bir kullanıcı yok. Lütfen kayıt olun.'
+          : error?.message?.includes('doğrulanmamış')
+          ? 'Önce e-posta doğrulama linkine tıklayın.'
+          : 'Lütfen tekrar deneyin veya destek ekibiyle iletişime geçin.',
+      });
     } finally {
       setLoading(false);
     }

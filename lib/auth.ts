@@ -454,12 +454,93 @@ export const signInWithGoogle = async () => {
 };
 
 export const resetPassword = async (email: string) => {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/reset-password`,
-  });
+  try {
+    // Validate email
+    if (!email || typeof email !== 'string') {
+      throw new Error('E-posta adresi gereklidir.');
+    }
 
-  if (error) throw error;
-  return data;
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      throw new Error('E-posta adresi boş olamaz.');
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      throw new Error('Geçerli bir e-posta adresi giriniz.');
+    }
+
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
+      (typeof window !== 'undefined' ? window.location.origin : '');
+
+    const redirectTo = `${siteUrl || window.location.origin}/auth/reset-password`;
+
+    // Log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Password reset request:', {
+        email: trimmedEmail,
+        redirectTo,
+      });
+    }
+
+    const { data, error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+      redirectTo,
+      // Add captcha token if available (for production)
+    });
+
+    if (error) {
+      console.error('Password reset error:', {
+        message: error.message,
+        status: error.status,
+        name: error.name,
+      });
+
+      // Provide user-friendly error messages
+      const errorMessage = error.message?.toLowerCase() || '';
+      
+      if (errorMessage.includes('user not found') || errorMessage.includes('email not found')) {
+        throw new Error('Bu e-posta adresi ile kayıtlı bir kullanıcı bulunamadı.');
+      } else if (errorMessage.includes('rate limit') || error.status === 429) {
+        throw new Error('Çok fazla istek yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.');
+      } else if (errorMessage.includes('email') && errorMessage.includes('invalid')) {
+        throw new Error('Geçerli bir e-posta adresi giriniz.');
+      } else if (errorMessage.includes('email not confirmed')) {
+        throw new Error('E-posta adresiniz henüz doğrulanmamış. Lütfen önce e-posta doğrulama linkine tıklayın.');
+      }
+
+      throw new Error(error.message || 'Şifre sıfırlama e-postası gönderilemedi. Lütfen tekrar deneyin.');
+    }
+
+    // Log success in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Password reset email sent successfully');
+    }
+
+    return data;
+  } catch (error: any) {
+    // Log in all environments for debugging
+    console.error('Password reset exception:', {
+      message: error?.message,
+      name: error?.name,
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+    });
+
+    // Re-throw user-friendly errors
+    if (error?.message && typeof error.message === 'string') {
+      const technicalTerms = ['AuthApiError', 'Supabase', 'API', 'JWT', 'token', 'PostgresError'];
+      const isTechnicalError = technicalTerms.some(term => 
+        error.message.includes(term)
+      );
+
+      if (!isTechnicalError) {
+        throw error; // Re-throw user-friendly errors as-is
+      }
+    }
+
+    throw new Error(error?.message || 'Şifre sıfırlama e-postası gönderilemedi. Lütfen tekrar deneyin.');
+  }
 };
 
 export const updatePassword = async (newPassword: string) => {
