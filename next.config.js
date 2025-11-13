@@ -171,10 +171,8 @@ const nextConfig = {
   // CSS and JS optimization is handled automatically by Next.js 16 + Turbopack
   // Critical CSS is automatically inlined, non-critical is deferred
   // JavaScript is automatically code-split and optimized
-  // Bundle analyzer - enabled for optimization
-  bundleAnalyzer: {
-    enabled: process.env.ANALYZE === 'true',
-  },
+  // Bundle analyzer configuration moved to separate plugin
+  // Use: npm run analyze to enable bundle analysis
 };
 
 module.exports = nextConfig;

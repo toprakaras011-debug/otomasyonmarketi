@@ -54,18 +54,3 @@ declare global {
     [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
   }
 }
-omponents
-   * @example
-   * ```tsx
-   * export default function Layout(props: LayoutProps<'/dashboard'>) {
-   *   return <div>{props.children}</div>
-   * }
-   * ```
-   */
-  type LayoutProps<LayoutRoute extends LayoutRoutes> = {
-    params: Promise<ParamMap[LayoutRoute]>
-    children: React.ReactNode
-  } & {
-    [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
-  }
-}
