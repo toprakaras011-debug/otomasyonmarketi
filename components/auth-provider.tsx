@@ -59,12 +59,14 @@ export function AuthProvider({
           .maybeSingle(); // ✅ Use maybeSingle instead of single to handle missing profiles gracefully
         
         if (error) {
-          console.error('Profile fetch error:', {
+          console.error('[DEBUG] auth-provider.tsx - Profile fetch error:', {
             message: error.message || 'Unknown error',
             code: error.code,
-            details: error.details,
-            hint: error.hint,
+            details: (error as any).details,
+            hint: (error as any).hint,
             name: error.name,
+            userId: user.id,
+            pathname,
           });
           // ✅ Admin hesapları için özel hata yönetimi
           if (error.code === 'PGRST116' || error.message?.includes('No rows')) {

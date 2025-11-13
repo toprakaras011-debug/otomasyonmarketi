@@ -183,6 +183,22 @@ export const signUp = async (
       throw new Error('Kullanıcı oluşturulamadı. Lütfen tekrar deneyin.');
     }
 
+    // Wait a moment to ensure session is fully established
+    // This is important for RLS policies to work correctly
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Verify session is established before creating profile
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession) {
+      console.warn('[DEBUG] signUp - No session after signup, waiting for trigger to create profile');
+      // Session not established yet - trigger will create profile
+      // Return success, profile will be created by trigger
+      return {
+        user: authData.user,
+        session: null,
+      };
+    }
+
     // Create user profile
     const profileData: any = {
       id: authData.user.id,
@@ -201,6 +217,7 @@ export const signUp = async (
 
     // Use upsert instead of insert to handle potential race conditions
     // This prevents errors if profile already exists
+    // Note: RLS policy requires auth.uid() = id, so session must be established
     const { error: profileError } = await supabase
       .from('user_profiles')
       .upsert(profileData, {
@@ -208,28 +225,150 @@ export const signUp = async (
       });
 
     if (profileError) {
+      // Type assertion for TypeScript
+      const error = profileError as { message?: string; code?: string; details?: string; hint?: string; status?: number };
+      
       // Log error in all environments for debugging
       console.error('Profile creation error:', {
-        message: profileError.message,
-        code: profileError.code,
-        details: profileError.details,
-        hint: profileError.hint,
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        userId: authData.user.id,
+        hasSession: !!authData.session,
       });
 
       // Check for specific errors
-      const errorMessage = profileError.message?.toLowerCase() || '';
-      const errorCode = profileError.code;
+      const errorMessage = error.message?.toLowerCase() || '';
+      const errorCode = error.code;
 
-      // Username already exists
+      // RLS policy violation or 401 Unauthorized
+      // Check error code, message, or hint for 401/RLS indicators
+      const is401Error = 
+        errorCode === 'PGRST301' ||
+        errorMessage.includes('401') ||
+        errorMessage.includes('unauthorized') ||
+        error.status === 401 ||
+        error.code === '401';
+      
+      const isRLSError =
+        errorMessage.includes('row-level security') ||
+        errorMessage.includes('violates row-level security') ||
+        errorCode === '42501';
+      
+      const is401OrRLSError = isRLSError || is401Error;
+      
+      if (is401OrRLSError) {
+        // This might happen if session is not fully established
+        // Check if session exists
+        const { data: { session: checkSession } } = await supabase.auth.getSession();
+        
+        if (!checkSession) {
+          console.warn('[DEBUG] signUp - No session, trigger will create profile automatically');
+          // No session - trigger will create profile
+          // Continue without throwing error - trigger will handle it
+          return {
+            user: authData.user,
+            session: null,
+          };
+        }
+        
+        // Session exists, try again after a short delay
+        console.warn('[DEBUG] signUp - Profile creation RLS/401 error, retrying after delay...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { error: retryError } = await supabase
+          .from('user_profiles')
+          .upsert(profileData, {
+            onConflict: 'id',
+          });
+        
+        if (retryError) {
+          console.error('[DEBUG] signUp - Profile creation retry failed:', retryError);
+          // If retry also fails, the trigger should create the profile
+          // Continue without throwing error - trigger will handle it
+          console.warn('[DEBUG] signUp - Profile creation failed, but trigger should create it automatically');
+          // Don't throw error - trigger will create profile
+          return {
+            user: authData.user,
+            session: checkSession,
+          };
+        } else {
+          console.log('[DEBUG] signUp - Profile creation succeeded on retry');
+        }
+      }
+
+      // Username already exists - but only throw if it's not a 401/RLS error
+      const is401OrRLS = 
+        errorMessage.includes('row-level security') ||
+        errorMessage.includes('401') ||
+        errorMessage.includes('unauthorized') ||
+        errorCode === '42501' ||
+        errorCode === 'PGRST301' ||
+        (profileError as any)?.status === 401;
+      
       if (
-        errorCode === '23505' ||
+        (errorCode === '23505' ||
         errorMessage.includes('unique') ||
         errorMessage.includes('duplicate') ||
-        errorMessage.includes('already exists')
+        errorMessage.includes('already exists')) &&
+        !is401OrRLS
       ) {
         throw new Error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
       }
-
+      
+      // If we get here and it's not a 401/RLS error, it's a different error
+      // But if it's 401/RLS, we already handled it above and returned
+      // So only throw if it's a different error
+      const isStill401OrRLS = 
+        errorMessage.includes('row-level security') ||
+        errorMessage.includes('violates row-level security') ||
+        errorCode === '42501' ||
+        errorCode === 'PGRST301' ||
+        (profileError as any)?.status === 401 ||
+        errorMessage.includes('401') ||
+        errorMessage.includes('unauthorized');
+      
+      if (!isStill401OrRLS) {
+        // This is a different error, throw it
+        throw new Error(profileError.message || 'Profil oluşturulamadı. Lütfen tekrar deneyin.');
+      }
+      
+      // If we get here, it was a 401/RLS error that we handled
+      // Return success - trigger will create profile
+      return {
+        user: authData.user,
+        session: authData.session,
+      };
+    }
+    
+    // If profileError exists but wasn't a 401/RLS error, handle other errors
+    // (This code should not be reached if 401/RLS was handled above)
+    // But TypeScript needs this check
+    if (profileError) {
+      const error = profileError as { message?: string; code?: string; status?: number };
+      const errorMessage = error.message?.toLowerCase() || '';
+      const errorCode = error.code;
+      
+      // Check if this is a 401/RLS error that we already handled
+      const is401OrRLS = 
+        errorMessage.includes('row-level security') ||
+        errorMessage.includes('violates row-level security') ||
+        errorCode === '42501' ||
+        errorCode === 'PGRST301' ||
+        error.status === 401 ||
+        errorMessage.includes('401') ||
+        errorMessage.includes('unauthorized');
+      
+      // Skip if already handled
+      if (is401OrRLS) {
+        // Already handled above, return success
+        return {
+          user: authData.user,
+          session: authData.session,
+        };
+      }
+      
       // Column doesn't exist error
       if (
         errorCode === '42703' ||
@@ -241,7 +380,7 @@ export const signUp = async (
 
       // Generic profile error with more details
       throw new Error(
-        profileError.message || 'Profil oluşturulamadı. Lütfen tekrar deneyin.'
+        error.message || 'Profil oluşturulamadı. Lütfen tekrar deneyin.'
       );
     }
 
@@ -274,14 +413,34 @@ export const signUp = async (
 };
 
 export const signIn = async (email: string, password: string) => {
+  console.log('[DEBUG] lib/auth.ts - signIn START', {
+    emailLength: email?.length || 0,
+    passwordLength: password?.length || 0,
+    hasEmail: !!email,
+    hasPassword: !!password,
+  });
+  
   try {
     // Basic validation
     if (!email || !password) {
+      console.warn('[DEBUG] lib/auth.ts - signIn validation failed: missing email or password', {
+        hasEmail: !!email,
+        hasPassword: !!password,
+      });
       throw new Error('E-posta ve şifre gereklidir.');
     }
 
     // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
+    console.log('[DEBUG] lib/auth.ts - signIn normalized email', {
+      originalEmail: email,
+      normalizedEmail,
+    });
+
+    console.log('[DEBUG] lib/auth.ts - signIn calling supabase.auth.signInWithPassword', {
+      normalizedEmail,
+      passwordLength: password.length,
+    });
 
     // Attempt sign in - let Supabase handle validation
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -289,15 +448,29 @@ export const signIn = async (email: string, password: string) => {
       password: password,
     });
 
+    console.log('[DEBUG] lib/auth.ts - signIn supabase response', {
+      hasData: !!data,
+      hasUser: !!data?.user,
+      hasSession: !!data?.session,
+      hasError: !!error,
+      errorMessage: error?.message,
+      errorStatus: error?.status,
+      userId: data?.user?.id,
+      userEmail: data?.user?.email,
+      emailConfirmed: data?.user?.email_confirmed_at,
+      provider: data?.user?.app_metadata?.provider,
+    });
+
     if (error) {
-      // Only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Sign in error:', {
-          message: error.message,
-          status: error.status,
-          name: error.name,
-        });
-      }
+      const errorDetails = error as any;
+      console.error('[DEBUG] lib/auth.ts - signIn error received', {
+        message: error.message,
+        status: error.status,
+        name: error.name,
+        code: errorDetails.code,
+        details: errorDetails.details,
+        hint: errorDetails.hint,
+      });
       
       // Check for specific error codes and messages
       const errorMessage = error.message?.toLowerCase() || '';
@@ -357,19 +530,57 @@ export const signIn = async (email: string, password: string) => {
 
     // Verify we got user data
     if (!data || !data.user) {
+      console.error('[DEBUG] lib/auth.ts - signIn failed: no user data', {
+        hasData: !!data,
+        hasUser: !!data?.user,
+      });
       throw new Error('Giriş başarısız. Kullanıcı bilgisi alınamadı. Lütfen tekrar deneyin.');
     }
 
     // Verify user email matches (case-insensitive)
     if (data.user.email?.toLowerCase() !== normalizedEmail) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Email mismatch:', { expected: normalizedEmail, got: data.user.email });
-      }
+      console.warn('[DEBUG] lib/auth.ts - signIn email mismatch', {
+        expected: normalizedEmail,
+        got: data.user.email,
+        normalizedGot: data.user.email?.toLowerCase(),
+      });
     }
 
+    // Check if email is verified
+    // OAuth users (Google, GitHub) have their email verified by the provider
+    // Only check for email/password users
+    const isOAuthUser = data.user.app_metadata?.provider && data.user.app_metadata.provider !== 'email';
+    
+    console.log('[DEBUG] lib/auth.ts - signIn email verification check', {
+      isOAuthUser,
+      provider: data.user.app_metadata?.provider,
+      emailConfirmed: !!data.user.email_confirmed_at,
+      emailConfirmedAt: data.user.email_confirmed_at,
+    });
+    
+    if (!isOAuthUser && !data.user.email_confirmed_at) {
+      console.warn('[DEBUG] lib/auth.ts - signIn email not verified, signing out', {
+        isOAuthUser,
+        emailConfirmed: !!data.user.email_confirmed_at,
+        userId: data.user.id,
+      });
+      // Sign out the user since email is not verified
+      await supabase.auth.signOut();
+      throw new Error('E-posta adresiniz henüz doğrulanmamış. Lütfen e-posta kutunuzu kontrol edin ve doğrulama linkine tıklayın.');
+    }
+
+    console.log('[DEBUG] lib/auth.ts - signIn waiting for session to be established (100ms)');
     // Wait a moment to ensure session is fully established
     // This is especially important for admin accounts
     await new Promise(resolve => setTimeout(resolve, 100));
+
+    console.log('[DEBUG] lib/auth.ts - signIn SUCCESS', {
+      userId: data.user.id,
+      userEmail: data.user.email,
+      hasSession: !!data.session,
+      isOAuthUser,
+      emailConfirmed: !!data.user.email_confirmed_at,
+    });
 
     return data;
   } catch (error: any) {
@@ -467,18 +678,35 @@ export const signInWithGithub = async () => {
 };
 
 export const signInWithGoogle = async () => {
+  console.log('[DEBUG] lib/auth.ts - signInWithGoogle START', {
+    isBrowser: typeof window !== 'undefined',
+    origin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
+  });
+  
   try {
     if (typeof window === 'undefined') {
+      console.error('[DEBUG] lib/auth.ts - signInWithGoogle failed: not in browser');
       throw new Error('OAuth sadece tarayıcıda çalışır');
     }
 
+    console.log('[DEBUG] lib/auth.ts - signInWithGoogle clearing existing session');
     // Clear any existing session first to prevent conflicts
     await supabase.auth.signOut();
+
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    console.log('[DEBUG] lib/auth.ts - signInWithGoogle calling supabase.auth.signInWithOAuth', {
+      provider: 'google',
+      redirectTo,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    });
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectTo,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -486,14 +714,39 @@ export const signInWithGoogle = async () => {
       },
     });
 
+    console.log('[DEBUG] lib/auth.ts - signInWithGoogle supabase response', {
+      hasData: !!data,
+      hasError: !!error,
+      errorMessage: error?.message,
+      errorStatus: error?.status,
+      errorCode: error?.code,
+      url: data?.url,
+    });
+
     if (error) {
-      console.error('Google OAuth error:', error);
+      const errorDetails = error as any;
+      console.error('[DEBUG] lib/auth.ts - signInWithGoogle error', {
+        message: error.message,
+        status: error.status,
+        code: errorDetails.code,
+        details: errorDetails.details,
+        hint: errorDetails.hint,
+      });
       throw new Error(error.message || 'Google ile giriş yapılamadı');
     }
 
+    console.log('[DEBUG] lib/auth.ts - signInWithGoogle SUCCESS', {
+      hasUrl: !!data?.url,
+      url: data?.url,
+    });
+
     return data;
   } catch (error: any) {
-    console.error('Google OAuth function error:', error);
+    console.error('[DEBUG] lib/auth.ts - signInWithGoogle exception', {
+      message: error?.message,
+      name: error?.name,
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+    });
     // Re-throw user-friendly errors
     if (error?.message && !error.message.includes('OAuth')) {
       throw error;

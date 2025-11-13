@@ -56,12 +56,18 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     } = await supabase.auth.getUser();
 
     if (userError) {
-      console.error('OAuth callback - Get user error:', userError);
+      console.error('[DEBUG] callback/route.ts - OAuth callback Get user error:', {
+        message: userError.message,
+        status: userError.status,
+        code: (userError as any).code,
+        details: (userError as any).details,
+        hint: (userError as any).hint,
+      });
       throw userError;
     }
 
     if (!user) {
-      console.warn('OAuth callback - No user found');
+      console.warn('[DEBUG] callback/route.ts - OAuth callback No user found');
       return;
     }
 
@@ -77,7 +83,13 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
       .maybeSingle();
 
     if (profileCheckError) {
-      console.error('OAuth callback - Profile check error:', profileCheckError);
+      console.error('[DEBUG] callback/route.ts - OAuth callback Profile check error:', {
+        message: profileCheckError.message,
+        code: profileCheckError.code,
+        details: profileCheckError.details,
+        hint: profileCheckError.hint,
+        userId: user.id,
+      });
       throw profileCheckError;
     }
 
@@ -99,10 +111,19 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
           .eq('id', user.id);
         
         if (updateError) {
-          console.error('OAuth callback - Admin update error:', updateError);
+          console.error('[DEBUG] callback/route.ts - OAuth callback Admin update error:', {
+            message: updateError.message,
+            code: updateError.code,
+            details: updateError.details,
+            hint: updateError.hint,
+            userId: user.id,
+          });
           // Don't throw - continue with existing profile
         } else {
-          console.log('OAuth callback - Profile updated to admin successfully');
+          console.log('[DEBUG] callback/route.ts - OAuth callback Profile updated to admin successfully', {
+            userId: user.id,
+            userEmail,
+          });
         }
       }
       return;
@@ -110,7 +131,12 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
 
     // If profile exists but not admin email, just return
     if (existingProfile) {
-      console.log('OAuth callback - Profile already exists for user:', user.id);
+      console.log('[DEBUG] callback/route.ts - OAuth callback Profile already exists for user', {
+        userId: user.id,
+        userEmail,
+        role: existingProfile.role,
+        isAdmin: existingProfile.is_admin,
+      });
       return;
     }
 
@@ -130,7 +156,11 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
         .maybeSingle();
 
       if (usernameCheckError) {
-        console.error('OAuth callback - Username check error:', usernameCheckError);
+        console.error('[DEBUG] callback/route.ts - OAuth callback Username check error:', {
+          message: usernameCheckError.message,
+          code: usernameCheckError.code,
+          candidate,
+        });
         continue;
       }
 
@@ -165,7 +195,12 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     if (isAdminEmail) {
       profileData.role = 'admin';
       profileData.is_admin = true;
-      console.log('OAuth callback - Creating admin profile for:', userEmail);
+      console.log('[DEBUG] callback/route.ts - OAuth callback Creating admin profile', {
+        userEmail,
+        userId: user.id,
+        username,
+        fullName,
+      });
     }
 
     // Use upsert to handle race conditions
@@ -214,7 +249,8 @@ export async function GET(request: NextRequest) {
   const errorDescription = requestUrl.searchParams.get('error_description');
 
   // Log all parameters for debugging
-  console.log('OAuth Callback - Request details:', {
+  console.log('[DEBUG] callback/route.ts - Request details:', {
+    pathname: requestUrl.pathname,
     code: code ? `${code.substring(0, 10)}...` : null,
     codeLength: code?.length || 0,
     type,
@@ -223,6 +259,8 @@ export async function GET(request: NextRequest) {
     url: requestUrl.toString(),
     hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    origin: requestUrl.origin,
+    searchParams: Object.fromEntries(requestUrl.searchParams.entries()),
   });
 
   // ============================================
@@ -231,10 +269,13 @@ export async function GET(request: NextRequest) {
   // If there's an error parameter but no code, this is an OAuth error
   // (user cancelled, access denied, etc.)
   if (error && !code) {
-    console.error('OAuth error in callback (no code):', {
+    console.error('[DEBUG] callback/route.ts - OAuth error in callback (no code):', {
       error,
       errorDescription,
       url: requestUrl.toString(),
+      pathname: requestUrl.pathname,
+      hasCode: !!code,
+      type,
     });
     
     // NEVER redirect to reset-password for OAuth errors
@@ -270,7 +311,12 @@ export async function GET(request: NextRequest) {
     try {
       // Validate environment variables
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        console.error('Callback - Missing Supabase environment variables');
+        console.error('[DEBUG] callback/route.ts - Missing Supabase environment variables', {
+          hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+          hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          code: code ? `${code.substring(0, 10)}...` : null,
+          type,
+        });
         const signinUrl = new URL('/auth/signin', request.url);
         signinUrl.searchParams.set('error', 'oauth_failed');
         signinUrl.searchParams.set('message', 'Sunucu yapılandırma hatası. Lütfen yöneticiye bildirin.');
@@ -279,9 +325,10 @@ export async function GET(request: NextRequest) {
 
       // Validate code
       if (!code || code.length < 10) {
-        console.error('Callback - Invalid code:', {
+        console.error('[DEBUG] callback/route.ts - Invalid code:', {
           code: code ? `${code.substring(0, 10)}...` : 'null',
           codeLength: code?.length || 0,
+          type,
         });
         const signinUrl = new URL('/auth/signin', request.url);
         signinUrl.searchParams.set('error', 'oauth_failed');
@@ -289,28 +336,35 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(signinUrl);
       }
 
-      console.log('Callback - Attempting code exchange...', {
+      console.log('[DEBUG] callback/route.ts - Attempting code exchange...', {
         codeLength: code.length,
+        codePreview: code.substring(0, 20) + '...',
         type: type || 'oauth',
+        hasError: !!error,
       });
 
       // Exchange code for session
       const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
       
       if (exchangeError) {
-        console.error('Callback - Exchange code error:', {
+        console.error('[DEBUG] callback/route.ts - Exchange code error:', {
           error: exchangeError,
           message: exchangeError.message,
           status: exchangeError.status,
           name: exchangeError.name,
           code: code.substring(0, 10) + '...',
+          codeLength: code.length,
           type,
           fullError: JSON.stringify(exchangeError, null, 2),
         });
         
         // If this is a recovery type, redirect to reset-password with error
         if (type === 'recovery') {
-          console.log('Recovery callback error - redirecting to reset-password');
+          console.log('[DEBUG] callback/route.ts - Recovery callback error - redirecting to reset-password', {
+            error: exchangeError.message,
+            status: exchangeError.status,
+            type,
+          });
           return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
         }
         
@@ -334,28 +388,42 @@ export async function GET(request: NextRequest) {
       }
 
       if (!sessionData?.user) {
-        console.error('Callback - No user in session data');
+        console.error('[DEBUG] callback/route.ts - No user in session data', {
+          hasSessionData: !!sessionData,
+          hasUser: !!sessionData?.user,
+          hasSession: !!sessionData?.session,
+          type,
+        });
         
         if (type === 'recovery') {
+          console.log('[DEBUG] callback/route.ts - No user, redirecting to reset-password (recovery)');
           return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
         }
         
+        console.log('[DEBUG] callback/route.ts - No user, redirecting to signin (OAuth)');
         const signinUrl = new URL('/auth/signin', request.url);
         signinUrl.searchParams.set('error', 'oauth_failed');
         return NextResponse.redirect(signinUrl);
       }
 
-      console.log('Callback - Session exchanged successfully:', {
+      console.log('[DEBUG] callback/route.ts - Session exchanged successfully:', {
         userId: sessionData.user.id,
-        email: sessionData.user.email,
+        userEmail: sessionData.user.email,
+        hasSession: !!sessionData.session,
         type: type || 'oauth',
+        emailConfirmed: !!sessionData.user.email_confirmed_at,
+        provider: sessionData.user.app_metadata?.provider,
       });
 
       // ============================================
       // STEP 3: Handle Password Reset (Recovery)
       // ============================================
       if (type === 'recovery') {
-        console.log('Password reset callback - redirecting to reset-password');
+        console.log('[DEBUG] callback/route.ts - Password reset callback - redirecting to reset-password', {
+          userId: sessionData.user.id,
+          userEmail: sessionData.user.email,
+          hasSession: !!sessionData.session,
+        });
         // Redirect to reset-password page - it will handle the session
         return NextResponse.redirect(new URL('/auth/reset-password', request.url));
       }
@@ -363,33 +431,74 @@ export async function GET(request: NextRequest) {
       // ============================================
       // STEP 4: Handle OAuth (Google/GitHub)
       // ============================================
+      console.log('[DEBUG] callback/route.ts - Handling OAuth flow', {
+        userId: sessionData.user.id,
+        userEmail: sessionData.user.email,
+        provider: sessionData.user.app_metadata?.provider,
+      });
+      
       // Ensure user profile exists (with admin role if applicable)
+      console.log('[DEBUG] callback/route.ts - Ensuring user profile exists');
       await ensureUserProfile(supabase);
       
       // Get user profile to check admin status for redirect
       // Retry a few times in case profile was just created
+      console.log('[DEBUG] callback/route.ts - Fetching user profile (with retry)');
       let profile = null;
       let retries = 3;
       while (retries > 0 && !profile) {
+        console.log('[DEBUG] callback/route.ts - Profile fetch attempt', {
+          attempt: 4 - retries,
+          maxRetries: 3,
+          userId: sessionData.user.id,
+        });
+        
         const { data, error } = await supabase
           .from('user_profiles')
           .select('role, is_admin')
           .eq('id', sessionData.user.id)
           .maybeSingle();
         
+        console.log('[DEBUG] callback/route.ts - Profile fetch result', {
+          hasData: !!data,
+          hasError: !!error,
+          error: error ? {
+            message: error.message,
+            code: error.code,
+          } : null,
+          role: data?.role,
+          isAdmin: data?.is_admin,
+          retriesLeft: retries - 1,
+        });
+        
         if (!error && data) {
           profile = data;
+          console.log('[DEBUG] callback/route.ts - Profile found', {
+            role: profile.role,
+            isAdmin: profile.is_admin,
+          });
           break;
         }
         
         // Wait a bit before retrying
-        await new Promise(resolve => setTimeout(resolve, 500));
+        if (retries > 1) {
+          console.log('[DEBUG] callback/route.ts - Waiting before retry (500ms)');
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
         retries--;
       }
 
       // Also check if email is in admin list (fallback)
       const userEmail = sessionData.user.email?.toLowerCase() || '';
       const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
+
+      console.log('[DEBUG] callback/route.ts - Admin check', {
+        userEmail,
+        isAdminEmail,
+        profileRole: profile?.role,
+        profileIsAdmin: profile?.is_admin,
+        adminEmails: ADMIN_EMAILS,
+      });
 
       // Determine redirect based on user role
       let redirectUrl = '/dashboard';
@@ -401,38 +510,70 @@ export async function GET(request: NextRequest) {
       
       if (isAdmin) {
         redirectUrl = '/admin/dashboard';
+        console.log('[DEBUG] callback/route.ts - User is admin, redirecting to admin dashboard', {
+          userId: sessionData.user.id,
+          userEmail,
+          profileRole: profile?.role,
+          profileIsAdmin: profile?.is_admin,
+          isAdminEmail,
+        });
+      } else {
+        console.log('[DEBUG] callback/route.ts - User is normal, redirecting to dashboard', {
+          userId: sessionData.user.id,
+          userEmail,
+          profileRole: profile?.role || 'none',
+          profileIsAdmin: profile?.is_admin || false,
+          isAdminEmail,
+        });
       }
       
-      console.log('OAuth callback - Process completed successfully', {
+      console.log('[DEBUG] callback/route.ts - OAuth callback process completed successfully', {
         userId: sessionData.user.id,
         email: sessionData.user.email,
         isAdmin,
+        redirectUrl,
         profileRole: profile?.role,
         profileIsAdmin: profile?.is_admin,
         isAdminEmail,
         redirectTo: redirectUrl,
       });
       
+      console.log('[DEBUG] callback/route.ts - Redirecting to final destination', {
+        redirectUrl,
+        userId: sessionData.user.id,
+        userEmail: sessionData.user.email,
+        isAdmin,
+      });
+      
       return NextResponse.redirect(new URL(redirectUrl, request.url));
     } catch (error: any) {
       // Log error in all environments for debugging
-      console.error('Callback error:', {
+      console.error('[DEBUG] callback/route.ts - Callback error:', {
         message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint,
+        name: error?.name,
+        errorCode: (error as any)?.code,
+        status: (error as any)?.status,
+        details: (error as any)?.details,
+        hint: (error as any)?.hint,
         type,
+        code: code ? `${code.substring(0, 10)}...` : null,
+        codeLength: code?.length || 0,
         stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       });
       
       // If recovery type, redirect to reset-password with error
       if (type === 'recovery') {
-        console.log('Recovery callback error - redirecting to reset-password');
+        console.log('[DEBUG] callback/route.ts - Recovery callback error - redirecting to reset-password', {
+          error: error?.message,
+        });
         return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
       }
       
       // For OAuth errors, ALWAYS redirect to signin (never reset-password)
-      console.log('OAuth callback error - redirecting to signin');
+      console.log('[DEBUG] callback/route.ts - OAuth callback error - redirecting to signin', {
+        error: error?.message,
+        type,
+      });
       const signinUrl = new URL('/auth/signin', request.url);
       signinUrl.searchParams.set('error', 'oauth_failed');
       if (error?.message) {
@@ -447,6 +588,12 @@ export async function GET(request: NextRequest) {
   // ============================================
   // If no code and no error, redirect to dashboard
   // This should rarely happen
-  console.warn('Callback - No code and no error, redirecting to dashboard');
+  console.warn('[DEBUG] callback/route.ts - No code and no error, redirecting to dashboard', {
+    pathname: requestUrl.pathname,
+    searchParams: Object.fromEntries(requestUrl.searchParams.entries()),
+    hasError: !!error,
+    hasCode: !!code,
+    type,
+  });
   return NextResponse.redirect(new URL('/dashboard', request.url));
 }

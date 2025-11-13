@@ -47,7 +47,14 @@ export default function ResetPasswordPage() {
                            !window.location.search.includes('type=recovery');
       
       if (isOAuthError || isFromOAuthCallback || hasOAuthParams) {
-        console.log('OAuth error detected on reset-password page, redirecting to signin');
+        console.log('[DEBUG] reset-password/page.tsx - OAuth error detected, redirecting to signin', {
+          error,
+          isOAuthError,
+          isFromOAuthCallback,
+          hasOAuthParams,
+          referrer: typeof document !== 'undefined' ? document.referrer : 'N/A',
+          url: typeof window !== 'undefined' ? window.location.href : 'N/A',
+        });
         router.replace('/auth/signin?error=oauth_failed&message=OAuth girişi başarısız oldu. Lütfen tekrar deneyin.');
         return;
       }
@@ -78,7 +85,11 @@ export default function ResetPasswordPage() {
         // If we have code parameter, it should have been handled by callback
         // But if we're here, redirect to callback to handle it
         if (code) {
-          console.log('Code parameter found, redirecting to callback:', code);
+          console.log('[DEBUG] reset-password/page.tsx - Code parameter found, redirecting to callback', {
+            code: `${code.substring(0, 10)}...`,
+            codeLength: code.length,
+            type: searchParams.get('type'),
+          });
           router.replace(`/auth/callback?code=${code}&type=recovery`);
           return;
         }
@@ -87,8 +98,12 @@ export default function ResetPasswordPage() {
         if (hashError) {
           const errorCode = hashError;
           
-          console.error('Password reset error from hash:', {
+          console.error('[DEBUG] reset-password/page.tsx - Password reset error from hash', {
             error: errorCode,
+            hashError,
+            type,
+            hasAccessToken: !!accessToken,
+            url: window.location.href.substring(0, 100) + '...',
           });
           
           setIsValidToken(false);
@@ -117,9 +132,15 @@ export default function ResetPasswordPage() {
             refresh_token: hashParams.get('refresh_token') || '',
           });
 
-          if (setSessionError) {
-            console.error('Set session error:', setSessionError);
-            setIsValidToken(false);
+            if (setSessionError) {
+              console.error('[DEBUG] reset-password/page.tsx - Set session error', {
+                message: setSessionError.message,
+                status: setSessionError.status,
+                code: (setSessionError as any).code,
+                details: (setSessionError as any).details,
+                hint: (setSessionError as any).hint,
+              });
+              setIsValidToken(false);
             toast.error('Şifre sıfırlama bağlantısı geçersiz', {
               duration: 6000,
               description: 'Lütfen yeni bir şifre sıfırlama isteği gönderin.',
@@ -148,9 +169,13 @@ export default function ResetPasswordPage() {
           // No token found - check if user is already authenticated (might have valid session)
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
-          if (sessionError) {
-            console.error('Get session error:', sessionError);
-          }
+        if (sessionError) {
+          console.error('[DEBUG] reset-password/page.tsx - Get session error', {
+            message: sessionError.message,
+            status: sessionError.status,
+            code: (sessionError as any).code,
+          });
+        }
           
           if (session) {
             console.log('User already has a session - allowing password reset');
@@ -165,7 +190,11 @@ export default function ResetPasswordPage() {
           }
         }
       } catch (error: any) {
-        console.error('Check recovery token error:', error);
+        console.error('[DEBUG] reset-password/page.tsx - Check recovery token error', {
+          message: error?.message,
+          name: error?.name,
+          stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+        });
         setIsValidToken(false);
         toast.error('Bir hata oluştu', {
           duration: 6000,
@@ -230,7 +259,13 @@ export default function ResetPasswordPage() {
         router.push('/auth/signin');
       }, 2000);
     } catch (error: any) {
-      console.error('Update password error:', error);
+      console.error('[DEBUG] reset-password/page.tsx - Update password error', {
+        message: error?.message,
+        name: error?.name,
+        code: error?.code,
+        status: error?.status,
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      });
       toast.error(error.message || 'Şifre güncellenemedi', {
         duration: 6000,
         description: 'Lütfen tekrar deneyin veya yeni bir şifre sıfırlama isteği gönderin.',

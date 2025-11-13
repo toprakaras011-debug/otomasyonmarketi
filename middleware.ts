@@ -22,8 +22,21 @@ export async function middleware(request: NextRequest) {
     const code = url.searchParams.get('code');
     const type = url.searchParams.get('type');
     
+    console.log('[DEBUG] middleware.ts - Checking reset-password route', {
+      pathname: url.pathname,
+      error,
+      code: code ? `${code.substring(0, 10)}...` : null,
+      codeLength: code?.length || 0,
+      type,
+    });
+    
     // If there's an OAuth error or code without recovery type, redirect to signin
     if ((error && error !== 'invalid_token') || (code && type !== 'recovery')) {
+      console.log('[DEBUG] middleware.ts - OAuth error detected, redirecting to signin', {
+        error,
+        hasCode: !!code,
+        type,
+      });
       const signinUrl = new URL('/auth/signin', request.url);
       signinUrl.searchParams.set('error', 'oauth_failed');
       signinUrl.searchParams.set('message', 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.');
@@ -38,7 +51,11 @@ export async function middleware(request: NextRequest) {
   // If environment variables are missing, allow request to continue
   // (This is common in development when .env.local is not set)
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase environment variables not set. Skipping auth middleware.');
+    console.warn('[DEBUG] middleware.ts - Supabase environment variables not set. Skipping auth middleware.', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseAnonKey: !!supabaseAnonKey,
+      pathname: url.pathname,
+    });
     return NextResponse.next();
   }
 

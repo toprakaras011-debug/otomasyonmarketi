@@ -7,8 +7,22 @@ const supabaseFunctionsUrl =
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase environment variables not set. Some features may not work.');
+  console.warn('[DEBUG] lib/supabase.ts - Supabase environment variables not set. Some features may not work.', {
+    hasSupabaseUrl: !!supabaseUrl,
+    hasSupabaseAnonKey: !!supabaseAnonKey,
+    isBrowser: typeof window !== 'undefined',
+    nodeEnv: process.env.NODE_ENV,
+  });
   // Create a dummy client to prevent crashes, but it won't work
+} else {
+  console.log('[DEBUG] lib/supabase.ts - Supabase client initialized', {
+    hasSupabaseUrl: !!supabaseUrl,
+    hasSupabaseAnonKey: !!supabaseAnonKey,
+    supabaseUrlLength: supabaseUrl.length,
+    supabaseAnonKeyLength: supabaseAnonKey.length,
+    isBrowser: typeof window !== 'undefined',
+    nodeEnv: process.env.NODE_ENV,
+  });
 }
 
 export const supabase = createClient(
