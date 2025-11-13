@@ -1,0 +1,60 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: project/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./project
+      run: npm ci
+    
+    - name: Install Playwright Browsers
+      working-directory: ./project
+      run: npx playwright install --with-deps
+    
+    - name: Build application
+      working-directory: ./project
+      run: npm run build
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    
+    - name: Run Playwright tests
+      working-directory: ./project
+      run: npm run test:e2e
+      env:
+        PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+        CI: true
+    
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: project/playwright-report/
+        retention-days: 30
+    
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-screenshots
+        path: project/test-results/
+        retention-days: 30
+

@@ -1,0 +1,11 @@
+{
+  "deno.enable": true,
+  "deno.enablePaths": ["./supabase/functions"],
+  "deno.disablePaths": ["./project"],
+  "deno.lint": true,
+  "deno.unstable": false,
+  "deno.suggest.imports.hosts": {
+    "https://deno.land": true,
+    "https://esm.sh": true
+  }
+}
