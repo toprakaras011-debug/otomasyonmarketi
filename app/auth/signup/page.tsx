@@ -364,13 +364,13 @@ export default function SignUpPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
                   <User className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-foreground">Kişisel Bilgiler</h3>
+                  <h3 className="text-base font-semibold text-foreground">Kişisel Bilgiler</h3>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5 group">
-                    <Label htmlFor="username" className="text-xs font-medium flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="space-y-2 group">
+                    <Label htmlFor="username" className="text-sm font-medium flex items-center gap-1.5">
+                      <User className="h-4 w-4 text-muted-foreground" />
                       Kullanıcı Adı
                       <span className="text-red-500">*</span>
                     </Label>
@@ -388,17 +388,17 @@ export default function SignUpPage() {
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                       )}
                     </div>
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                      <Shield className="h-3 w-3" />
+                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                      <Shield className="h-3.5 w-3.5" />
                       <span>Kalıcıdır, değiştirilemez</span>
                     </p>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <Label htmlFor="fullName" className="text-xs font-medium flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-sm font-medium flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-muted-foreground" />
                       Ad Soyad
-                      <span className="text-xs text-muted-foreground">(Opsiyonel)</span>
+                      <span className="text-sm text-muted-foreground">(Opsiyonel)</span>
                     </Label>
                     <Input
                       id="fullName"
@@ -416,12 +416,12 @@ export default function SignUpPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
                   <Mail className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-foreground">İletişim Bilgileri</h3>
+                  <h3 className="text-base font-semibold text-foreground">İletişim Bilgileri</h3>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-xs font-medium flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium flex items-center gap-1.5">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
                     E-posta Adresi
                     <span className="text-red-500">*</span>
                   </Label>
@@ -435,7 +435,7 @@ export default function SignUpPage() {
                       onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                       required
                       autoComplete="email"
-                      className="h-10 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      className="h-11 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                     />
                     {formData.email && formData.email.includes('@') && (
                       <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
@@ -443,15 +443,15 @@ export default function SignUpPage() {
                   </div>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-xs font-medium flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-1.5">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
                     Telefon Numarası
-                    <span className="text-xs text-muted-foreground">(Opsiyonel)</span>
+                    <span className="text-sm text-muted-foreground">(Opsiyonel)</span>
                   </Label>
                   <div className="flex gap-2">
                     <div className="flex items-center rounded-lg border border-input bg-background px-3 text-sm text-muted-foreground">
-                      <span className="text-xs font-medium">🇹🇷 +90</span>
+                      <span className="text-sm font-medium">🇹🇷 +90</span>
                     </div>
                     <Input
                       id="phone"
@@ -486,7 +486,7 @@ export default function SignUpPage() {
                       className="h-11 flex-1 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                     />
                   </div>
-                  <p className="text-[10px] text-muted-foreground">Türkiye (+90) - 10 haneli numara</p>
+                  <p className="text-xs text-muted-foreground">Türkiye (+90) - 10 haneli numara</p>
                 </div>
               </div>
 
@@ -494,13 +494,13 @@ export default function SignUpPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
                   <Lock className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-foreground">Güvenlik</h3>
+                  <h3 className="text-base font-semibold text-foreground">Güvenlik</h3>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-xs font-medium flex items-center gap-1.5">
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium flex items-center gap-1.5">
+                      <Lock className="h-4 w-4 text-muted-foreground" />
                       Şifre
                       <span className="text-red-500">*</span>
                     </Label>
@@ -526,9 +526,9 @@ export default function SignUpPage() {
                         ) : null;
                       })()}
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] text-muted-foreground">Min. 8 karakter</p>
-                      <div className="grid grid-cols-2 gap-1 text-[9px]">
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">Min. 8 karakter</p>
+                      <div className="grid grid-cols-2 gap-1.5 text-xs">
                         <div className={`flex items-center gap-1 ${/[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-muted-foreground'}`}>
                           <span>{/[A-Z]/.test(formData.password) ? '✓' : '○'}</span>
                           <span>Büyük harf</span>
@@ -549,9 +549,9 @@ export default function SignUpPage() {
                     </div>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-xs font-medium flex items-center gap-1.5">
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-1.5">
+                      <Lock className="h-4 w-4 text-muted-foreground" />
                       Şifre Tekrar
                       <span className="text-red-500">*</span>
                     </Label>
@@ -574,7 +574,7 @@ export default function SignUpPage() {
                       )}
                     </div>
                     {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                      <p className="text-[10px] text-red-500">Şifreler eşleşmiyor</p>
+                      <p className="text-xs text-red-500">Şifreler eşleşmiyor</p>
                     )}
                   </div>
                 </div>
@@ -584,7 +584,7 @@ export default function SignUpPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
                   <Sparkles className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-foreground">Hesap Türü Seçimi</h3>
+                  <h3 className="text-base font-semibold text-foreground">Hesap Türü Seçimi</h3>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
@@ -623,8 +623,8 @@ export default function SignUpPage() {
                         }`} />
                       </div>
                       <div className="text-left space-y-0">
-                        <span className="text-xs font-semibold block leading-tight">Kullanıcı</span>
-                        <span className="text-[10px] text-muted-foreground block leading-tight">Otomasyonları satın al</span>
+                        <span className="text-sm font-semibold block leading-tight">Kullanıcı</span>
+                        <span className="text-xs text-muted-foreground block leading-tight">Otomasyonları satın al</span>
                       </div>
                       {formData.role === 'user' && (
                         <motion.div
@@ -672,8 +672,8 @@ export default function SignUpPage() {
                         }`} />
                       </div>
                       <div className="text-left space-y-0">
-                        <span className="text-xs font-semibold block leading-tight">Geliştirici</span>
-                        <span className="text-[10px] text-muted-foreground block leading-tight">Otomasyonları sat</span>
+                        <span className="text-sm font-semibold block leading-tight">Geliştirici</span>
+                        <span className="text-xs text-muted-foreground block leading-tight">Otomasyonları sat</span>
                       </div>
                       {formData.role === 'developer' && (
                         <motion.div
@@ -697,7 +697,7 @@ export default function SignUpPage() {
                     onCheckedChange={(checked) => setFormData({ ...formData, terms: checked as boolean })}
                     className="mt-0.5"
                   />
-                  <label htmlFor="terms" className="cursor-pointer text-xs leading-tight">
+                  <label htmlFor="terms" className="cursor-pointer text-sm leading-tight">
                     <Link href="/terms" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                       Kullanım Koşulları
                     </Link>
@@ -712,7 +712,7 @@ export default function SignUpPage() {
                     onCheckedChange={(checked) => setFormData({ ...formData, kvkk: checked as boolean })}
                     className="mt-0.5"
                   />
-                  <label htmlFor="kvkk" className="cursor-pointer text-xs leading-tight">
+                  <label htmlFor="kvkk" className="cursor-pointer text-sm leading-tight">
                     <Link href="/kvkk" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                       KVKK Aydınlatma Metni
                     </Link>
@@ -729,7 +729,7 @@ export default function SignUpPage() {
                         onCheckedChange={(checked) => setFormData({ ...formData, developerTerms: checked as boolean })}
                         className="mt-0.5"
                       />
-                      <label htmlFor="developerTerms" className="cursor-pointer text-xs leading-tight">
+                      <label htmlFor="developerTerms" className="cursor-pointer text-sm leading-tight">
                         <Link href="/developer-agreement" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                           Geliştirici Sözleşmesi
                         </Link>
@@ -744,7 +744,7 @@ export default function SignUpPage() {
                         onCheckedChange={(checked) => setFormData({ ...formData, commission: checked as boolean })}
                         className="mt-0.5"
                       />
-                      <label htmlFor="commission" className="cursor-pointer text-xs leading-tight">
+                      <label htmlFor="commission" className="cursor-pointer text-sm leading-tight">
                         %15 komisyon sistemini kabul ediyorum <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -758,7 +758,7 @@ export default function SignUpPage() {
                     onCheckedChange={(checked) => setFormData({ ...formData, newsletter: checked as boolean })}
                     className="mt-0.5"
                   />
-                  <label htmlFor="newsletter" className="cursor-pointer text-xs leading-tight">
+                  <label htmlFor="newsletter" className="cursor-pointer text-sm leading-tight">
                     Kampanya ve duyuru e-postaları almak istiyorum
                   </label>
                 </div>
