@@ -15,6 +15,17 @@ import { FileUpload } from '@/components/file-upload';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   User,
   Lock,
   Bell,
@@ -321,6 +332,59 @@ export default function SettingsPage() {
       });
     } finally {
       setSavingPayment(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) {
+      toast.error('Kullanıcı bilgisi bulunamadı.');
+      return;
+    }
+
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading('Hesabınız siliniyor...', {
+        duration: 10000,
+      });
+
+      // Delete user profile from database
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', user.id);
+
+      if (profileError) {
+        console.error('Profile deletion error:', profileError);
+        toast.dismiss(loadingToast);
+        toast.error('Profil silinirken bir hata oluştu. Lütfen tekrar deneyin.', {
+          duration: 5000,
+        });
+        return;
+      }
+
+      // Sign out user
+      const { error: signOutError } = await supabase.auth.signOut();
+
+      if (signOutError) {
+        console.error('Sign out error:', signOutError);
+        // Continue anyway - profile is already deleted
+      }
+
+      toast.dismiss(loadingToast);
+      toast.success('Hesabınız başarıyla silindi. Yönlendiriliyorsunuz...', {
+        duration: 3000,
+      });
+
+      // Redirect to home page after a short delay
+      setTimeout(() => {
+        // Force page reload to clear all state
+        window.location.href = '/';
+      }, 2000);
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      toast.error('Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin veya destek ekibiyle iletişime geçin.', {
+        duration: 6000,
+      });
     }
   };
 
@@ -1491,13 +1555,47 @@ export default function SettingsPage() {
                   <div>
                     Geliştirici hesabınızı silmek istiyorsanız önce ödemelerinizi tamamlayın ve aktif abonelikleri sonlandırın.
                   </div>
-                  <Button
-                    variant="destructive"
-                    className="group relative overflow-hidden border-none bg-gradient-to-r from-red-500 via-rose-600 to-red-700 px-6 py-2 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(248,113,113,0.35)] hover:opacity-90"
-                  >
-                    <span className="absolute inset-0 translate-y-[120%] bg-gradient-to-r from-white/40 via-white/10 to-transparent opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100" />
-                    <span className="relative">Hesabı Sil</span>
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        className="group relative overflow-hidden border-none bg-gradient-to-r from-red-500 via-rose-600 to-red-700 px-6 py-2 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(248,113,113,0.35)] hover:opacity-90"
+                      >
+                        <span className="absolute inset-0 translate-y-[120%] bg-gradient-to-r from-white/40 via-white/10 to-transparent opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100" />
+                        <span className="relative">Hesabı Sil</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="border-red-200 dark:border-red-900/50">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                          <Trash2 className="h-5 w-5" />
+                          Hesabınızı Silmek İstediğinize Emin misiniz?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-base text-slate-700 dark:text-white/80">
+                          Bu işlem <strong>geri alınamaz</strong>. Hesabınız ve tüm verileriniz kalıcı olarak silinecektir:
+                          <ul className="mt-3 ml-4 list-disc space-y-1 text-sm">
+                            <li>Tüm profil bilgileriniz</li>
+                            <li>Satın aldığınız otomasyonlar</li>
+                            <li>Geliştirdiğiniz otomasyonlar (eğer geliştiriciyseniz)</li>
+                            <li>Favoriler ve ayarlarınız</li>
+                            <li>Ödeme geçmişiniz</li>
+                          </ul>
+                          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+                            <strong>Uyarı:</strong> Bu işlem geri alınamaz. Lütfen emin olduğunuzdan sonra devam edin.
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>İptal</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteAccount}
+                          className="bg-red-600 text-white hover:bg-red-700 focus:ring-red-600"
+                        >
+                          Evet, Hesabımı Sil
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>
