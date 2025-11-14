@@ -34,11 +34,10 @@ export default async function AutomationsPage() {
       .select('id,title,slug,description,price,image_url,image_path,total_sales,rating_avg,created_at,is_published,admin_approved, category:categories(id,name,slug), developer:user_profiles(id,username,avatar_url)')
       .eq('is_published', true)
       .eq('admin_approved', true)
-      .not('slug', 'in', `(${blockedSlugs.map(s => `"${s}"`).join(',')})`)
       .order('created_at', { ascending: false })
       .limit(100);
     
-    // Also filter out blocked slugs client-side as backup
+    // Filter out blocked slugs (test, debug, demo, example)
     const filteredAutomations = (automations || []).filter(
       (automation: any) => !blockedSlugs.includes(automation.slug?.toLowerCase() || '')
     );
