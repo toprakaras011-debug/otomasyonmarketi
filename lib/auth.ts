@@ -1,5 +1,10 @@
 import { supabase } from './supabase';
 
+// Admin email list - matches callback route
+const ADMIN_EMAILS = [
+  'ftnakras01@gmail.com',
+].map(email => email.toLowerCase());
+
 export const signUp = async (
   email: string,
   password: string,
@@ -212,6 +217,19 @@ export const signUp = async (
       full_name: fullName?.trim() || null,
       phone: normalizedPhone || null,
     };
+
+    // Check if user email is in admin list
+    const userEmail = normalizedEmail.toLowerCase();
+    const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
+    
+    if (isAdminEmail) {
+      console.log('[DEBUG] signUp - Admin email detected, setting admin role', {
+        email: userEmail,
+        userId: authData.user.id,
+      });
+      profileData.role = 'admin';
+      profileData.is_admin = true;
+    }
 
     // Add role if provided (default is 'user')
     if (role) {
