@@ -31,10 +31,12 @@ class Logger {
   }
 
   /**
-   * Log a debug message (only in development)
+   * Log a debug message (only in development, and only if explicitly enabled)
    */
   debug(message: string, context?: LogContext): void {
-    if (this.isDevelopment) {
+    // Debug logs are disabled by default to reduce console noise
+    // Enable with DEBUG=true environment variable if needed
+    if (this.isDevelopment && process.env.DEBUG === 'true') {
       console.log(`[DEBUG] ${message}`, context || '');
     }
   }

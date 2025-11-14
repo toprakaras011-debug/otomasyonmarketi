@@ -30,7 +30,7 @@ function NavbarComponent() {
   const { count } = useCart();
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const { scrollY } = useScroll();
+  const { scrollY } = useScroll({ target: typeof window !== 'undefined' ? window : undefined });
   const [mounted, setMounted] = useState(false);
   const navOpacity = useTransform(scrollY, [0, 100], [0.8, 1]);
   const navBlur = useTransform(scrollY, [0, 100], [8, 20]);
@@ -134,14 +134,15 @@ function NavbarComponent() {
   ];
 
   return (
-    <motion.nav 
-      style={{ opacity: mounted ? navOpacity : 0.8, position: 'fixed' }}
-      className={`fixed top-0 z-50 w-full h-16 transition-all duration-300 gpu-accelerated ${
-        scrolled
-          ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
-          : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
-      }`}
-    >
+    <nav className="fixed top-0 z-50 w-full h-16">
+      <motion.div
+        style={{ opacity: mounted ? navOpacity : 0.8 }}
+        className={`w-full h-full transition-all duration-300 gpu-accelerated ${
+          scrolled
+            ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
+            : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
+        }`}
+      >
       {/* Animated gradient line */}
       <motion.div 
         className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent"
