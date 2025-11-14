@@ -933,6 +933,7 @@ export const signInWithOAuth = async (
     }
 
     const origin = window.location.origin;
+    // Use client-side callback page instead of server-side route
     const callbackUrl = `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`;
     
     logger.debug('OAuth sign in initiated', { 
@@ -941,6 +942,17 @@ export const signInWithOAuth = async (
       origin,
       callbackUrl,
     });
+
+    // Verify localStorage is available
+    try {
+      const testKey = 'supabase.oauth.test';
+      localStorage.setItem(testKey, 'test');
+      localStorage.removeItem(testKey);
+      logger.debug('OAuth - localStorage is available');
+    } catch (storageError) {
+      logger.error('OAuth - localStorage not available', storageError);
+      throw new Error('Tarayıcı depolama erişimi engellenmiş. Lütfen tarayıcı ayarlarınızı kontrol edin.');
+    }
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,

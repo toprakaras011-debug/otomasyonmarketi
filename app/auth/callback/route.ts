@@ -1,6 +1,13 @@
 /**
- * OAuth Callback Route - Sıfırdan Yazılmış
- * Hatasız, robust OAuth callback implementasyonu
+ * OAuth Callback Route - Server-Side Handler (Fallback)
+ * 
+ * NOTE: This route is now a fallback for email verification and password recovery.
+ * OAuth callbacks are handled client-side in /app/auth/callback/page.tsx
+ * to ensure PKCE code_verifier can be accessed from localStorage.
+ * 
+ * This route only handles:
+ * - Email verification (type=email or type=signup)
+ * - Password recovery (type=recovery)
  */
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
