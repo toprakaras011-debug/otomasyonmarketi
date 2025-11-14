@@ -416,13 +416,14 @@ export async function GET(request: NextRequest) {
       let errorType = 'oauth_failed';
       
       // Check if this is actually an OAuth callback by looking at the provider
-      const provider = sessionData?.user?.app_metadata?.provider;
-      const isOAuthProvider = provider && (provider === 'google' || provider === 'github');
+      // Note: sessionData might be null if exchange failed, so we check type parameter instead
+      const isOAuthType = type === 'oauth' || !type || type === '';
+      const providerFromError = errorMessage.includes('google') ? 'google' : errorMessage.includes('github') ? 'github' : null;
       
       console.log('[DEBUG] callback/route.ts - Determining error type', {
         type,
-        provider,
-        isOAuthProvider,
+        isOAuthType,
+        providerFromError,
         errorMessage,
         hasSessionData: !!sessionData,
       });
@@ -438,9 +439,9 @@ export async function GET(request: NextRequest) {
           userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
         }
         errorType = 'verification_failed';
-      } else if (isOAuthProvider || type === 'oauth' || !type) {
+      } else if (isOAuthType || providerFromError) {
         // OAuth error - this is the most common case for OAuth callbacks
-        // If type is missing or empty, and we have an OAuth provider, treat as OAuth error
+        // If type is missing or empty, treat as OAuth error (default for OAuth callbacks)
         if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
           userFriendlyMessage = 'OAuth giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
         } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
