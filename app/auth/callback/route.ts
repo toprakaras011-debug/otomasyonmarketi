@@ -391,7 +391,27 @@ export async function GET(request: NextRequest) {
     });
 
     // Exchange code for session
+    console.log('[DEBUG] callback/route.ts - Exchanging code for session', {
+      codeLength: code.length,
+      codePreview: code.substring(0, 20) + '...',
+      type: type || 'oauth',
+      timestamp: new Date().toISOString(),
+    });
+    
     const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    
+    console.log('[DEBUG] callback/route.ts - Code exchange result', {
+      hasSessionData: !!sessionData,
+      hasUser: !!sessionData?.user,
+      hasSession: !!sessionData?.session,
+      hasError: !!exchangeError,
+      error: exchangeError ? {
+        message: exchangeError.message,
+        status: exchangeError.status,
+        name: exchangeError.name,
+      } : null,
+      provider: sessionData?.user?.app_metadata?.provider,
+    });
     
     if (exchangeError) {
       console.error('[DEBUG] callback/route.ts - Code exchange error', {
@@ -439,15 +459,15 @@ export async function GET(request: NextRequest) {
           userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
         }
         errorType = 'verification_failed';
-      } else if (isOAuthType || providerFromError) {
-        // OAuth error - this is the most common case for OAuth callbacks
-        // If type is missing or empty, treat as OAuth error (default for OAuth callbacks)
+      } else {
+        // OAuth or unknown error - default to OAuth failed
+        // Most OAuth callbacks don't have a type parameter, so we treat missing type as OAuth
         if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
           userFriendlyMessage = 'OAuth giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
         } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
           userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
-        } else if (errorMessage.includes('provider') || errorMessage.includes('oauth')) {
-          userFriendlyMessage = 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
+        } else if (errorMessage.includes('provider') || errorMessage.includes('oauth') || errorMessage.includes('configuration')) {
+          userFriendlyMessage = 'OAuth yapılandırması eksik. Lütfen yöneticiye bildirin.';
         } else {
           userFriendlyMessage = 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
         }
