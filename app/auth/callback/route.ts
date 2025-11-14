@@ -391,18 +391,34 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
       }
       
-      // Determine user-friendly error message
+      // Determine user-friendly error message based on type
       const errorMessage = exchangeError.message?.toLowerCase() || '';
-      let userFriendlyMessage = 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
+      let userFriendlyMessage = 'Doğrulama başarısız oldu. Lütfen tekrar deneyin.';
+      let errorType = 'verification_failed';
       
-      if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
-        userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Hesabınız zaten oluşturulmuş olabilir. Lütfen OAuth ile tekrar giriş yapın.';
-      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-        userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+      if (type === 'recovery') {
+        // Already handled above
+        return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
+      } else if (type === 'email' || type === 'signup') {
+        // Email verification error
+        if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
+          userFriendlyMessage = 'E-posta doğrulama bağlantısı geçersiz veya süresi dolmuş. Lütfen yeni bir doğrulama e-postası isteyin.';
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+        }
+        errorType = 'verification_failed';
+      } else {
+        // OAuth or unknown error (shouldn't happen since OAuth is removed)
+        if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
+          userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+        }
+        errorType = 'oauth_failed';
       }
       
       const signinUrl = new URL('/auth/signin', request.url);
-      signinUrl.searchParams.set('error', 'oauth_failed');
+      signinUrl.searchParams.set('error', errorType);
       signinUrl.searchParams.set('message', userFriendlyMessage);
       return NextResponse.redirect(signinUrl);
     }
@@ -420,9 +436,15 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
       }
       
+      // Determine error type based on callback type
+      const errorType = (type === 'email' || type === 'signup') ? 'verification_failed' : 'oauth_failed';
+      const errorMessage = (type === 'email' || type === 'signup') 
+        ? 'E-posta doğrulama başarısız oldu. Lütfen yeni bir doğrulama e-postası isteyin.'
+        : 'Oturum oluşturulamadı. Lütfen tekrar deneyin.';
+      
       const signinUrl = new URL('/auth/signin', request.url);
-      signinUrl.searchParams.set('error', 'oauth_failed');
-      signinUrl.searchParams.set('message', 'Oturum oluşturulamadı. Lütfen tekrar deneyin.');
+      signinUrl.searchParams.set('error', errorType);
+      signinUrl.searchParams.set('message', errorMessage);
       return NextResponse.redirect(signinUrl);
     }
 
@@ -443,12 +465,70 @@ export async function GET(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 5: Handle OAuth (Google/GitHub)
+    // STEP 5: Handle Email Verification (Signup/Email)
     // ============================================
-    console.log('[DEBUG] callback/route.ts - Handling OAuth flow', {
+    // Check if this is an email verification flow
+    // - type is 'email' or 'signup'
+    // - OR no type but user provider is 'email' (email/password signup)
+    const provider = sessionData.user.app_metadata?.provider;
+    const isEmailVerification = 
+      type === 'email' || 
+      type === 'signup' || 
+      (!type && (!provider || provider === 'email'));
+
+    if (isEmailVerification) {
+      console.log('[DEBUG] callback/route.ts - Email verification type', {
+        userId: sessionData.user.id,
+        userEmail: sessionData.user.email,
+        emailConfirmed: !!sessionData.user.email_confirmed_at,
+        type,
+        provider,
+      });
+
+      // Ensure user profile exists
+      await ensureUserProfile(supabase);
+
+      // Check if email is confirmed
+      if (sessionData.user.email_confirmed_at) {
+        console.log('[DEBUG] callback/route.ts - Email verified, redirecting to signin');
+        const signinUrl = new URL('/auth/signin', request.url);
+        signinUrl.searchParams.set('verified', 'true');
+        return NextResponse.redirect(signinUrl);
+      } else {
+        console.log('[DEBUG] callback/route.ts - Email not confirmed yet, redirecting to verify-email');
+        const verifyUrl = new URL('/auth/verify-email', request.url);
+        if (sessionData.user.email) {
+          verifyUrl.searchParams.set('email', sessionData.user.email);
+        }
+        return NextResponse.redirect(verifyUrl);
+      }
+    }
+
+    // ============================================
+    // STEP 6: Handle OAuth (Google/GitHub) - DEPRECATED (OAuth removed)
+    // ============================================
+    // OAuth has been removed, but we keep this for backwards compatibility
+    // If user has OAuth provider (not email), redirect to signin with error
+    if (provider && provider !== 'email') {
+      console.log('[DEBUG] callback/route.ts - OAuth provider detected but OAuth is disabled', {
+        userId: sessionData.user.id,
+        userEmail: sessionData.user.email,
+        provider,
+      });
+      
+      const signinUrl = new URL('/auth/signin', request.url);
+      signinUrl.searchParams.set('error', 'oauth_disabled');
+      signinUrl.searchParams.set('message', 'OAuth girişi devre dışı bırakıldı. Lütfen e-posta ve şifre ile giriş yapın.');
+      return NextResponse.redirect(signinUrl);
+    }
+
+    // ============================================
+    // STEP 7: Default - Email/Password User
+    // ============================================
+    console.log('[DEBUG] callback/route.ts - Handling default flow (email/password)', {
       userId: sessionData.user.id,
       userEmail: sessionData.user.email,
-      provider: sessionData.user.app_metadata?.provider,
+      emailConfirmed: !!sessionData.user.email_confirmed_at,
     });
 
     // Ensure user profile exists
@@ -515,9 +595,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
     }
     
+    // Determine error type based on callback type
+    const errorType = (type === 'email' || type === 'signup') ? 'verification_failed' : 'oauth_failed';
+    const errorMessage = (type === 'email' || type === 'signup')
+      ? 'E-posta doğrulama sırasında bir hata oluştu. Lütfen yeni bir doğrulama e-postası isteyin.'
+      : (error?.message || 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+    
     const signinUrl = new URL('/auth/signin', request.url);
-    signinUrl.searchParams.set('error', 'oauth_failed');
-    signinUrl.searchParams.set('message', error?.message || 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+    signinUrl.searchParams.set('error', errorType);
+    signinUrl.searchParams.set('message', errorMessage);
     return NextResponse.redirect(signinUrl);
   }
 }
