@@ -330,23 +330,10 @@ export async function GET(request: NextRequest) {
   // STEP 3: Handle code exchange
   // ============================================
   if (!code) {
-    console.warn('[DEBUG] callback/route.ts - No code provided', {
-      hasError: !!error,
-      error,
-      errorDescription,
-      type,
-      fullUrl: requestUrl.toString(),
-      allParams: Object.fromEntries(requestUrl.searchParams.entries()),
-      timestamp: new Date().toISOString(),
-    });
-    
     const signinUrl = new URL('/auth/signin', request.url);
     signinUrl.searchParams.set('error', 'oauth_failed');
     const errorMsg = errorDescription || error || 'Giriş kodu bulunamadı. Lütfen tekrar deneyin.';
     signinUrl.searchParams.set('message', encodeURIComponent(errorMsg));
-    console.log('[DEBUG] callback/route.ts - Redirecting to signin (no code)', {
-      redirectUrl: signinUrl.toString(),
-    });
     return NextResponse.redirect(signinUrl);
   }
 
@@ -391,27 +378,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Exchange code for session
-    console.log('[DEBUG] callback/route.ts - Exchanging code for session', {
-      codeLength: code.length,
-      codePreview: code.substring(0, 20) + '...',
-      type: type || 'oauth',
-      timestamp: new Date().toISOString(),
-    });
-    
     const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-    
-    console.log('[DEBUG] callback/route.ts - Code exchange result', {
-      hasSessionData: !!sessionData,
-      hasUser: !!sessionData?.user,
-      hasSession: !!sessionData?.session,
-      hasError: !!exchangeError,
-      error: exchangeError ? {
-        message: exchangeError.message,
-        status: exchangeError.status,
-        name: exchangeError.name,
-      } : null,
-      provider: sessionData?.user?.app_metadata?.provider,
-    });
     
     if (exchangeError) {
       console.error('[DEBUG] callback/route.ts - Code exchange error', {
