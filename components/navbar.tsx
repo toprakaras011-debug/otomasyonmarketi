@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -30,18 +30,17 @@ function NavbarComponent() {
   const { count } = useCart();
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const navRef = useRef<HTMLElement | null>(null);
   const [mounted, setMounted] = useState(false);
-  
-  // Use window scroll directly without ref for useScroll
-  const { scrollY } = useScroll();
-  const navOpacity = useTransform(scrollY, [0, 100], [0.8, 1]);
-  const navBlur = useTransform(scrollY, [0, 100], [8, 20]);
+  const [opacity, setOpacity] = useState(0.8);
 
   useEffect(() => {
     setMounted(true);
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 10);
+      // Calculate opacity based on scroll position (0.8 to 1.0)
+      const newOpacity = Math.min(0.8 + (scrollY / 100) * 0.2, 1.0);
+      setOpacity(newOpacity);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
@@ -137,15 +136,21 @@ function NavbarComponent() {
   ];
 
   return (
-    <nav ref={navRef} className="fixed top-0 z-50 w-full h-16" style={{ position: 'fixed' }}>
-      <motion.div
-        style={{ opacity: mounted ? navOpacity : 0.8, position: 'relative' }}
-        className={`w-full h-full transition-all duration-300 gpu-accelerated ${
-          scrolled
-            ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
-            : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
-        }`}
+    <nav className="fixed top-0 z-50 w-full h-16" style={{ position: 'fixed', top: 0, left: 0, right: 0 }}>
+      <div 
+        className="relative w-full h-full transition-all duration-300"
+        style={{ 
+          opacity: mounted ? opacity : 0.8,
+          position: 'relative'
+        }}
       >
+        <div
+          className={`w-full h-full transition-all duration-300 gpu-accelerated ${
+            scrolled
+              ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
+              : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
+          }`}
+        >
       {/* Animated gradient line */}
       <motion.div 
         className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent"
