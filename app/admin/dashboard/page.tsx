@@ -43,22 +43,48 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('role, is_admin')
         .eq('id', user.id)
         .maybeSingle();
 
+      console.log('[DEBUG] admin/dashboard - Profile check', {
+        userId: user.id,
+        userEmail: user.email,
+        hasProfile: !!profile,
+        profileRole: profile?.role,
+        profileIsAdmin: profile?.is_admin,
+        profileError: profileError ? {
+          message: profileError.message,
+          code: profileError.code,
+        } : null,
+      });
+
       // Check both role and is_admin for admin access
       const isAdmin = profile?.role === 'admin' || profile?.is_admin === true;
       
       if (!isAdmin) {
+        console.warn('[DEBUG] admin/dashboard - User is not admin', {
+          userId: user.id,
+          userEmail: user.email,
+          profileRole: profile?.role,
+          profileIsAdmin: profile?.is_admin,
+        });
         toast.error('Bu sayfaya erişim yetkiniz yok.', {
           duration: 4000,
+          description: 'Admin yetkisi gereklidir. Lütfen yönetici ile iletişime geçin.',
         });
         router.replace('/dashboard');
         return;
       }
+
+      console.log('[DEBUG] admin/dashboard - User is admin, loading dashboard', {
+        userId: user.id,
+        userEmail: user.email,
+        profileRole: profile?.role,
+        profileIsAdmin: profile?.is_admin,
+      });
 
       const [automationsRes, automationsCount, pendingCount, usersCount, developersCount, earningsRes] = await Promise.all([
         supabase
