@@ -470,21 +470,45 @@ export const signIn = async (email: string, password: string) => {
         code: errorDetails.code,
         details: errorDetails.details,
         hint: errorDetails.hint,
+        fullError: error, // Log full error for debugging
       });
       
       // Check for specific error codes and messages
       const errorMessage = error.message?.toLowerCase() || '';
       const errorCode = error.status;
 
-      // Invalid credentials
+      // 400 Bad Request - usually invalid credentials or user doesn't exist in auth.users
+      if (errorCode === 400) {
+        // Check if it's specifically invalid credentials
+        if (
+          errorMessage.includes('invalid login credentials') ||
+          errorMessage.includes('invalid_credentials') ||
+          errorMessage.includes('invalid email or password') ||
+          errorMessage.includes('email not confirmed') ||
+          errorMessage.includes('email_not_confirmed') ||
+          errorMessage.includes('email address not confirmed') ||
+          errorMessage.includes('credentials')
+        ) {
+          throw new Error('E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.');
+        }
+        
+        // Generic 400 error - could be orphaned profile (user_profiles exists but auth.users doesn't)
+        // Or could be other validation errors
+        console.error('[DEBUG] lib/auth.ts - 400 error - possible orphaned profile or invalid request', {
+          errorMessage,
+          hint: 'User might exist in user_profiles but not in auth.users. Check Supabase dashboard.',
+        });
+        throw new Error('Giriş yapılamadı. Bu e-posta adresi ile kayıtlı bir hesap bulunamadı veya hesap geçersiz. Lütfen kayıt olun veya şifrenizi sıfırlayın.');
+      }
+
+      // Invalid credentials (non-400 errors)
       if (
         errorMessage.includes('invalid login credentials') ||
         errorMessage.includes('invalid_credentials') ||
         errorMessage.includes('invalid email or password') ||
         errorMessage.includes('email not confirmed') ||
         errorMessage.includes('email_not_confirmed') ||
-        errorMessage.includes('email address not confirmed') ||
-        (errorCode === 400 && errorMessage.includes('credentials'))
+        errorMessage.includes('email address not confirmed')
       ) {
         throw new Error('E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.');
       }

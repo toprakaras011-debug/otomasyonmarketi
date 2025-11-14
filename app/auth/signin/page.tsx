@@ -252,15 +252,22 @@ export default function SignInPage() {
         code: error?.code,
         status: error?.status,
         stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+        fullError: error, // Log full error for debugging
       });
       
       const errorMessage = error?.message || 'Giriş yapılamadı';
       
+      // More helpful error messages
+      let description = undefined;
+      if (errorMessage.includes('şifre') || errorMessage.includes('e-posta')) {
+        description = 'Şifrenizi unuttuysanız "Şifremi Unuttum" linkine tıklayın.';
+      } else if (errorMessage.includes('kayıtlı bir hesap bulunamadı') || errorMessage.includes('hesap geçersiz')) {
+        description = 'Eğer daha önce kayıt olduysanız, hesabınız silinmiş olabilir. Lütfen yeniden kayıt olun.';
+      }
+      
       toast.error(errorMessage, {
-        duration: 6000,
-        description: errorMessage.includes('şifre') || errorMessage.includes('e-posta') 
-          ? 'Şifrenizi unuttuysanız "Şifremi Unuttum" linkine tıklayın.'
-          : undefined,
+        duration: 8000,
+        description,
       });
       
       // Clear password field and reset Turnstile on error for security
