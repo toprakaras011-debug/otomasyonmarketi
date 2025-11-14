@@ -517,17 +517,21 @@ export async function GET(request: NextRequest) {
         (profile && (profile.role === 'admin' || profile.is_admin === true)) ||
         isAdminEmail;
 
-      // Determine redirect URL
-      const redirectUrl = isAdmin ? '/admin/dashboard' : '/dashboard';
-
-      console.log('[DEBUG] callback/route.ts - Redirecting to dashboard (email verification disabled)', {
-        redirectUrl,
+      // Email verification callback - session is already created by exchangeCodeForSession
+      // Redirect to signin with verified=true so user can login
+      // The session should be available, but redirect to signin to ensure it's properly set
+      const signinUrl = new URL('/auth/signin', request.url);
+      signinUrl.searchParams.set('verified', 'true');
+      signinUrl.searchParams.set('auto_login', 'true');
+      
+      console.log('[DEBUG] callback/route.ts - Email verified, redirecting to signin for auto-login', {
         userId: sessionData.user.id,
         userEmail,
+        hasSession: !!sessionData.session,
         isAdmin,
       });
 
-      return NextResponse.redirect(new URL(redirectUrl, request.url));
+      return NextResponse.redirect(signinUrl);
     }
 
     // ============================================

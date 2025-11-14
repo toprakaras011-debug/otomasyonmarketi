@@ -34,14 +34,74 @@ export default function SignInPage() {
     const error = searchParams.get('error');
     const message = searchParams.get('message');
     const verified = searchParams.get('verified');
+    const autoLogin = searchParams.get('auto_login');
 
     console.log('[DEBUG] signin/page.tsx - URL parameters check', {
       error,
       message,
       verified,
+      autoLogin,
     });
 
-    // Show email verification success message
+    // Auto-login after email verification
+    if (verified === 'true' && autoLogin === 'true') {
+      const attemptAutoLogin = async () => {
+        try {
+          console.log('[DEBUG] signin/page.tsx - Attempting auto-login after email verification');
+          
+          // Check if user is already logged in (session should be set by callback)
+          const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+          
+          if (user && !getUserError) {
+            console.log('[DEBUG] signin/page.tsx - User is logged in, redirecting to dashboard', {
+              userId: user.id,
+              userEmail: user.email,
+            });
+            
+            // Get user profile to determine redirect
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('role, is_admin')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            const redirectUrl = (profile && (profile.role === 'admin' || profile.is_admin)) 
+              ? '/admin/dashboard' 
+              : '/dashboard';
+            
+            toast.success('E-posta doğrulandı! Giriş yapılıyor...', {
+              duration: 3000,
+            });
+            
+            setTimeout(() => {
+              window.location.href = redirectUrl;
+            }, 500);
+          } else {
+            console.log('[DEBUG] signin/page.tsx - User not logged in, showing message', {
+              getUserError: getUserError?.message,
+            });
+            toast.success('E-posta adresiniz başarıyla doğrulandı!', {
+              duration: 6000,
+              description: 'Lütfen giriş yapın.',
+            });
+            // Clean URL
+            router.replace('/auth/signin');
+          }
+        } catch (err) {
+          console.error('[DEBUG] signin/page.tsx - Auto-login error', err);
+          toast.success('E-posta adresiniz başarıyla doğrulandı!', {
+            duration: 6000,
+            description: 'Lütfen giriş yapın.',
+          });
+          router.replace('/auth/signin');
+        }
+      };
+      
+      attemptAutoLogin();
+      return;
+    }
+
+    // Show email verification success message (without auto-login)
     if (verified === 'true') {
       toast.success('E-posta adresiniz başarıyla doğrulandı!', {
         duration: 6000,
