@@ -447,7 +447,7 @@ function NavbarComponent() {
           </motion.div>
         )}
       </div>
-      </motion.div>
+      </div>
     </nav>
   );
 }
