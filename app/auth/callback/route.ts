@@ -433,23 +433,14 @@ export async function GET(request: NextRequest) {
         }
       }
       
-      // If it's email verification error, redirect to verify-email page with error
-      // Otherwise redirect to signin
-      if (errorType === 'verification_failed') {
-        const verifyEmailUrl = new URL('/auth/verify-email', request.url);
-        // Try to get email from error message or use generic message
-        verifyEmailUrl.searchParams.set('error', 'verification_failed');
-        verifyEmailUrl.searchParams.set('message', userFriendlyMessage);
-        console.log('[DEBUG] callback/route.ts - Redirecting to verify-email page with error', {
-          errorType,
-          userFriendlyMessage,
-        });
-        return NextResponse.redirect(verifyEmailUrl);
-      }
-      
+      // Email verification is disabled - redirect all errors to signin
       const signinUrl = new URL('/auth/signin', request.url);
-      signinUrl.searchParams.set('error', errorType);
+      signinUrl.searchParams.set('error', errorType === 'verification_failed' ? 'oauth_failed' : errorType);
       signinUrl.searchParams.set('message', userFriendlyMessage);
+      console.log('[DEBUG] callback/route.ts - Redirecting to signin with error', {
+        errorType,
+        userFriendlyMessage,
+      });
       return NextResponse.redirect(signinUrl);
     }
 
@@ -466,29 +457,17 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
       }
       
-      // Determine error type based on callback type
-      // If type is missing, assume it's email verification (most common case)
-      const isEmailVerification = type === 'email' || type === 'signup' || !type || type === '';
-      const errorType = isEmailVerification ? 'verification_failed' : 'oauth_failed';
-      const errorMessage = isEmailVerification
-        ? 'E-posta doğrulama başarısız oldu. Lütfen yeni bir doğrulama e-postası isteyin.'
-        : 'Oturum oluşturulamadı. Lütfen tekrar deneyin.';
-      
-      // If it's email verification error, redirect to verify-email page
-      if (isEmailVerification) {
-        const verifyEmailUrl = new URL('/auth/verify-email', request.url);
-        verifyEmailUrl.searchParams.set('error', 'verification_failed');
-        verifyEmailUrl.searchParams.set('message', errorMessage);
-        console.log('[DEBUG] callback/route.ts - No user in session, redirecting to verify-email', {
-          errorType,
-          errorMessage,
-        });
-        return NextResponse.redirect(verifyEmailUrl);
-      }
+      // Email verification is disabled - redirect all errors to signin
+      const errorType = 'oauth_failed';
+      const errorMessage = 'Oturum oluşturulamadı. Lütfen tekrar deneyin.';
       
       const signinUrl = new URL('/auth/signin', request.url);
       signinUrl.searchParams.set('error', errorType);
       signinUrl.searchParams.set('message', errorMessage);
+      console.log('[DEBUG] callback/route.ts - No user in session, redirecting to signin', {
+        errorType,
+        errorMessage,
+      });
       return NextResponse.redirect(signinUrl);
     }
 
