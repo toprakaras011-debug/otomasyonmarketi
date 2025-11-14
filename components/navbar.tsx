@@ -30,8 +30,11 @@ function NavbarComponent() {
   const { count } = useCart();
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const { scrollY } = useScroll({ target: typeof window !== 'undefined' ? window : undefined });
+  const navRef = useRef<HTMLElement | null>(null);
   const [mounted, setMounted] = useState(false);
+  
+  // Use window scroll directly without ref for useScroll
+  const { scrollY } = useScroll();
   const navOpacity = useTransform(scrollY, [0, 100], [0.8, 1]);
   const navBlur = useTransform(scrollY, [0, 100], [8, 20]);
 
@@ -134,7 +137,7 @@ function NavbarComponent() {
   ];
 
   return (
-    <nav className="fixed top-0 z-50 w-full h-16">
+    <nav ref={navRef} className="fixed top-0 z-50 w-full h-16">
       <motion.div
         style={{ opacity: mounted ? navOpacity : 0.8 }}
         className={`w-full h-full transition-all duration-300 gpu-accelerated ${
