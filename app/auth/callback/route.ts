@@ -556,21 +556,61 @@ export async function GET(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 6: Handle OAuth (Google/GitHub) - DEPRECATED (OAuth removed)
+    // STEP 6: Handle OAuth (Google/GitHub)
     // ============================================
-    // OAuth has been removed, but we keep this for backwards compatibility
-    // If user has OAuth provider (not email), redirect to signin with error
-    if (provider && provider !== 'email') {
-      console.log('[DEBUG] callback/route.ts - OAuth provider detected but OAuth is disabled', {
+    // OAuth providers (Google, GitHub) - redirect to dashboard after profile creation
+    if (provider && provider !== 'email' && (provider === 'google' || provider === 'github')) {
+      console.log('[DEBUG] callback/route.ts - OAuth provider detected', {
         userId: sessionData.user.id,
         userEmail: sessionData.user.email,
         provider,
       });
+
+      // Ensure user profile exists
+      await ensureUserProfile(supabase);
+
+      // Get user profile to determine redirect
+      let profile = null;
+      let retries = 3;
       
-      const signinUrl = new URL('/auth/signin', request.url);
-      signinUrl.searchParams.set('error', 'oauth_disabled');
-      signinUrl.searchParams.set('message', 'OAuth girişi devre dışı bırakıldı. Lütfen e-posta ve şifre ile giriş yapın.');
-      return NextResponse.redirect(signinUrl);
+      while (retries > 0 && !profile) {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('role, is_admin')
+          .eq('id', sessionData.user.id)
+          .maybeSingle();
+        
+        if (!error && data) {
+          profile = data;
+          break;
+        }
+        
+        if (retries > 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        retries--;
+      }
+
+      // Check admin status
+      const userEmail = sessionData.user.email?.toLowerCase() || '';
+      const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
+      const isAdmin = 
+        (profile && (profile.role === 'admin' || profile.is_admin === true)) ||
+        isAdminEmail;
+
+      // Get redirect URL from query params or use default
+      const redirectParam = requestUrl.searchParams.get('redirect');
+      const redirectUrl = redirectParam || (isAdmin ? '/admin/dashboard' : '/dashboard');
+
+      console.log('[DEBUG] callback/route.ts - OAuth success, redirecting', {
+        redirectUrl,
+        userId: sessionData.user.id,
+        userEmail,
+        provider,
+        isAdmin,
+      });
+
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
 
     // ============================================
