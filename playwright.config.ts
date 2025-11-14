@@ -8,6 +8,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
+ * Playwright test configuration for E2E testing
  */
 export default defineConfig({
   testDir: './e2e',
