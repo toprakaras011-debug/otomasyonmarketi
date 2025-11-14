@@ -416,14 +416,14 @@ export default function DeveloperDashboardPage() {
 
     setSavingPayment(true);
     
-    // Timeout koruması (10 saniye)
+    // Timeout koruması (20 saniye - optimized)
     let timeoutCleared = false;
     const timeoutId = setTimeout(() => {
       if (!timeoutCleared) {
         setSavingPayment(false);
         toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
       }
-    }, 10000);
+    }, 20000); // Optimized: 20s for better reliability
     
     try {
       const cleanIban = paymentData.iban.replace(/[\s\-_.,]/g, '').toUpperCase();
