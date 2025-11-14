@@ -343,16 +343,17 @@ function NavbarComponent() {
             </motion.button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <motion.div
-            ref={mobileMenuRef}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background"
-          >
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <motion.div
+          ref={mobileMenuRef}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="lg:hidden py-6 space-y-2 border-t border-purple-500/20 bg-background"
+        >
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
