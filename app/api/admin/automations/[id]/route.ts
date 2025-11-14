@@ -136,13 +136,17 @@ export async function POST(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'İşlem başarısız oldu';
+    const errorStack = error instanceof Error && process.env.NODE_ENV === 'development' ? error.stack : undefined;
+    
     console.error('[DEBUG] api/admin/automations/[id] - POST error', {
-      message: error?.message,
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      message: errorMessage,
+      stack: errorStack,
     });
+    
     return NextResponse.json(
-      { message: error?.message || 'İşlem başarısız oldu' },
+      { message: errorMessage },
       { status: 500 }
     );
   }
@@ -194,13 +198,17 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Silme işlemi başarısız oldu';
+    const errorStack = error instanceof Error && process.env.NODE_ENV === 'development' ? error.stack : undefined;
+    
     console.error('[DEBUG] api/admin/automations/[id] - DELETE error', {
-      message: error?.message,
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      message: errorMessage,
+      stack: errorStack,
     });
+    
     return NextResponse.json(
-      { message: error?.message || 'Silme işlemi başarısız oldu' },
+      { message: errorMessage },
       { status: 500 }
     );
   }
