@@ -143,7 +143,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.supabase.co https://*.supabase.in https://va.vercel-scripts.com; connect-src 'self' https://*.supabase.co https://*.supabase.in https://vitals.vercel-insights.com https://va.vercel-scripts.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self' https://challenges.cloudflare.com;"
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.supabase.co https://*.supabase.in https://va.vercel-scripts.com https://accounts.google.com https://github.com; connect-src 'self' https://*.supabase.co https://*.supabase.in https://vitals.vercel-insights.com https://va.vercel-scripts.com https://accounts.google.com https://github.com https://api.github.com https://oauth2.googleapis.com https://www.googleapis.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com https://github.com;"
           }
         ]
       },
