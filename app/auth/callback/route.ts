@@ -412,8 +412,20 @@ export async function GET(request: NextRequest) {
       
       // Determine user-friendly error message based on type
       const errorMessage = exchangeError.message?.toLowerCase() || '';
-      let userFriendlyMessage = 'Doğrulama başarısız oldu. Lütfen tekrar deneyin.';
-      let errorType = 'verification_failed';
+      let userFriendlyMessage = 'Giriş başarısız oldu. Lütfen tekrar deneyin.';
+      let errorType = 'oauth_failed';
+      
+      // Check if this is actually an OAuth callback by looking at the provider
+      const provider = sessionData?.user?.app_metadata?.provider;
+      const isOAuthProvider = provider && (provider === 'google' || provider === 'github');
+      
+      console.log('[DEBUG] callback/route.ts - Determining error type', {
+        type,
+        provider,
+        isOAuthProvider,
+        errorMessage,
+        hasSessionData: !!sessionData,
+      });
       
       if (type === 'recovery') {
         // Already handled above
@@ -426,30 +438,27 @@ export async function GET(request: NextRequest) {
           userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
         }
         errorType = 'verification_failed';
-      } else {
-        // OAuth or unknown error - but check if it might be email verification
-        // If type is missing, assume it's email verification (most common case)
-        const isLikelyEmailVerification = !type || type === '' || errorMessage.includes('email') || errorMessage.includes('signup');
-        
-        if (isLikelyEmailVerification) {
-          // Treat as email verification error
-          if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
-            userFriendlyMessage = 'E-posta doğrulama bağlantısı geçersiz veya süresi dolmuş. Lütfen yeni bir doğrulama e-postası isteyin.';
-          } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-            userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
-          } else {
-            userFriendlyMessage = 'E-posta doğrulama başarısız oldu. Lütfen yeni bir doğrulama e-postası isteyin.';
-          }
-          errorType = 'verification_failed';
+      } else if (isOAuthProvider || type === 'oauth' || !type) {
+        // OAuth error - this is the most common case for OAuth callbacks
+        // If type is missing or empty, and we have an OAuth provider, treat as OAuth error
+        if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
+          userFriendlyMessage = 'OAuth giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+        } else if (errorMessage.includes('provider') || errorMessage.includes('oauth')) {
+          userFriendlyMessage = 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
         } else {
-          // OAuth or other error
-          if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
-            userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
-          } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-            userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
-          }
-          errorType = 'oauth_failed';
+          userFriendlyMessage = 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
         }
+        errorType = 'oauth_failed';
+      } else {
+        // Unknown error type - default to OAuth failed
+        if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
+          userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+        }
+        errorType = 'oauth_failed';
       }
       
       // Email verification is disabled - redirect all errors to signin
