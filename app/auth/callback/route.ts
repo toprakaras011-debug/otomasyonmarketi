@@ -509,11 +509,10 @@ export async function GET(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 5: Handle Email Verification (Signup/Email)
+    // STEP 5: Handle Email Verification (Signup/Email) - DISABLED
     // ============================================
-    // Email verification callback - user clicked the link in their email
-    // Session is already created by exchangeCodeForSession
-    // Ensure profile exists and redirect to appropriate dashboard
+    // Email verification is now optional - users can login immediately
+    // If this is an email verification callback, just ensure profile and redirect to dashboard
     const provider = sessionData.user.app_metadata?.provider;
     const isEmailVerification = 
       type === 'email' || 
@@ -521,18 +520,18 @@ export async function GET(request: NextRequest) {
       (!type && (!provider || provider === 'email'));
 
     if (isEmailVerification) {
-      console.log('[DEBUG] callback/route.ts - Email verification callback', {
+      console.log('[DEBUG] callback/route.ts - Email verification type (verification disabled, redirecting to dashboard)', {
         userId: sessionData.user.id,
         userEmail: sessionData.user.email,
         emailConfirmed: !!sessionData.user.email_confirmed_at,
         type,
         provider,
-        hasSession: !!sessionData.session,
       });
 
       // Ensure user profile exists
       await ensureUserProfile(supabase);
 
+      // Email verification is disabled - redirect directly to dashboard
       // Get user profile to determine redirect
       let profile = null;
       let retries = 3;

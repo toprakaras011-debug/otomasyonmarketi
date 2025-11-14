@@ -92,20 +92,22 @@ export const signUp = async (
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
       (typeof window !== 'undefined' ? window.location.origin : '');
 
-    // Email verification is enabled
-    // Users must verify their email before they can login
-    // Make sure "Enable email confirmations" is enabled in Supabase Dashboard:
-    // Authentication > Settings > Email Auth > Enable "Enable email confirmations"
+    // Note: Email verification is disabled in code, but Supabase may still send emails
+    // To completely disable email verification emails, go to Supabase Dashboard:
+    // Authentication > Settings > Email Auth > Disable "Enable email confirmations"
     const emailRedirectTo = `${(siteUrl || 'http://localhost:3000')}/auth/callback`;
 
-    // Attempt sign up - email verification is required
-    // Users will receive an email with verification link
+    // Attempt sign up - email verification is disabled
+    // Users can login immediately without email verification
+    // Note: Supabase Dashboard must have "Enable email confirmations" disabled to stop emails
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password: password, // Don't trim password
       options: {
+        // emailRedirectTo is kept for backwards compatibility but emails should be disabled in Supabase Dashboard
         emailRedirectTo,
         data: metadata,
+        // Note: There's no way to disable email sending from code - must be done in Supabase Dashboard
       },
     });
 
