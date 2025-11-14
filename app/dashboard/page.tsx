@@ -27,10 +27,41 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      // Wait a bit for session to be established (especially after redirect)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Try to get session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log('[DEBUG] dashboard/page.tsx - Session check', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        sessionError: sessionError ? {
+          message: sessionError.message,
+          code: sessionError.code,
+        } : null,
+      });
+      
+      // If no session, try getUser
+      if (!session) {
+        console.log('[DEBUG] dashboard/page.tsx - No session, trying getUser...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+
+      console.log('[DEBUG] dashboard/page.tsx - User check', {
+        hasUser: !!currentUser,
+        userId: currentUser?.id,
+        userError: userError ? {
+          message: userError.message,
+          code: userError.code,
+        } : null,
+      });
 
       if (!currentUser) {
-        router.push('/auth/signin');
+        console.warn('[DEBUG] dashboard/page.tsx - No user found, redirecting to signin');
+        router.replace('/auth/signin');
         return;
       }
 

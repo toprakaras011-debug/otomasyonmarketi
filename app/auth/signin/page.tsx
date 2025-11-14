@@ -224,9 +224,25 @@ export default function SignInPage() {
         throw new Error('Giriş başarısız. Lütfen tekrar deneyin.');
       }
 
-      console.log('[DEBUG] signin/page.tsx - Waiting for session to be established (200ms)');
-      // Wait for session to be established
-      await new Promise(resolve => setTimeout(resolve, 200));
+      console.log('[DEBUG] signin/page.tsx - Waiting for session to be established (500ms)');
+      // Wait longer for session to be fully established
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verify session is established
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      console.log('[DEBUG] signin/page.tsx - Session check after signin', {
+        hasSession: !!currentSession,
+        hasUser: !!currentSession?.user,
+        sessionError: sessionError ? {
+          message: sessionError.message,
+          code: sessionError.code,
+        } : null,
+      });
+      
+      if (!currentSession) {
+        console.warn('[DEBUG] signin/page.tsx - No session after signin, waiting more...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       
       console.log('[DEBUG] signin/page.tsx - Fetching user profile', {
         userId: result.user.id,
@@ -299,12 +315,17 @@ export default function SignInPage() {
       
       // Force page reload to ensure session is properly established
       // This is especially important for admin accounts
-      setTimeout(() => {
-        console.log('[DEBUG] signin/page.tsx - Executing redirect', {
-          finalRedirect,
-        });
-        window.location.href = finalRedirect;
-      }, 500);
+      // Use window.location.replace to prevent back button issues
+      console.log('[DEBUG] signin/page.tsx - Executing redirect with replace', {
+        finalRedirect,
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Small delay to ensure all state is saved
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Use replace instead of href to prevent redirect loops
+      window.location.replace(finalRedirect);
     } catch (error: any) {
       console.error('[DEBUG] signin/page.tsx - Sign in error caught', {
         message: error?.message,
