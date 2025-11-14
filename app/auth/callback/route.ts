@@ -7,6 +7,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { logger } from '@/lib/logger';
 
 // Admin email list
 const ADMIN_EMAILS = [
@@ -273,18 +274,15 @@ export async function GET(request: NextRequest) {
   const error = requestUrl.searchParams.get('error');
   const errorDescription = requestUrl.searchParams.get('error_description');
 
-  console.log('[DEBUG] callback/route.ts - GET request received', {
-    pathname: requestUrl.pathname,
-    code: code ? `${code.substring(0, 10)}...` : null,
-    codeLength: code?.length || 0,
-    type,
-    error,
-    errorDescription,
-    origin: requestUrl.origin,
-    fullUrl: requestUrl.toString(),
-    searchParams: Object.fromEntries(requestUrl.searchParams.entries()),
-    timestamp: new Date().toISOString(),
-  });
+  // Log minimal info for OAuth debugging
+  if (process.env.NODE_ENV === 'development') {
+    logger.debug('OAuth callback received', {
+      hasCode: !!code,
+      type,
+      error,
+      origin: requestUrl.origin,
+    });
+  }
 
   // ============================================
   // STEP 1: Handle OAuth errors (NO CODE)
