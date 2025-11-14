@@ -215,16 +215,23 @@ export default function SettingsPage() {
 
     setSavingPayment(true);
     
-    // Timeout koruması (15 saniye - increased for reliability)
+    // Timeout koruması (30 saniye - increased for network reliability)
     let timeoutCleared = false;
     const timeoutId = setTimeout(() => {
       if (!timeoutCleared) {
         setSavingPayment(false);
-        toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
+        toast.error('İşlem zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.', {
+          duration: 6000,
+        });
       }
-    }, 15000);
+    }, 30000); // 15s -> 30s
     
     try {
+      console.log('[DEBUG] dashboard/settings - handleSavePayment START', {
+        userId: user.id,
+        hasPaymentData: !!paymentData,
+      });
+
       const cleanIban = paymentData.iban.replace(/[\s\-_.,]/g, '').toUpperCase();
       
       const updateData: any = {
@@ -247,8 +254,14 @@ export default function SettingsPage() {
         Object.entries(updateData).filter(([_, value]) => value !== undefined && value !== null)
       );
 
+      console.log('[DEBUG] dashboard/settings - handleSavePayment - Calling upsert', {
+        userId: user.id,
+        updateDataKeys: Object.keys(cleanUpdateData),
+      });
+
       // Use upsert instead of update to handle cases where profile doesn't exist
       // This prevents "cannot coerce the result to a single JSON object" error
+      const upsertStartTime = Date.now();
       const { data, error } = await supabase
         .from('user_profiles')
         .upsert(
@@ -262,14 +275,33 @@ export default function SettingsPage() {
         )
         .select()
         .maybeSingle();
+      
+      const upsertDuration = Date.now() - upsertStartTime;
+      console.log('[DEBUG] dashboard/settings - handleSavePayment - Upsert completed', {
+        duration: `${upsertDuration}ms`,
+        hasData: !!data,
+        hasError: !!error,
+        error: error ? {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        } : null,
+      });
 
       clearTimeout(timeoutId);
       timeoutCleared = true;
 
       if (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Payment save error:', error);
-        }
+        console.error('[DEBUG] dashboard/settings - handleSavePayment - Error received', {
+          error: {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+          },
+        });
+        
         // Kolon yoksa daha açıklayıcı hata mesajı
         if (error.code === '42703' || error.message?.includes('column') || error.message?.includes('does not exist')) {
           // Extract column name from error message if possible
@@ -281,11 +313,19 @@ export default function SettingsPage() {
             description: 'supabase-migration-complete-profile-fields.sql dosyasını Supabase SQL Editor\'de çalıştırın.',
           });
         } else if (error.code === '23505' || error.message?.includes('unique')) {
-          toast.error('Bu bilgiler zaten kullanılıyor. Lütfen farklı bilgiler giriniz.');
+          toast.error('Bu bilgiler zaten kullanılıyor. Lütfen farklı bilgiler giriniz.', {
+            duration: 5000,
+          });
         } else if (error.message?.includes('cannot coerce') || error.message?.includes('PGRST116')) {
           // Handle "cannot coerce" error
-          toast.error('Ödeme bilgileri kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
-          console.error('Coerce error:', error);
+          toast.error('Ödeme bilgileri kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.', {
+            duration: 6000,
+          });
+          console.error('[DEBUG] dashboard/settings - Coerce error:', error);
+        } else if (error.message?.includes('timeout') || error.message?.includes('network') || error.code === 'PGRST301') {
+          toast.error('Bağlantı zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.', {
+            duration: 6000,
+          });
         } else {
           toast.error(error.message || 'Kayıt başarısız. Lütfen tekrar deneyin.', {
             duration: 5000,

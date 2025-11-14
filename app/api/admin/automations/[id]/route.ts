@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// Admin email list - matches auth.ts and callback route
+const ADMIN_EMAILS = [
+  'ftnakras01@gmail.com',
+].map(email => email.toLowerCase());
+
 async function resolveAuthContext(request: Request, automationId: string) {
   if (!automationId || automationId === 'undefined' || automationId === 'null') {
     console.error('Invalid automation ID received:', automationId);
@@ -56,13 +61,28 @@ async function resolveAuthContext(request: Request, automationId: string) {
     return NextResponse.json({ message: 'Profil bilgisi alınamadı' }, { status: 500 });
   }
 
-  // Check both role and is_admin flag
-  const isAdmin = profile?.role === 'admin' || profile?.is_admin === true;
+  // Check admin status: role, is_admin flag, or email in ADMIN_EMAILS list
+  const userEmail = user.email?.toLowerCase() || '';
+  const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
+  const isAdmin = 
+    profile?.role === 'admin' || 
+    profile?.is_admin === true || 
+    isAdminEmail;
+
+  console.log('[DEBUG] api/admin/automations/[id] - Admin check', {
+    userId: user.id,
+    userEmail,
+    isAdminEmail,
+    profileRole: profile?.role,
+    profileIsAdmin: profile?.is_admin,
+    finalIsAdmin: isAdmin,
+  });
 
   if (!isAdmin) {
     console.warn('[DEBUG] api/admin/automations/[id] - User is not admin', {
       userId: user.id,
-      userEmail: user.email,
+      userEmail,
+      isAdminEmail,
       profileRole: profile?.role,
       profileIsAdmin: profile?.is_admin,
     });
