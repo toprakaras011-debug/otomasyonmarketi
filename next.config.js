@@ -113,6 +113,17 @@ const nextConfig = {
   
   // Headers for security and performance
   async headers() {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    // CSP Policy - unsafe-eval removed for security
+    // Note: Next.js 16 + Turbopack doesn't require unsafe-eval in production
+    // Development may need it for HMR, but we'll try without it first
+    const scriptSrc = isDevelopment
+      ? "'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.supabase.co https://*.supabase.in https://va.vercel-scripts.com https://accounts.google.com https://github.com"
+      : "'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.supabase.co https://*.supabase.in https://va.vercel-scripts.com https://accounts.google.com https://github.com";
+    
+    const cspPolicy = `default-src 'self'; script-src ${scriptSrc}; connect-src 'self' https://*.supabase.co https://*.supabase.in https://vitals.vercel-insights.com https://va.vercel-scripts.com https://accounts.google.com https://github.com https://api.github.com https://oauth2.googleapis.com https://www.googleapis.com https://*.googleapis.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com https://github.com; worker-src 'self' blob:;`;
+    
     return [
       {
         source: '/:path*',
@@ -143,7 +154,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.supabase.co https://*.supabase.in https://va.vercel-scripts.com https://accounts.google.com https://github.com; connect-src 'self' https://*.supabase.co https://*.supabase.in https://vitals.vercel-insights.com https://va.vercel-scripts.com https://accounts.google.com https://github.com https://api.github.com https://oauth2.googleapis.com https://www.googleapis.com https://*.googleapis.com; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com https://github.com; worker-src 'self' blob:;"
+            value: cspPolicy
           }
         ]
       },
