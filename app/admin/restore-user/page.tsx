@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
 import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,104 +25,21 @@ export default function RestoreUserPage() {
     setResult(null);
 
     try {
-      // 1. Kullanıcıyı auth.users'dan bul
-      const { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(email.trim());
-      
-      if (authError || !authUser) {
-        throw new Error('Kullanıcı auth.users tablosunda bulunamadı. Önce Supabase Dashboard\'dan kullanıcıyı oluşturun.');
+      const response = await fetch('/api/admin/restore-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Kullanıcı geri getirme işlemi başarısız oldu');
       }
 
-      const userId = authUser.user.id;
-
-      // 2. Profil var mı kontrol et
-      const { data: existingProfile, error: profileCheckError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      let profileData;
-      
-      if (!existingProfile) {
-        // Profil yoksa oluştur
-        const { data: newProfile, error: createError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: userId,
-            username: email.split('@')[0],
-            full_name: 'Kullanıcı',
-            email: email.trim(),
-            is_developer: true,
-            developer_approved: true,
-            role: 'admin',
-            is_admin: true,
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          throw new Error(`Profil oluşturulamadı: ${createError.message}`);
-        }
-
-        profileData = newProfile;
-      } else {
-        // Profil varsa güncelle
-        const { data: updatedProfile, error: updateError } = await supabase
-          .from('user_profiles')
-          .update({
-            is_developer: true,
-            developer_approved: true,
-            role: 'admin',
-            is_admin: true,
-            email: email.trim(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', userId)
-          .select()
-          .single();
-
-        if (updateError) {
-          throw new Error(`Profil güncellenemedi: ${updateError.message}`);
-        }
-
-        profileData = updatedProfile;
-      }
-
-      // 3. Otomasyonları kontrol et
-      const { data: automations, error: automationError } = await supabase
-        .from('automations')
-        .select('id, title, slug, status, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (automationError) {
-        console.warn('Otomasyon kontrolü başarısız:', automationError);
-      }
-
-      // 4. Son durum raporu
-      const finalResult = {
-        success: true,
-        user: {
-          id: userId,
-          email: email.trim(),
-          emailConfirmed: !!authUser.user.email_confirmed_at,
-        },
-        profile: {
-          id: profileData.id,
-          username: profileData.username,
-          full_name: profileData.full_name,
-          is_developer: profileData.is_developer,
-          developer_approved: profileData.developer_approved,
-          role: profileData.role,
-          is_admin: profileData.is_admin,
-        },
-        automations: {
-          total: automations?.length || 0,
-          list: automations || [],
-        },
-      };
-
-      setResult(finalResult);
+      setResult(data);
       toast.success('Kullanıcı hesabı başarıyla geri getirildi!', {
         duration: 5000,
       });
