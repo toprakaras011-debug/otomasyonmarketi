@@ -655,10 +655,22 @@ export const signInWithGithub = async () => {
       throw new Error('OAuth sadece tarayıcıda çalışır');
     }
 
+    // Use NEXT_PUBLIC_SITE_URL if available, otherwise use window.location.origin
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || window.location.origin;
+    const redirectTo = `${siteUrl}/auth/callback`;
+
+    console.log('[DEBUG] lib/auth.ts - signInWithGithub calling supabase.auth.signInWithOAuth', {
+      provider: 'github',
+      redirectTo,
+      siteUrl,
+      windowOrigin: window.location.origin,
+      hasEnvSiteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,
+    });
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectTo,
       },
     });
 
@@ -693,10 +705,16 @@ export const signInWithGoogle = async () => {
     // Clear any existing session first to prevent conflicts
     await supabase.auth.signOut();
 
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    // Use NEXT_PUBLIC_SITE_URL if available, otherwise use window.location.origin
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || window.location.origin;
+    const redirectTo = `${siteUrl}/auth/callback`;
+    
     console.log('[DEBUG] lib/auth.ts - signInWithGoogle calling supabase.auth.signInWithOAuth', {
       provider: 'google',
       redirectTo,
+      siteUrl,
+      windowOrigin: window.location.origin,
+      hasEnvSiteUrl: !!process.env.NEXT_PUBLIC_SITE_URL,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
