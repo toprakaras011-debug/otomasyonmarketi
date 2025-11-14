@@ -75,13 +75,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
         duration: 5000,
         classNames: {
           toast:
-            'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:shadow-2xl group-[.toaster]:z-[99999] group-[.toaster]:rounded-2xl',
-          description: 'group-[.toast]:text-white/90 group-[.toast]:text-[13px] group-[.toast]:leading-relaxed group-[.toast]:mt-1',
+            'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:shadow-2xl group-[.toaster]:z-[99999] group-[.toaster]:rounded-2xl group-[.toaster]:border',
+          description: 'group-[.toast]:text-[13px] group-[.toast]:leading-relaxed group-[.toast]:mt-1',
           actionButton:
-            'group-[.toast]:bg-white/20 group-[.toast]:text-white group-[.toast]:rounded-lg group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:font-medium group-[.toast]:backdrop-blur-sm hover:group-[.toast]:bg-white/30',
+            'group-[.toast]:bg-white/20 group-[.toast]:text-white group-[.toast]:rounded-lg group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:font-medium hover:group-[.toast]:bg-white/30',
           cancelButton:
             'group-[.toast]:bg-white/10 group-[.toast]:text-white group-[.toast]:rounded-lg group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:font-medium hover:group-[.toast]:bg-white/20',
-          closeButton: 'group-[.toast]:bg-white/20 group-[.toast]:border group-[.toast]:border-white/15 group-[.toast]:text-white hover:group-[.toast]:bg-white/30 hover:group-[.toast]:scale-110 hover:group-[.toast]:rotate-90',
+          closeButton: 'group-[.toast]:bg-white/20 group-[.toast]:border group-[.toast]:border-white/30 group-[.toast]:text-white hover:group-[.toast]:bg-white/30 hover:group-[.toast]:scale-110 hover:group-[.toast]:rotate-90',
           title: 'group-[.toast]:text-[15px] group-[.toast]:font-semibold group-[.toast]:text-white group-[.toast]:tracking-tight',
           icon: 'group-[.toast]:mr-3 group-[.toast]:w-6 group-[.toast]:h-6',
         },

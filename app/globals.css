@@ -97,6 +97,98 @@
     overflow-x: hidden;
   }
 
+  /* Toast/Notification Colors - Improved Readability */
+  [data-sonner-toaster] [data-sonner-toast][data-type="success"] {
+    background-color: rgb(22 163 74) !important; /* green-600 */
+    color: white !important;
+    border-color: rgb(21 128 61) !important; /* green-700 */
+  }
+
+  .dark [data-sonner-toaster] [data-sonner-toast][data-type="success"] {
+    background-color: rgb(21 128 61) !important; /* green-700 */
+    color: white !important;
+    border-color: rgb(20 83 45) !important; /* green-800 */
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-title],
+  [data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-description] {
+    color: white !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="error"] {
+    background-color: rgb(220 38 38) !important; /* red-600 */
+    color: white !important;
+    border-color: rgb(185 28 28) !important; /* red-700 */
+  }
+
+  .dark [data-sonner-toaster] [data-sonner-toast][data-type="error"] {
+    background-color: rgb(185 28 28) !important; /* red-700 */
+    color: white !important;
+    border-color: rgb(153 27 27) !important; /* red-800 */
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-title],
+  [data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-description] {
+    color: white !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="info"] {
+    background-color: rgb(37 99 235) !important; /* blue-600 */
+    color: white !important;
+    border-color: rgb(29 78 216) !important; /* blue-700 */
+  }
+
+  .dark [data-sonner-toaster] [data-sonner-toast][data-type="info"] {
+    background-color: rgb(29 78 216) !important; /* blue-700 */
+    color: white !important;
+    border-color: rgb(30 64 175) !important; /* blue-800 */
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-title],
+  [data-sonner-toaster] [data-sonner-toast][data-type="info"] [data-description] {
+    color: white !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="warning"] {
+    background-color: rgb(217 119 6) !important; /* amber-600 */
+    color: white !important;
+    border-color: rgb(180 83 9) !important; /* amber-700 */
+  }
+
+  .dark [data-sonner-toaster] [data-sonner-toast][data-type="warning"] {
+    background-color: rgb(180 83 9) !important; /* amber-700 */
+    color: white !important;
+    border-color: rgb(146 64 14) !important; /* amber-800 */
+  }
+
+  [data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-title],
+  [data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-description] {
+    color: white !important;
+  }
+
+  /* Default toast (no type) - better contrast */
+  [data-sonner-toaster] [data-sonner-toast]:not([data-type]) {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Toast icons - ensure visibility */
+  [data-sonner-toaster] [data-sonner-toast] [data-icon] {
+    color: inherit !important;
+  }
+
+  /* Toast close button - better visibility */
+  [data-sonner-toaster] [data-sonner-toast] button[data-close-button] {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast] button[data-close-button]:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
   /* Optimize animations and transitions - GPU acceleration */
   * {
     backface-visibility: hidden;
