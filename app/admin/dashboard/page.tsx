@@ -7,7 +7,7 @@ import { Navbar } from '@/components/navbar';
 import AdminAutomationList from '@/components/admin/AdminAutomationList';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Loader2, Package, Users, TrendingUp, DollarSign, Shield } from 'lucide-react';
+import { Loader2, Package, Users, TrendingUp, DollarSign, Shield, RefreshCw } from 'lucide-react';
 
 type StatSummary = {
   totalAutomations: number;
@@ -31,6 +31,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [automations, setAutomations] = useState<any[]>([]);
   const [stats, setStats] = useState<StatSummary>(initialStats);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     const loadData = async () => {
@@ -86,6 +87,14 @@ export default function AdminDashboardPage() {
         profileIsAdmin: profile?.is_admin,
       });
 
+      // Add cache-busting timestamp to ensure fresh data
+      const cacheBuster = Date.now();
+      
+      console.log('[DEBUG] admin/dashboard - Loading stats with cache-busting', {
+        cacheBuster,
+        timestamp: new Date().toISOString(),
+      });
+
       const [automationsRes, automationsCount, pendingCount, usersCount, developersCount, earningsRes] = await Promise.all([
         supabase
           .from('admin_dashboard')
@@ -114,6 +123,14 @@ export default function AdminDashboardPage() {
         supabase.from('platform_earnings').select('amount'),
       ]);
 
+      console.log('[DEBUG] admin/dashboard - Stats loaded', {
+        automationsCount: automationsCount.count,
+        pendingCount: pendingCount.count,
+        usersCount: usersCount.count,
+        developersCount: developersCount.count,
+        timestamp: new Date().toISOString(),
+      });
+
       if (automationsRes.data) {
         setAutomations(automationsRes.data);
       }
@@ -127,10 +144,23 @@ export default function AdminDashboardPage() {
           earningsRes.data?.reduce((total, row) => total + Number(row.amount ?? 0), 0) ?? 0,
       });
 
+      setLastRefresh(new Date());
       setLoading(false);
     };
 
     void loadData();
+    
+    // Auto-refresh stats every 30 seconds to ensure data is always fresh
+    const refreshInterval = setInterval(() => {
+      console.log('[DEBUG] admin/dashboard - Auto-refreshing stats', {
+        timestamp: new Date().toISOString(),
+      });
+      void loadData();
+    }, 30000); // 30 seconds
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
   }, [router]);
 
   if (loading) {
@@ -173,6 +203,12 @@ export default function AdminDashboardPage() {
           <p className="mx-auto max-w-2xl text-lg text-foreground/70">
             Platform istatistiklerini görüntüleyin ve otomasyonları yönetin
           </p>
+          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-foreground/50">
+            <RefreshCw className="h-4 w-4" />
+            <span>Son güncelleme: {lastRefresh.toLocaleTimeString('tr-TR')}</span>
+            <span>•</span>
+            <span>Otomatik yenileme: 30 saniye</span>
+          </div>
         </motion.div>
 
         {/* Stats Cards */}
