@@ -472,14 +472,6 @@ export async function GET(request: NextRequest) {
           userFriendlyMessage = 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
         }
         errorType = 'oauth_failed';
-      } else {
-        // Unknown error type - default to OAuth failed
-        if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
-          userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
-        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-          userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
-        }
-        errorType = 'oauth_failed';
       }
       
       // Email verification is disabled - redirect all errors to signin
