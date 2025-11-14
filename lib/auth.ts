@@ -651,9 +651,77 @@ export const signIn = async (email: string, password: string) => {
   }
 };
 
+/**
+ * Sign out the current user
+ * Clears session, cookies, and local storage
+ * @returns Promise with error if any
+ */
 export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  return { error };
+  try {
+    logger.debug('Sign out initiated');
+    
+    // First, clear Supabase session storage keys explicitly
+    if (typeof window !== 'undefined') {
+      // Clear Supabase auth tokens from localStorage
+      const supabaseStorageKey = 'supabase.auth.token';
+      localStorage.removeItem(supabaseStorageKey);
+      
+      // Also clear any other Supabase-related keys
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('supabase.') || key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear sessionStorage as well
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('supabase.') || key.startsWith('sb-')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+    
+    // Sign out from Supabase - this should trigger SIGNED_OUT event
+    const { error } = await supabase.auth.signOut({
+      scope: 'global' // Sign out from all sessions
+    });
+    
+    if (error) {
+      logger.error('Sign out error', error);
+      // Even if there's an error, try to clear local state
+      if (typeof window !== 'undefined') {
+        // Clear any cached data
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      return { error };
+    }
+    
+    logger.info('Sign out successful');
+    
+    // Double-check: Clear any remaining cached data
+    if (typeof window !== 'undefined') {
+      // Wait a bit for auth state change to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Final cleanup
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+    
+    return { error: null };
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Sign out exception', errorObj);
+    
+    // Clear local state even on exception
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+    
+    return { error: errorObj };
+  }
 };
 
 export const getCurrentUser = async () => {

@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, User, Shield, Code2, Heart, Settings, LogOut } from 'lucide-react';
 import { signOut } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProfileDropdownProps {
@@ -53,11 +54,38 @@ export function ProfileDropdown({ user, profile }: ProfileDropdownProps) {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      window.location.href = '/';
+      const { error } = await signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        // Even if there's an error, try to clear local state and redirect
+      }
+      
+      // Wait longer to ensure session is fully cleared and auth state change propagates
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Verify session is actually cleared
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.warn('Session still exists after signOut, forcing clear');
+        // Force clear if session still exists
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+        }
+      }
+      
+      // Clear any cached state and redirect
+      // Use replace to prevent back button issues
+      window.location.replace('/');
     } catch (error) {
       console.error('Sign out error:', error);
-      window.location.href = '/';
+      // Force redirect even on error
+      // Clear local storage
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      window.location.replace('/');
     }
   };
 

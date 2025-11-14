@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Menu, X, Sparkles, Package, Layers, Code2, BookOpen, ChevronDown, Shield, ShoppingCart, User, Heart, Settings, Zap } from 'lucide-react';
 import { signOut } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { useCart } from '@/components/cart-context';
 import { useAuth } from '@/components/auth-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -95,12 +96,33 @@ function NavbarComponent() {
         console.error('Sign out error:', error);
         // Even if there's an error, try to clear local state and redirect
       }
+      
+      // Wait longer to ensure session is fully cleared and auth state change propagates
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Verify session is actually cleared
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.warn('Session still exists after signOut, forcing clear');
+        // Force clear if session still exists
+        if (typeof window !== 'undefined') {
+          localStorage.clear();
+          sessionStorage.clear();
+        }
+      }
+      
       // Clear any cached state and redirect
-      window.location.href = '/';
+      // Use replace to prevent back button issues
+      window.location.replace('/');
     } catch (error) {
       console.error('Sign out error:', error);
       // Force redirect even on error
-      window.location.href = '/';
+      // Clear local storage
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      window.location.replace('/');
     }
   }, []);
 
