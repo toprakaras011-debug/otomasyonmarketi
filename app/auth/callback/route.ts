@@ -356,6 +356,10 @@ export async function GET(request: NextRequest) {
           codeLength: code.length,
           type,
           fullError: JSON.stringify(exchangeError, null, 2),
+          timestamp: new Date().toISOString(),
+          requestUrl: requestUrl.toString(),
+          origin: requestUrl.origin,
+          pathname: requestUrl.pathname,
         });
         
         // If this is a recovery type, redirect to reset-password with error
