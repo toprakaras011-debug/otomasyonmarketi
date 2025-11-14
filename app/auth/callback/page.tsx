@@ -37,30 +37,38 @@ export default function OAuthCallbackPage() {
           type,
         });
 
-        // Handle OAuth errors
+        // Handle OAuth/email/recovery errors
         if (errorParam && !code) {
-          logger.error('OAuth callback error', new Error(errorDescription || errorParam), {
+          logger.error('Callback error', new Error(errorDescription || errorParam), {
             error: errorParam,
             errorDescription,
+            type,
           });
           
-          setError(errorDescription || 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.');
+          setError(errorDescription || 'Giriş başarısız oldu. Lütfen tekrar deneyin.');
           setLoading(false);
           
-          // Redirect to signin after a delay
+          // Determine redirect based on type
+          const redirectPath = type === 'recovery' ? '/auth/reset-password' : '/auth/signin';
+          const errorType = type === 'recovery' ? 'invalid_token' : 'oauth_failed';
+          
           setTimeout(() => {
-            router.push(`/auth/signin?error=oauth_failed&message=${encodeURIComponent(errorDescription || 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.')}`);
+            router.push(`${redirectPath}?error=${errorType}&message=${encodeURIComponent(errorDescription || 'Giriş başarısız oldu. Lütfen tekrar deneyin.')}`);
           }, 2000);
           return;
         }
 
         // Validate code
         if (!code) {
-          logger.error('OAuth callback - No code provided', new Error('No code parameter'));
+          logger.error('Callback - No code provided', new Error('No code parameter'));
           setError('Giriş kodu bulunamadı. Lütfen tekrar deneyin.');
           setLoading(false);
+          
+          const redirectPath = type === 'recovery' ? '/auth/reset-password' : '/auth/signin';
+          const errorType = type === 'recovery' ? 'invalid_token' : 'oauth_failed';
+          
           setTimeout(() => {
-            router.push('/auth/signin?error=oauth_failed&message=Giriş kodu bulunamadı. Lütfen tekrar deneyin.');
+            router.push(`${redirectPath}?error=${errorType}&message=Giriş kodu bulunamadı. Lütfen tekrar deneyin.`);
           }, 2000);
           return;
         }
@@ -84,7 +92,7 @@ export default function OAuthCallbackPage() {
         });
 
         if (exchangeError) {
-          logger.error('OAuth callback - Code exchange error', exchangeError, {
+          logger.error('Callback - Code exchange error', exchangeError, {
             codeLength: code.length,
             type,
           });
@@ -92,19 +100,32 @@ export default function OAuthCallbackPage() {
           setError(exchangeError.message || 'Giriş başarısız oldu. Lütfen tekrar deneyin.');
           setLoading(false);
           
-          setTimeout(() => {
-            router.push(`/auth/signin?error=oauth_failed&message=${encodeURIComponent(exchangeError.message || 'Giriş başarısız oldu. Lütfen tekrar deneyin.')}`);
-          }, 2000);
+          // Handle recovery type separately
+          if (type === 'recovery') {
+            setTimeout(() => {
+              router.push(`/auth/reset-password?error=invalid_token&message=${encodeURIComponent(exchangeError.message || 'Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.')}`);
+            }, 2000);
+          } else {
+            // OAuth or email verification error
+            const errorType = type === 'email' || type === 'signup' ? 'verification_failed' : 'oauth_failed';
+            setTimeout(() => {
+              router.push(`/auth/signin?error=${errorType}&message=${encodeURIComponent(exchangeError.message || 'Giriş başarısız oldu. Lütfen tekrar deneyin.')}`);
+            }, 2000);
+          }
           return;
         }
 
         // Validate session
         if (!sessionData?.session || !sessionData?.user) {
-          logger.error('OAuth callback - No session data', new Error('No session or user data'));
+          logger.error('Callback - No session data', new Error('No session or user data'));
           setError('Oturum oluşturulamadı. Lütfen tekrar deneyin.');
           setLoading(false);
+          
+          const redirectPath = type === 'recovery' ? '/auth/reset-password' : '/auth/signin';
+          const errorType = type === 'recovery' ? 'invalid_token' : 'oauth_failed';
+          
           setTimeout(() => {
-            router.push('/auth/signin?error=oauth_failed&message=Oturum oluşturulamadı. Lütfen tekrar deneyin.');
+            router.push(`${redirectPath}?error=${errorType}&message=Oturum oluşturulamadı. Lütfen tekrar deneyin.`);
           }, 2000);
           return;
         }
