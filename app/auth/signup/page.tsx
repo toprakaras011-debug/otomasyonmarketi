@@ -269,24 +269,25 @@ export default function SignUpPage() {
           window.location.href = redirectUrl;
         }, 1000);
       } else {
-        console.log('[DEBUG] signup/page.tsx - handleSubmit user not logged in, but email verification is disabled - redirecting to signin', {
+        console.log('[DEBUG] signup/page.tsx - handleSubmit user not logged in - email verification required', {
           getUserError: getUserError ? {
             message: getUserError.message,
             code: getUserError.code,
           } : null,
+          email: normalizedEmail,
         });
         
-        // Email verification is disabled - redirect to signin page
-        // User can login immediately after signup
-        toast.info('Hesabınız oluşturuldu! Giriş yapabilirsiniz.', {
+        // Email verification is required - redirect to verify-email page
+        toast.success('Hesabınız oluşturuldu!', {
           duration: 5000,
+          description: 'E-posta adresinizi doğrulamanız gerekiyor.',
         });
         
         setTimeout(() => {
-          console.log('[DEBUG] signup/page.tsx - handleSubmit redirecting to signin', {
+          console.log('[DEBUG] signup/page.tsx - handleSubmit redirecting to verify-email', {
             email: normalizedEmail,
           });
-          router.push(`/auth/signin?email=${encodeURIComponent(normalizedEmail)}`);
+          router.push(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`);
         }, 1500);
       }
     } catch (error: any) {
