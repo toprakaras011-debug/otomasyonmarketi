@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Zap, Mail, ArrowLeft, Loader2, Github } from 'lucide-react';
 import { Turnstile } from '@/components/turnstile';
 import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -34,91 +35,16 @@ export default function SignInPage() {
   useEffect(() => {
     const error = searchParams.get('error');
     const message = searchParams.get('message');
-    const verified = searchParams.get('verified');
-    const autoLogin = searchParams.get('auto_login');
 
-    console.log('[DEBUG] signin/page.tsx - URL parameters check', {
+    logger.debug('URL parameters check', {
       error,
       message,
-      verified,
-      autoLogin,
     });
-
-    // Auto-login after email verification
-    if (verified === 'true' && autoLogin === 'true') {
-      const attemptAutoLogin = async () => {
-        try {
-          console.log('[DEBUG] signin/page.tsx - Attempting auto-login after email verification');
-          
-          // Check if user is already logged in (session should be set by callback)
-          const { data: { user }, error: getUserError } = await supabase.auth.getUser();
-          
-          if (user && !getUserError) {
-            console.log('[DEBUG] signin/page.tsx - User is logged in, redirecting to dashboard', {
-              userId: user.id,
-              userEmail: user.email,
-            });
-            
-            // Get user profile to determine redirect
-            const { data: profile } = await supabase
-              .from('user_profiles')
-              .select('role, is_admin')
-              .eq('id', user.id)
-              .maybeSingle();
-
-            const redirectUrl = (profile && (profile.role === 'admin' || profile.is_admin)) 
-              ? '/admin/dashboard' 
-              : '/dashboard';
-            
-            toast.success('E-posta doğrulandı! Giriş yapılıyor...', {
-              duration: 3000,
-            });
-            
-            setTimeout(() => {
-              window.location.href = redirectUrl;
-            }, 500);
-          } else {
-            console.log('[DEBUG] signin/page.tsx - User not logged in, showing message', {
-              getUserError: getUserError?.message,
-            });
-            toast.success('E-posta adresiniz başarıyla doğrulandı!', {
-              duration: 6000,
-              description: 'Lütfen giriş yapın.',
-            });
-            // Clean URL
-            router.replace('/auth/signin');
-          }
-        } catch (err) {
-          console.error('[DEBUG] signin/page.tsx - Auto-login error', err);
-          toast.success('E-posta adresiniz başarıyla doğrulandı!', {
-            duration: 6000,
-            description: 'Lütfen giriş yapın.',
-          });
-          router.replace('/auth/signin');
-        }
-      };
-      
-      attemptAutoLogin();
-      return;
-    }
-
-    // Show email verification success message (without auto-login)
-    if (verified === 'true') {
-      toast.success('E-posta adresiniz başarıyla doğrulandı!', {
-        duration: 6000,
-        description: 'Artık giriş yapabilirsiniz.',
-      });
-      // Clean URL after showing message
-      const timer = setTimeout(() => {
-        router.replace('/auth/signin');
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
 
     // Show error messages
     if (error && message) {
       const decodedMessage = decodeURIComponent(message);
-      console.log('[DEBUG] signin/page.tsx - Showing error from URL', {
+      logger.debug('Showing error from URL', {
         error,
         decodedMessage,
       });
@@ -139,15 +65,20 @@ export default function SignInPage() {
   const handleOAuthSignIn = async (provider: 'google' | 'github') => {
     try {
       setLoading(true);
-      logger.debug('OAuth sign in initiated', { provider });
+      logger.debug('OAuth sign in initiated', { provider, redirectTo });
       
       await signInWithOAuth(provider, redirectTo);
       
       // OAuth redirect will happen automatically
       // No need to handle redirect here as Supabase handles it
-    } catch (error: any) {
-      logger.error('OAuth sign in error', error);
-      toast.error(error?.message || `${provider === 'google' ? 'Google' : 'GitHub'} ile giriş yapılamadı. Lütfen tekrar deneyin.`, {
+    } catch (error: unknown) {
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('OAuth sign in error', errorObj, { provider });
+      
+      const category = getErrorCategory(errorObj);
+      const errorMessage = getErrorMessage(errorObj, category, `${provider === 'google' ? 'Google' : 'GitHub'} ile giriş yapılamadı. Lütfen tekrar deneyin.`);
+      
+      toast.error(errorMessage, {
         duration: 5000,
       });
       setLoading(false);
@@ -157,7 +88,7 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('[DEBUG] signin/page.tsx - handleSubmit START', {
+    logger.debug('Sign in form submit started', {
       hasEmail: !!formData.email?.trim(),
       hasPassword: !!formData.password,
       emailLength: formData.email?.length || 0,
@@ -171,7 +102,7 @@ export default function SignInPage() {
     
     // Basic validation
     if (!formData.email?.trim()) {
-      console.warn('[DEBUG] signin/page.tsx - Validation failed: email empty');
+      logger.warn('Validation failed: email empty');
       toast.error('E-posta adresi gereklidir', {
         duration: 4000,
       });
@@ -179,7 +110,7 @@ export default function SignInPage() {
     }
 
     if (!formData.password) {
-      console.warn('[DEBUG] signin/page.tsx - Validation failed: password empty');
+      logger.warn('Validation failed: password empty');
       toast.error('Şifre gereklidir', {
         duration: 4000,
       });
@@ -190,7 +121,7 @@ export default function SignInPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const normalizedEmail = formData.email.trim().toLowerCase();
     if (!emailRegex.test(normalizedEmail)) {
-      console.warn('[DEBUG] signin/page.tsx - Validation failed: invalid email format', {
+      logger.warn('Validation failed: invalid email format', {
         email: normalizedEmail,
       });
       toast.error('Geçerli bir e-posta adresi giriniz', {
@@ -201,7 +132,7 @@ export default function SignInPage() {
     
     // Validate Turnstile token - only if site key is configured
     if (turnstileSiteKey && !turnstileToken) {
-      console.warn('[DEBUG] signin/page.tsx - Validation failed: missing Turnstile token', {
+      logger.warn('Validation failed: missing Turnstile token', {
         hasTurnstileSiteKey: !!turnstileSiteKey,
         hasTurnstileToken: !!turnstileToken,
       });
@@ -211,11 +142,11 @@ export default function SignInPage() {
       return;
     }
     
-    console.log('[DEBUG] signin/page.tsx - Validation passed, setting loading state');
+    logger.debug('Validation passed, setting loading state');
     setLoading(true);
 
     try {
-      console.log('[DEBUG] signin/page.tsx - Calling signIn function', {
+      logger.debug('Calling signIn function', {
         normalizedEmail,
         passwordLength: formData.password.length,
         redirectTo,
@@ -224,7 +155,7 @@ export default function SignInPage() {
       // Sign in
       const result = await signIn(normalizedEmail, formData.password);
       
-      console.log('[DEBUG] signin/page.tsx - signIn function returned', {
+      logger.debug('signIn function returned', {
         hasResult: !!result,
         hasUser: !!result?.user,
         userId: result?.user?.id,
@@ -236,20 +167,20 @@ export default function SignInPage() {
       
       // Verify sign-in was successful
       if (!result || !result.user) {
-        console.error('[DEBUG] signin/page.tsx - Sign in failed: no result or user', {
+        logger.error('Sign in failed: no result or user', {
           hasResult: !!result,
           hasUser: !!result?.user,
         });
         throw new Error('Giriş başarısız. Lütfen tekrar deneyin.');
       }
 
-      console.log('[DEBUG] signin/page.tsx - Waiting for session to be established (500ms)');
+      logger.debug('Waiting for session to be established (500ms)');
       // Wait longer for session to be fully established
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Verify session is established
       const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log('[DEBUG] signin/page.tsx - Session check after signin', {
+      logger.debug('Session check after signin', {
         hasSession: !!currentSession,
         hasUser: !!currentSession?.user,
         sessionError: sessionError ? {
@@ -259,11 +190,11 @@ export default function SignInPage() {
       });
       
       if (!currentSession) {
-        console.warn('[DEBUG] signin/page.tsx - No session after signin, waiting more...');
+        logger.warn('No session after signin, waiting more...');
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
-      console.log('[DEBUG] signin/page.tsx - Fetching user profile', {
+      logger.debug('Fetching user profile', {
         userId: result.user.id,
       });
       
@@ -274,7 +205,7 @@ export default function SignInPage() {
         .eq('id', result.user.id)
         .maybeSingle();
 
-      console.log('[DEBUG] signin/page.tsx - Profile fetch result', {
+      logger.debug('Profile fetch result', {
         hasProfile: !!profile,
         profileError: profileError ? {
           message: profileError.message,
@@ -287,11 +218,7 @@ export default function SignInPage() {
       });
 
       if (profileError) {
-        console.error('[DEBUG] signin/page.tsx - Profile fetch error:', {
-          message: profileError.message,
-          code: profileError.code,
-          details: profileError.details,
-          hint: profileError.hint,
+        logger.error('Profile fetch error', profileError, {
           userId: result.user.id,
         });
       }
@@ -301,41 +228,43 @@ export default function SignInPage() {
       
       // If user is admin, redirect to admin dashboard
       if (profile && (profile.role === 'admin' || profile.is_admin)) {
-        console.log('[DEBUG] signin/page.tsx - User is admin, redirecting to admin dashboard', {
+        logger.debug('User is admin, redirecting to admin dashboard', {
           role: profile.role,
           isAdmin: profile.is_admin,
         });
         finalRedirect = '/admin/dashboard';
       } else if (redirectTo === '/dashboard') {
         // Normal user goes to dashboard
-        console.log('[DEBUG] signin/page.tsx - User is normal, redirecting to dashboard', {
+        logger.debug('User is normal, redirecting to dashboard', {
           role: profile?.role || 'none',
           isAdmin: profile?.is_admin || false,
         });
         finalRedirect = '/dashboard';
       } else {
-        console.log('[DEBUG] signin/page.tsx - Using custom redirect', {
+        logger.debug('Using custom redirect', {
           finalRedirect,
         });
       }
 
-      console.log('[DEBUG] signin/page.tsx - Sign in successful, showing success toast', {
+      logger.info('Sign in successful', {
         finalRedirect,
+        userId: result.user.id,
+        userEmail: result.user.email,
       });
 
       toast.success('Giriş başarılı!', {
         duration: 3000,
       });
       
-      console.log('[DEBUG] signin/page.tsx - Scheduling redirect', {
+      logger.debug('Scheduling redirect', {
         finalRedirect,
-        delay: 500,
+        delay: 300,
       });
       
       // Force page reload to ensure session is properly established
       // This is especially important for admin accounts
       // Use window.location.replace to prevent back button issues
-      console.log('[DEBUG] signin/page.tsx - Executing redirect with replace', {
+      logger.debug('Executing redirect with replace', {
         finalRedirect,
         timestamp: new Date().toISOString(),
       });
@@ -345,20 +274,15 @@ export default function SignInPage() {
       
       // Use replace instead of href to prevent redirect loops
       window.location.replace(finalRedirect);
-    } catch (error: any) {
-      console.error('[DEBUG] signin/page.tsx - Sign in error caught', {
-        message: error?.message,
-        name: error?.name,
-        code: error?.code,
-        status: error?.status,
-        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-        fullError: error, // Log full error for debugging
-      });
+    } catch (error: unknown) {
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error('Sign in error caught', errorObj);
       
-      const errorMessage = error?.message || 'Giriş yapılamadı';
+      const category = getErrorCategory(errorObj);
+      const errorMessage = getErrorMessage(errorObj, category, 'Giriş yapılamadı');
       
       // More helpful error messages
-      let description = undefined;
+      let description: string | undefined = undefined;
       if (errorMessage.includes('şifre') || errorMessage.includes('e-posta')) {
         description = 'Şifrenizi unuttuysanız "Şifremi Unuttum" linkine tıklayın.';
       } else if (errorMessage.includes('kayıtlı bir hesap bulunamadı') || errorMessage.includes('hesap geçersiz')) {
@@ -374,9 +298,9 @@ export default function SignInPage() {
       setFormData(prev => ({ ...prev, password: '' }));
       setTurnstileToken(null);
       
-      console.log('[DEBUG] signin/page.tsx - Error handled, form reset');
+      logger.debug('Error handled, form reset');
     } finally {
-      console.log('[DEBUG] signin/page.tsx - handleSubmit FINALLY: resetting loading state');
+      logger.debug('handleSubmit FINALLY: resetting loading state');
       setLoading(false);
     }
   };
