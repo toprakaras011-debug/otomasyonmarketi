@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
   const error = requestUrl.searchParams.get('error');
   const errorDescription = requestUrl.searchParams.get('error_description');
 
-  console.log('[DEBUG] callback/route.ts - GET request', {
+  console.log('[DEBUG] callback/route.ts - GET request received', {
     pathname: requestUrl.pathname,
     code: code ? `${code.substring(0, 10)}...` : null,
     codeLength: code?.length || 0,
@@ -281,6 +281,8 @@ export async function GET(request: NextRequest) {
     error,
     errorDescription,
     origin: requestUrl.origin,
+    fullUrl: requestUrl.toString(),
+    searchParams: Object.fromEntries(requestUrl.searchParams.entries()),
     timestamp: new Date().toISOString(),
   });
 
@@ -292,11 +294,20 @@ export async function GET(request: NextRequest) {
       error,
       errorDescription,
       url: requestUrl.toString(),
+      fullUrl: requestUrl.toString(),
+      allParams: Object.fromEntries(requestUrl.searchParams.entries()),
+      timestamp: new Date().toISOString(),
     });
     
     const signinUrl = new URL('/auth/signin', request.url);
     signinUrl.searchParams.set('error', 'oauth_failed');
-    signinUrl.searchParams.set('message', errorDescription || 'OAuth girişi başarısız oldu');
+    const errorMsg = errorDescription || error || 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
+    signinUrl.searchParams.set('message', encodeURIComponent(errorMsg));
+    console.log('[DEBUG] callback/route.ts - Redirecting to signin with OAuth error', {
+      error,
+      errorDescription,
+      redirectUrl: signinUrl.toString(),
+    });
     return NextResponse.redirect(signinUrl);
   }
 
@@ -322,12 +333,20 @@ export async function GET(request: NextRequest) {
     console.warn('[DEBUG] callback/route.ts - No code provided', {
       hasError: !!error,
       error,
+      errorDescription,
       type,
+      fullUrl: requestUrl.toString(),
+      allParams: Object.fromEntries(requestUrl.searchParams.entries()),
+      timestamp: new Date().toISOString(),
     });
     
     const signinUrl = new URL('/auth/signin', request.url);
     signinUrl.searchParams.set('error', 'oauth_failed');
-    signinUrl.searchParams.set('message', 'Giriş kodu bulunamadı. Lütfen tekrar deneyin.');
+    const errorMsg = errorDescription || error || 'Giriş kodu bulunamadı. Lütfen tekrar deneyin.';
+    signinUrl.searchParams.set('message', encodeURIComponent(errorMsg));
+    console.log('[DEBUG] callback/route.ts - Redirecting to signin (no code)', {
+      redirectUrl: signinUrl.toString(),
+    });
     return NextResponse.redirect(signinUrl);
   }
 
