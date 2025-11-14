@@ -408,13 +408,43 @@ export async function GET(request: NextRequest) {
         }
         errorType = 'verification_failed';
       } else {
-        // OAuth or unknown error (shouldn't happen since OAuth is removed)
-        if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
-          userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
-        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
-          userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+        // OAuth or unknown error - but check if it might be email verification
+        // If type is missing, assume it's email verification (most common case)
+        const isLikelyEmailVerification = !type || type === '' || errorMessage.includes('email') || errorMessage.includes('signup');
+        
+        if (isLikelyEmailVerification) {
+          // Treat as email verification error
+          if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
+            userFriendlyMessage = 'E-posta doğrulama bağlantısı geçersiz veya süresi dolmuş. Lütfen yeni bir doğrulama e-postası isteyin.';
+          } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+            userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+          } else {
+            userFriendlyMessage = 'E-posta doğrulama başarısız oldu. Lütfen yeni bir doğrulama e-postası isteyin.';
+          }
+          errorType = 'verification_failed';
+        } else {
+          // OAuth or other error
+          if (errorMessage.includes('expired') || errorMessage.includes('invalid') || errorMessage.includes('already used')) {
+            userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Lütfen tekrar deneyin.';
+          } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+            userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+          }
+          errorType = 'oauth_failed';
         }
-        errorType = 'oauth_failed';
+      }
+      
+      // If it's email verification error, redirect to verify-email page with error
+      // Otherwise redirect to signin
+      if (errorType === 'verification_failed') {
+        const verifyEmailUrl = new URL('/auth/verify-email', request.url);
+        // Try to get email from error message or use generic message
+        verifyEmailUrl.searchParams.set('error', 'verification_failed');
+        verifyEmailUrl.searchParams.set('message', userFriendlyMessage);
+        console.log('[DEBUG] callback/route.ts - Redirecting to verify-email page with error', {
+          errorType,
+          userFriendlyMessage,
+        });
+        return NextResponse.redirect(verifyEmailUrl);
       }
       
       const signinUrl = new URL('/auth/signin', request.url);
@@ -437,10 +467,24 @@ export async function GET(request: NextRequest) {
       }
       
       // Determine error type based on callback type
-      const errorType = (type === 'email' || type === 'signup') ? 'verification_failed' : 'oauth_failed';
-      const errorMessage = (type === 'email' || type === 'signup') 
+      // If type is missing, assume it's email verification (most common case)
+      const isEmailVerification = type === 'email' || type === 'signup' || !type || type === '';
+      const errorType = isEmailVerification ? 'verification_failed' : 'oauth_failed';
+      const errorMessage = isEmailVerification
         ? 'E-posta doğrulama başarısız oldu. Lütfen yeni bir doğrulama e-postası isteyin.'
         : 'Oturum oluşturulamadı. Lütfen tekrar deneyin.';
+      
+      // If it's email verification error, redirect to verify-email page
+      if (isEmailVerification) {
+        const verifyEmailUrl = new URL('/auth/verify-email', request.url);
+        verifyEmailUrl.searchParams.set('error', 'verification_failed');
+        verifyEmailUrl.searchParams.set('message', errorMessage);
+        console.log('[DEBUG] callback/route.ts - No user in session, redirecting to verify-email', {
+          errorType,
+          errorMessage,
+        });
+        return NextResponse.redirect(verifyEmailUrl);
+      }
       
       const signinUrl = new URL('/auth/signin', request.url);
       signinUrl.searchParams.set('error', errorType);

@@ -19,7 +19,30 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     const emailParam = searchParams.get('email');
+    const error = searchParams.get('error');
+    const message = searchParams.get('message');
+    
     setEmail(emailParam);
+    
+    // Show error message if present
+    if (error && message) {
+      const decodedMessage = decodeURIComponent(message);
+      console.log('[DEBUG] verify-email/page.tsx - Error from URL', {
+        error,
+        decodedMessage,
+      });
+      
+      toast.error('Doğrulama Hatası', {
+        duration: 8000,
+        description: decodedMessage,
+      });
+      
+      // Clean URL after showing message
+      const timer = setTimeout(() => {
+        router.replace(emailParam ? `/auth/verify-email?email=${encodeURIComponent(emailParam)}` : '/auth/verify-email');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
     
     // Check if user is already verified and logged in
     const checkVerification = async () => {
