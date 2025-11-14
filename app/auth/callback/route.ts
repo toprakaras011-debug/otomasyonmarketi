@@ -475,8 +475,12 @@ export async function GET(request: NextRequest) {
       userId: sessionData.user.id,
       userEmail: sessionData.user.email,
       hasSession: !!sessionData.session,
+      sessionExpiresAt: sessionData.session?.expires_at,
       provider: sessionData.user.app_metadata?.provider,
       emailConfirmed: !!sessionData.user.email_confirmed_at,
+      userMetadata: sessionData.user.user_metadata,
+      appMetadata: sessionData.user.app_metadata,
+      timestamp: new Date().toISOString(),
     });
 
     // ============================================
@@ -559,58 +563,154 @@ export async function GET(request: NextRequest) {
     // STEP 6: Handle OAuth (Google/GitHub)
     // ============================================
     // OAuth providers (Google, GitHub) - redirect to dashboard after profile creation
-    if (provider && provider !== 'email' && (provider === 'google' || provider === 'github')) {
-      console.log('[DEBUG] callback/route.ts - OAuth provider detected', {
+    const isOAuthProvider = provider && provider !== 'email' && (provider === 'google' || provider === 'github');
+    
+    console.log('[DEBUG] callback/route.ts - Checking OAuth provider', {
+      provider,
+      isOAuthProvider,
+      providerType: typeof provider,
+      userId: sessionData.user.id,
+      userEmail: sessionData.user.email,
+    });
+    
+    if (isOAuthProvider) {
+      console.log('[DEBUG] callback/route.ts - OAuth provider detected - starting profile creation', {
         userId: sessionData.user.id,
         userEmail: sessionData.user.email,
         provider,
+        hasSession: !!sessionData.session,
+        sessionExpiresAt: sessionData.session?.expires_at,
+        timestamp: new Date().toISOString(),
       });
 
-      // Ensure user profile exists
-      await ensureUserProfile(supabase);
+      try {
+        // Ensure user profile exists
+        console.log('[DEBUG] callback/route.ts - Calling ensureUserProfile for OAuth user');
+        const profileStartTime = Date.now();
+        await ensureUserProfile(supabase);
+        const profileDuration = Date.now() - profileStartTime;
+        console.log('[DEBUG] callback/route.ts - ensureUserProfile completed', {
+          duration: `${profileDuration}ms`,
+          userId: sessionData.user.id,
+        });
 
-      // Get user profile to determine redirect
-      let profile = null;
-      let retries = 3;
-      
-      while (retries > 0 && !profile) {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('role, is_admin')
-          .eq('id', sessionData.user.id)
-          .maybeSingle();
+        // Get user profile to determine redirect
+        let profile = null;
+        let retries = 3;
+        const profileFetchStartTime = Date.now();
         
-        if (!error && data) {
-          profile = data;
-          break;
+        console.log('[DEBUG] callback/route.ts - Fetching user profile', {
+          userId: sessionData.user.id,
+          retries,
+        });
+        
+        while (retries > 0 && !profile) {
+          const fetchStartTime = Date.now();
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('role, is_admin')
+            .eq('id', sessionData.user.id)
+            .maybeSingle();
+          const fetchDuration = Date.now() - fetchStartTime;
+          
+          console.log('[DEBUG] callback/route.ts - Profile fetch attempt', {
+            retry: 4 - retries,
+            hasData: !!data,
+            hasError: !!error,
+            error: error ? {
+              message: error.message,
+              code: error.code,
+              details: error.details,
+              hint: error.hint,
+            } : null,
+            duration: `${fetchDuration}ms`,
+          });
+          
+          if (!error && data) {
+            profile = data;
+            console.log('[DEBUG] callback/route.ts - Profile found', {
+              role: profile.role,
+              isAdmin: profile.is_admin,
+            });
+            break;
+          }
+          
+          if (retries > 1) {
+            console.log('[DEBUG] callback/route.ts - Waiting before retry', {
+              remainingRetries: retries - 1,
+            });
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          retries--;
         }
         
-        if (retries > 1) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        retries--;
+        const profileFetchDuration = Date.now() - profileFetchStartTime;
+        console.log('[DEBUG] callback/route.ts - Profile fetch completed', {
+          totalDuration: `${profileFetchDuration}ms`,
+          hasProfile: !!profile,
+          profileRole: profile?.role,
+          profileIsAdmin: profile?.is_admin,
+        });
+
+        // Check admin status
+        const userEmail = sessionData.user.email?.toLowerCase() || '';
+        const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
+        const isAdmin = 
+          (profile && (profile.role === 'admin' || profile.is_admin === true)) ||
+          isAdminEmail;
+
+        console.log('[DEBUG] callback/route.ts - Admin check', {
+          userEmail,
+          isAdminEmail,
+          profileRole: profile?.role,
+          profileIsAdmin: profile?.is_admin,
+          finalIsAdmin: isAdmin,
+        });
+
+        // Get redirect URL from query params or use default
+        const redirectParam = requestUrl.searchParams.get('redirect');
+        const redirectUrl = redirectParam || (isAdmin ? '/admin/dashboard' : '/dashboard');
+
+        console.log('[DEBUG] callback/route.ts - OAuth success, redirecting', {
+          redirectUrl,
+          redirectParam,
+          userId: sessionData.user.id,
+          userEmail,
+          provider,
+          isAdmin,
+          hasProfile: !!profile,
+          timestamp: new Date().toISOString(),
+        });
+
+        return NextResponse.redirect(new URL(redirectUrl, request.url));
+      } catch (profileError: unknown) {
+        const errorObj = profileError instanceof Error ? profileError : new Error(String(profileError));
+        console.error('[DEBUG] callback/route.ts - OAuth profile creation error', {
+          error: errorObj.message,
+          errorStack: errorObj.stack,
+          userId: sessionData.user.id,
+          provider,
+          timestamp: new Date().toISOString(),
+        });
+        
+        // Even if profile creation fails, redirect to dashboard
+        // Profile might be created by trigger
+        const redirectParam = requestUrl.searchParams.get('redirect');
+        const redirectUrl = redirectParam || '/dashboard';
+        
+        console.log('[DEBUG] callback/route.ts - OAuth redirecting despite profile error', {
+          redirectUrl,
+          error: errorObj.message,
+        });
+        
+        return NextResponse.redirect(new URL(redirectUrl, request.url));
       }
-
-      // Check admin status
-      const userEmail = sessionData.user.email?.toLowerCase() || '';
-      const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
-      const isAdmin = 
-        (profile && (profile.role === 'admin' || profile.is_admin === true)) ||
-        isAdminEmail;
-
-      // Get redirect URL from query params or use default
-      const redirectParam = requestUrl.searchParams.get('redirect');
-      const redirectUrl = redirectParam || (isAdmin ? '/admin/dashboard' : '/dashboard');
-
-      console.log('[DEBUG] callback/route.ts - OAuth success, redirecting', {
-        redirectUrl,
-        userId: sessionData.user.id,
-        userEmail,
+    } else {
+      console.log('[DEBUG] callback/route.ts - Not an OAuth provider', {
         provider,
-        isAdmin,
+        isEmail: provider === 'email',
+        isOAuth: provider === 'google' || provider === 'github',
       });
-
-      return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
 
     // ============================================

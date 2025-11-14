@@ -928,12 +928,36 @@ export const signInWithOAuth = async (
   redirectTo: string = '/dashboard'
 ) => {
   try {
-    logger.debug('OAuth sign in initiated', { provider, redirectTo });
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const callbackUrl = `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`;
+    
+    logger.debug('OAuth sign in initiated', { 
+      provider, 
+      redirectTo,
+      origin,
+      callbackUrl,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Validate environment
+    if (!origin) {
+      logger.error('OAuth sign in failed: window.location.origin is not available');
+      throw new Error('OAuth başlatılamadı: Tarayıcı bilgisi alınamadı.');
+    }
+
+    logger.debug('Calling supabase.auth.signInWithOAuth', {
+      provider,
+      callbackUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    });
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+        redirectTo: callbackUrl,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -942,15 +966,39 @@ export const signInWithOAuth = async (
     });
 
     if (error) {
-      logger.error('OAuth sign in error', error);
+      logger.error('OAuth sign in error', error, {
+        provider,
+        callbackUrl,
+        errorMessage: error.message,
+        errorStatus: error.status,
+        errorName: error.name,
+      });
       throw new Error(error.message || `${provider} ile giriş yapılamadı. Lütfen tekrar deneyin.`);
     }
 
-    logger.info('OAuth sign in successful', { provider, url: data.url });
+    if (!data || !data.url) {
+      logger.error('OAuth sign in failed: No URL returned', {
+        provider,
+        hasData: !!data,
+        dataKeys: data ? Object.keys(data) : [],
+      });
+      throw new Error(`${provider} OAuth URL alınamadı. Lütfen tekrar deneyin.`);
+    }
+
+    logger.info('OAuth sign in successful - redirecting to provider', { 
+      provider, 
+      url: data.url,
+      urlLength: data.url.length,
+      callbackUrl,
+    });
+    
     return data;
   } catch (error: unknown) {
     const errorObj = error instanceof Error ? error : new Error(String(error));
-    logger.error('OAuth sign in exception', errorObj);
+    logger.error('OAuth sign in exception', errorObj, {
+      provider,
+      redirectTo,
+    });
     throw errorObj;
   }
 };
