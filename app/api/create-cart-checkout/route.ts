@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 export async function POST(request: Request) {
   try {
@@ -12,9 +14,13 @@ export async function POST(request: Request) {
 
     // Items processed
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Function error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Function error', errorObj);
+
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'İşlem başarısız oldu');
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

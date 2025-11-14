@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 export async function POST() {
   try {
@@ -25,10 +27,15 @@ export async function POST() {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('Failed to ensure profile avatars bucket:', error);
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Failed to ensure profile avatars bucket', errorObj);
+
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'Bucket kontrolü başarısız');
+
     return NextResponse.json(
-      { success: false, message: error?.message ?? 'Bucket kontrolü başarısız' },
+      { success: false, message: errorMessage },
       { status: 500 }
     );
   }

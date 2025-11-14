@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 export async function POST(request: Request) {
   try {
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
     orderError = result.error;
 
     if (orderError) {
-      console.error('Order creation error:', orderError);
+      logger.error('Order creation error', orderError);
       
       // If guest fields don't exist, try without them (basic purchase record)
       // You should add guest fields to purchases table or create guest_orders table

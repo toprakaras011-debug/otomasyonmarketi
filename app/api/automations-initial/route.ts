@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +47,13 @@ export async function GET() {
       },
       { headers: { 'Cache-Control': 'no-store' } }
     );
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Error' }, { status: 500 });
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Automations initial API error', errorObj);
+
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'Otomasyonlar yüklenemedi');
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

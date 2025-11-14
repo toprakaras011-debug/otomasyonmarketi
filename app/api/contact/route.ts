@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import rateLimit from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 // Rate limiting configuration
 const limiter = rateLimit({
@@ -180,15 +182,19 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-  } catch (error: any) {
-    // Unexpected error
-    
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Contact API unexpected error', errorObj, {
+      code: (error as any)?.code,
+    });
+
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.');
+
     return NextResponse.json(
       { 
         success: false, 
-        message: 'Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.',
-        error: error.message,
-        code: error.code
+        message: errorMessage,
       },
       { status: 500 }
     );

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-
 import type { Transporter } from 'nodemailer';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 // E-posta gönderim ayarları - Environment variables'dan alınmalı
 const createTransporter = (): Transporter => {
@@ -51,18 +52,19 @@ export async function POST(req: Request) {
       messageId: info.messageId
     });
 
-  } catch (error: any) {
-    console.error('E-posta gönderilirken hata oluştu:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('E-posta gönderilirken hata oluştu', errorObj, {
+      code: (error as any)?.code,
     });
+
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'E-posta gönderilirken bir hata oluştu');
 
     return NextResponse.json(
       { 
         success: false, 
-        message: 'E-posta gönderilirken bir hata oluştu',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: errorMessage,
       },
       { status: 500 }
     );

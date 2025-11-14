@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 interface ErrorReport {
   message: string;
@@ -65,16 +67,13 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.group(`🚨 Server Error Report [${enhancedReport.level}] - ${enhancedReport.category}`);
-      console.error('Message:', enhancedReport.message);
-      if (enhancedReport.stack) {
-        console.error('Stack:', enhancedReport.stack);
-      }
-      console.log('Context:', enhancedReport.context);
-      console.groupEnd();
-    }
+    // Log using logger
+    logger.error('Server Error Report', new Error(enhancedReport.message), {
+      level: enhancedReport.level,
+      category: enhancedReport.category,
+      stack: enhancedReport.stack,
+      context: enhancedReport.context,
+    });
 
     // Store in database for analysis (optional)
     if (process.env.NODE_ENV === 'production') {
@@ -99,7 +98,7 @@ export async function POST(request: NextRequest) {
         });
       } catch (dbError) {
         // Don't fail error reporting if database insert fails
-        console.warn('Failed to store error in database:', dbError);
+        logger.warn('Failed to store error in database', { error: dbError });
       }
     }
 
@@ -110,12 +109,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Error reported successfully' });
 
-  } catch (error: any) {
-    console.error('Error in error reporting endpoint:', error);
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Error in error reporting endpoint', errorObj);
+    
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'Error report işleme başarısız oldu');
     
     // Don't return detailed error info to client for security
     return NextResponse.json(
-      { error: 'Failed to process error report' },
+      { error: 'Failed to process error report', message: errorMessage },
       { status: 500 }
     );
   }
@@ -141,14 +144,14 @@ async function sendToExternalMonitoring(errorReport: ErrorReport): Promise<void>
     // }
 
     // For now, just log that we would send to external service
-    console.log('Would send to external monitoring service:', {
+    logger.info('Would send to external monitoring service', {
       level: errorReport.level,
       category: errorReport.category,
       message: errorReport.message.substring(0, 100),
     });
 
   } catch (error) {
-    console.warn('Failed to send to external monitoring:', error);
+    logger.warn('Failed to send to external monitoring', { error });
   }
 }
 

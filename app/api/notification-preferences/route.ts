@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 const DEFAULT_NOTIFICATION_PREFS = {
   email: true,
@@ -39,16 +41,21 @@ export async function GET() {
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Bildirim tercihleri okunamadı:', error);
-      return NextResponse.json({ message: 'Tercihler alınamadı' }, { status: 500 });
+      logger.error('Bildirim tercihleri okunamadı', error);
+      const category = getErrorCategory(error);
+      const errorMessage = getErrorMessage(error, category, 'Tercihler alınamadı');
+      return NextResponse.json({ message: errorMessage }, { status: 500 });
     }
 
     const prefs = sanitizePrefs(data ?? undefined);
 
     return NextResponse.json({ data: prefs });
-  } catch (error) {
-    console.error('Bildirim tercihleri GET hatası:', error);
-    return NextResponse.json({ message: 'Beklenmeyen bir hata oluştu' }, { status: 500 });
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Bildirim tercihleri GET hatası', errorObj);
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'Beklenmeyen bir hata oluştu');
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }
 
@@ -84,13 +91,18 @@ export async function PUT(request: Request) {
       );
 
     if (error) {
-      console.error('Bildirim tercihleri kaydedilemedi:', error);
-      return NextResponse.json({ message: 'Tercihler kaydedilemedi' }, { status: 500 });
+      logger.error('Bildirim tercihleri kaydedilemedi', error);
+      const category = getErrorCategory(error);
+      const errorMessage = getErrorMessage(error, category, 'Tercihler kaydedilemedi');
+      return NextResponse.json({ message: errorMessage }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, data: prefs });
-  } catch (error) {
-    console.error('Bildirim tercihleri PUT hatası:', error);
-    return NextResponse.json({ message: 'Beklenmeyen bir hata oluştu' }, { status: 500 });
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Bildirim tercihleri PUT hatası', errorObj);
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'Beklenmeyen bir hata oluştu');
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }

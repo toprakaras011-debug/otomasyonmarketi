@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 /**
  * Fix orphaned profiles - profiles that exist in user_profiles but not in auth.users
@@ -78,16 +80,17 @@ export async function POST(request: NextRequest) {
     ];
 
     return NextResponse.json(result, { status: 200 });
-  } catch (error: any) {
-    console.error('[DEBUG] fix-orphaned-profiles API error:', {
-      message: error?.message,
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-    });
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Fix orphaned profiles API error', errorObj);
+
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'Orphaned profile düzeltme başarısız oldu');
 
     return NextResponse.json(
       {
         error: 'Failed to fix orphaned profile',
-        message: error?.message || 'Unknown error',
+        message: errorMessage,
       },
       { status: 500 }
     );
