@@ -465,11 +465,10 @@ export async function GET(request: NextRequest) {
     }
 
     // ============================================
-    // STEP 5: Handle Email Verification (Signup/Email)
+    // STEP 5: Handle Email Verification (Signup/Email) - DISABLED
     // ============================================
-    // Check if this is an email verification flow
-    // - type is 'email' or 'signup'
-    // - OR no type but user provider is 'email' (email/password signup)
+    // Email verification is now optional - users can login immediately
+    // If this is an email verification callback, just ensure profile and redirect to dashboard
     const provider = sessionData.user.app_metadata?.provider;
     const isEmailVerification = 
       type === 'email' || 
@@ -477,7 +476,7 @@ export async function GET(request: NextRequest) {
       (!type && (!provider || provider === 'email'));
 
     if (isEmailVerification) {
-      console.log('[DEBUG] callback/route.ts - Email verification type', {
+      console.log('[DEBUG] callback/route.ts - Email verification type (verification disabled, redirecting to dashboard)', {
         userId: sessionData.user.id,
         userEmail: sessionData.user.email,
         emailConfirmed: !!sessionData.user.email_confirmed_at,
@@ -488,20 +487,47 @@ export async function GET(request: NextRequest) {
       // Ensure user profile exists
       await ensureUserProfile(supabase);
 
-      // Check if email is confirmed
-      if (sessionData.user.email_confirmed_at) {
-        console.log('[DEBUG] callback/route.ts - Email verified, redirecting to signin');
-        const signinUrl = new URL('/auth/signin', request.url);
-        signinUrl.searchParams.set('verified', 'true');
-        return NextResponse.redirect(signinUrl);
-      } else {
-        console.log('[DEBUG] callback/route.ts - Email not confirmed yet, redirecting to verify-email');
-        const verifyUrl = new URL('/auth/verify-email', request.url);
-        if (sessionData.user.email) {
-          verifyUrl.searchParams.set('email', sessionData.user.email);
+      // Email verification is disabled - redirect directly to dashboard
+      // Get user profile to determine redirect
+      let profile = null;
+      let retries = 3;
+      
+      while (retries > 0 && !profile) {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('role, is_admin')
+          .eq('id', sessionData.user.id)
+          .maybeSingle();
+        
+        if (!error && data) {
+          profile = data;
+          break;
         }
-        return NextResponse.redirect(verifyUrl);
+        
+        if (retries > 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        retries--;
       }
+
+      // Check admin status
+      const userEmail = sessionData.user.email?.toLowerCase() || '';
+      const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
+      const isAdmin = 
+        (profile && (profile.role === 'admin' || profile.is_admin === true)) ||
+        isAdminEmail;
+
+      // Determine redirect URL
+      const redirectUrl = isAdmin ? '/admin/dashboard' : '/dashboard';
+
+      console.log('[DEBUG] callback/route.ts - Redirecting to dashboard (email verification disabled)', {
+        redirectUrl,
+        userId: sessionData.user.id,
+        userEmail,
+        isAdmin,
+      });
+
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
 
     // ============================================
