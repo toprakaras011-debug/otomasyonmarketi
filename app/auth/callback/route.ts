@@ -376,8 +376,8 @@ export async function GET(request: NextRequest) {
   );
 
   try {
-    // Exchange code for session immediately - OAuth codes are single-use and expire quickly
-    logger.debug('OAuth code exchange starting', {
+    // Exchange code for session immediately - Email/recovery codes are single-use and expire quickly
+    logger.debug('Email/recovery code exchange starting', {
       codeLength: code.length,
       codePrefix: code.substring(0, 10),
       origin: requestUrl.origin,
