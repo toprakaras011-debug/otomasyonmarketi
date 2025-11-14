@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { logger } from './logger';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -7,21 +8,17 @@ const supabaseFunctionsUrl =
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('[DEBUG] lib/supabase.ts - Supabase environment variables not set. Some features may not work.', {
+  logger.warn('Supabase environment variables not set. Some features may not work.', {
     hasSupabaseUrl: !!supabaseUrl,
     hasSupabaseAnonKey: !!supabaseAnonKey,
     isBrowser: typeof window !== 'undefined',
-    nodeEnv: process.env.NODE_ENV,
   });
   // Create a dummy client to prevent crashes, but it won't work
 } else {
-  console.log('[DEBUG] lib/supabase.ts - Supabase client initialized', {
+  logger.debug('Supabase client initialized', {
     hasSupabaseUrl: !!supabaseUrl,
     hasSupabaseAnonKey: !!supabaseAnonKey,
-    supabaseUrlLength: supabaseUrl.length,
-    supabaseAnonKeyLength: supabaseAnonKey.length,
     isBrowser: typeof window !== 'undefined',
-    nodeEnv: process.env.NODE_ENV,
   });
 }
 
@@ -36,7 +33,7 @@ export const supabase = createClient(
       storage: typeof window !== 'undefined' ? window.localStorage : undefined, // ✅ Use localStorage in browser
       storageKey: 'supabase.auth.token', // ✅ Consistent storage key
       flowType: 'pkce', // ✅ Use PKCE flow for better security and stability
-      debug: process.env.NODE_ENV === 'development', // ✅ Enable debug in development
+      debug: false, // Disable Supabase debug logs in all environments // ✅ Enable debug in development
     },
     functions: {
       url: supabaseFunctionsUrl,

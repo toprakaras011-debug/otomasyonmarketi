@@ -135,7 +135,7 @@ function NavbarComponent() {
 
   return (
     <motion.nav 
-      style={{ opacity: mounted ? navOpacity : 0.8 }}
+      style={{ opacity: mounted ? navOpacity : 0.8, position: 'fixed' }}
       className={`fixed top-0 z-50 w-full h-16 transition-all duration-300 gpu-accelerated ${
         scrolled
           ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
