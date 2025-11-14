@@ -23,6 +23,9 @@ export default async function AutomationsPage() {
       },
     });
 
+    // Block test/debug automations from appearing in listings
+    const blockedSlugs = ['test', 'debug', 'demo', 'example'];
+    
     const {
       data: automations,
       error: automationsError,
@@ -31,8 +34,14 @@ export default async function AutomationsPage() {
       .select('id,title,slug,description,price,image_url,image_path,total_sales,rating_avg,created_at,is_published,admin_approved, category:categories(id,name,slug), developer:user_profiles(id,username,avatar_url)')
       .eq('is_published', true)
       .eq('admin_approved', true)
+      .not('slug', 'in', `(${blockedSlugs.map(s => `"${s}"`).join(',')})`)
       .order('created_at', { ascending: false })
       .limit(100);
+    
+    // Also filter out blocked slugs client-side as backup
+    const filteredAutomations = (automations || []).filter(
+      (automation: any) => !blockedSlugs.includes(automation.slug?.toLowerCase() || '')
+    );
 
     const {
       data: categories,
@@ -78,8 +87,8 @@ export default async function AutomationsPage() {
       description: 'Türkiye\'nin en büyük otomasyon marketplace\'i - Tüm otomasyon çözümleri',
       url: 'https://otomasyonmagazasi.com/automations',
       sameAs: ['https://otomasyonmagazasi.com/automations'],
-      numberOfItems: automations?.length || 0,
-      itemListElement: (automations || []).slice(0, 20).map((automation: any, index: number) => ({
+      numberOfItems: filteredAutomations?.length || 0,
+      itemListElement: (filteredAutomations || []).slice(0, 20).map((automation: any, index: number) => ({
         '@type': 'ListItem',
         position: index + 1,
         item: {
@@ -126,8 +135,8 @@ export default async function AutomationsPage() {
       description: 'Türkiye\'nin en büyük otomasyon marketplace\'i - Tüm otomasyon çözümleri',
       url: 'https://otomasyonmagazasi.com/automations',
       sameAs: ['https://otomasyonmagazasi.com/automations'],
-      numberOfItems: automations?.length || 0,
-      itemListElement: (automations || []).slice(0, 20).map((automation: any, index: number) => ({
+      numberOfItems: filteredAutomations?.length || 0,
+      itemListElement: (filteredAutomations || []).slice(0, 20).map((automation: any, index: number) => ({
         '@type': 'ListItem',
         position: index + 1,
         item: {
@@ -179,7 +188,7 @@ export default async function AutomationsPage() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLdAlt) }}
         />
         <AutomationsClient
-          automations={(automations || []) as any}
+          automations={(filteredAutomations || []) as any}
           categories={[...mergedCategories, ...remainingCategories]}
         />
       </>
