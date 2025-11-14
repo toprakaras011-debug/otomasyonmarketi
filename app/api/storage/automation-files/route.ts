@@ -1,24 +1,36 @@
+/**
+ * Storage Bucket Management API
+ * 
+ * Ensures the automation-files bucket exists in Supabase Storage.
+ * Creates the bucket if it doesn't exist, or updates it if it does.
+ * 
+ * @route /api/storage/automation-files
+ * @method POST
+ * 
+ * @returns { success: boolean } on success
+ * @returns { success: false, message: string } on error
+ * 
+ * @example
+ * POST /api/storage/automation-files
+ */
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
 export async function POST(request: Request) {
   try {
-    console.log('[DEBUG] api/storage/automation-files - POST request received');
+    logger.debug('POST request received');
     
     const supabaseAdmin = getSupabaseAdmin();
     const bucketName = 'automation-files';
 
-    console.log('[DEBUG] api/storage/automation-files - Checking bucket existence', {
-      bucketName,
-    });
+    logger.debug('Checking bucket existence', { bucketName });
 
     const { data: existingBucket, error: getError } = await supabaseAdmin.storage.getBucket(bucketName);
 
     if (getError) {
-      console.error('[DEBUG] api/storage/automation-files - Get bucket error', {
-        error: getError.message,
-        name: getError.name,
-      });
+      logger.error('Get bucket error', getError);
       
       // If bucket not found, that's okay - we'll create it
       if (!getError.message?.toLowerCase().includes('not found')) {
@@ -27,9 +39,7 @@ export async function POST(request: Request) {
     }
 
     if (!existingBucket) {
-      console.log('[DEBUG] api/storage/automation-files - Creating bucket', {
-        bucketName,
-      });
+      logger.debug('Creating bucket', { bucketName });
       
       const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, {
         public: true, // Automation files are public for download
@@ -48,16 +58,13 @@ export async function POST(request: Request) {
       });
 
       if (createError) {
-        console.error('[DEBUG] api/storage/automation-files - Create bucket error', {
-          error: createError.message,
-          name: createError.name,
-        });
+        logger.error('Create bucket error', createError);
         throw createError;
       }
       
-      console.log('[DEBUG] api/storage/automation-files - Bucket created successfully');
+      logger.info('Bucket created successfully');
     } else {
-      console.log('[DEBUG] api/storage/automation-files - Bucket already exists');
+      logger.debug('Bucket already exists');
       // If bucket exists, ensure the file size limit is updated
       // Note: updateBucket requires 'public' property, but we'll keep existing bucket settings
       // Only update if we can determine the current public status
@@ -71,25 +78,20 @@ export async function POST(request: Request) {
         }
       } catch (updateErr) {
         // Silently fail - bucket exists and works, update is optional
-        console.warn('Bucket update skipped:', updateErr);
+        logger.warn('Bucket update skipped', { error: updateErr instanceof Error ? updateErr.message : String(updateErr) });
       }
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('[DEBUG] api/storage/automation-files - Error caught', {
-      message: error?.message,
-      name: error?.name,
-      code: error?.code,
-      statusCode: error?.statusCode,
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-    });
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Error caught', errorObj);
     
+    const category = getErrorCategory(errorObj);
     return NextResponse.json(
       { 
         success: false, 
-        message: error?.message ?? 'Bucket kontrolü başarısız',
-        error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+        message: getErrorMessage(errorObj, category, 'Bucket operation'),
       },
       { status: 500 }
     );

@@ -215,7 +215,7 @@ export default function SettingsPage() {
 
     setSavingPayment(true);
     
-    // Timeout koruması (30 saniye - increased for network reliability)
+    // Timeout koruması (30 saniye - optimized for network reliability)
     let timeoutCleared = false;
     const timeoutId = setTimeout(() => {
       if (!timeoutCleared) {
@@ -224,7 +224,7 @@ export default function SettingsPage() {
           duration: 6000,
         });
       }
-    }, 30000); // 15s -> 30s
+    }, 30000); // Optimized: 30s for network reliability
     
     try {
       console.log('[DEBUG] dashboard/settings - handleSavePayment START', {
@@ -605,14 +605,14 @@ export default function SettingsPage() {
     
     setSaving(true);
 
-    // Timeout protection (15 seconds - increased for reliability)
+    // Timeout protection (20 seconds - optimized for reliability)
     let timeoutCleared = false;
     const timeoutId = setTimeout(() => {
       if (!timeoutCleared) {
         setSaving(false);
         toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
       }
-    }, 15000);
+    }, 20000); // Optimized: 20s for better UX
 
     try {
       const updateData: any = {

@@ -1,22 +1,48 @@
+/**
+ * Admin Automation Management API
+ * 
+ * Handles approval, rejection, and deletion of automations by admin users.
+ * 
+ * @route /api/admin/automations/[id]
+ * @method POST - Approve or reject an automation
+ * @method DELETE - Delete an automation
+ * 
+ * @requires Admin role or email in ADMIN_EMAILS list
+ * @returns { success: boolean } on success
+ * @returns { message: string } on error
+ * 
+ * @example
+ * POST /api/admin/automations/123
+ * Body: { approved: true }
+ */
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
+import { getErrorMessage, getErrorCategory, sanitizeError } from '@/lib/error-messages';
 
 // Admin email list - matches auth.ts and callback route
 const ADMIN_EMAILS = [
   'ftnakras01@gmail.com',
 ].map(email => email.toLowerCase());
 
+/**
+ * Resolve authentication context and verify admin access
+ * 
+ * @param request - The incoming request
+ * @param automationId - The automation ID to validate
+ * @returns User context or error response
+ */
 async function resolveAuthContext(request: Request, automationId: string) {
   if (!automationId || automationId === 'undefined' || automationId === 'null') {
-    console.error('Invalid automation ID received:', automationId);
-    return NextResponse.json({ message: 'Geçersiz otomasyon kimliği' }, { status: 400 });
+    logger.error('Invalid automation ID received', { automationId });
+    return NextResponse.json({ message: getErrorMessage(new Error('Invalid automation ID'), 'validation') }, { status: 400 });
   }
 
   // Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(automationId)) {
-    console.error('Invalid UUID format for automation ID:', automationId);
-    return NextResponse.json({ message: 'Geçersiz otomasyon kimliği formatı' }, { status: 400 });
+    logger.error('Invalid UUID format for automation ID', { automationId });
+    return NextResponse.json({ message: getErrorMessage(new Error('Invalid UUID format'), 'validation') }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -31,9 +57,11 @@ async function resolveAuthContext(request: Request, automationId: string) {
     error: authError,
   } = userResponse;
 
-  if (authError || !user) {
-    return NextResponse.json({ message: 'Oturum doğrulanamadı' }, { status: 401 });
-  }
+    if (authError || !user) {
+      const error = authError || new Error('User not authenticated');
+      const category = getErrorCategory(error);
+      return NextResponse.json({ message: getErrorMessage(error, category, 'Authentication') }, { status: 401 });
+    }
 
   const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
@@ -41,24 +69,21 @@ async function resolveAuthContext(request: Request, automationId: string) {
     .eq('id', user.id)
     .maybeSingle();
 
-  console.log('[DEBUG] api/admin/automations/[id] - Profile check', {
+  logger.debug('Profile check', {
     userId: user.id,
     userEmail: user.email,
     hasProfile: !!profile,
     profileRole: profile?.role,
     profileIsAdmin: profile?.is_admin,
-    profileError: profileError ? {
-      message: profileError.message,
-      code: profileError.code,
-    } : null,
+    profileError: profileError ? sanitizeError(profileError) : null,
   });
 
   if (profileError) {
-    console.error('[DEBUG] api/admin/automations/[id] - Profile fetch error', {
+    logger.error('Profile fetch error', profileError, {
       userId: user.id,
-      error: profileError,
     });
-    return NextResponse.json({ message: 'Profil bilgisi alınamadı' }, { status: 500 });
+    const category = getErrorCategory(profileError);
+    return NextResponse.json({ message: getErrorMessage(profileError, category, 'Profile fetch') }, { status: 500 });
   }
 
   // Check admin status: role, is_admin flag, or email in ADMIN_EMAILS list
@@ -69,7 +94,7 @@ async function resolveAuthContext(request: Request, automationId: string) {
     profile?.is_admin === true || 
     isAdminEmail;
 
-  console.log('[DEBUG] api/admin/automations/[id] - Admin check', {
+  logger.debug('Admin check', {
     userId: user.id,
     userEmail,
     isAdminEmail,
@@ -79,19 +104,26 @@ async function resolveAuthContext(request: Request, automationId: string) {
   });
 
   if (!isAdmin) {
-    console.warn('[DEBUG] api/admin/automations/[id] - User is not admin', {
+    logger.warn('User is not admin', {
       userId: user.id,
       userEmail,
       isAdminEmail,
       profileRole: profile?.role,
       profileIsAdmin: profile?.is_admin,
     });
-    return NextResponse.json({ message: 'Yetkisiz erişim. Admin yetkisi gereklidir.' }, { status: 403 });
+    return NextResponse.json({ message: getErrorMessage(new Error('Unauthorized access'), 'permission') }, { status: 403 });
   }
 
   return { supabase, user } as const;
 }
 
+/**
+ * Approve or reject an automation
+ * 
+ * @param request - The incoming request with { approved: boolean } in body
+ * @param params - Route parameters containing automation ID
+ * @returns Success or error response
+ */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> | { id: string } }
@@ -100,9 +132,7 @@ export async function POST(
     const resolvedParams = params instanceof Promise ? await params : params;
     const automationId = resolvedParams.id;
 
-    console.log('[DEBUG] api/admin/automations/[id] - POST request', {
-      automationId,
-    });
+    logger.debug('POST request', { automationId });
 
     if (!automationId) {
       return NextResponse.json({ message: 'Otomasyon kimliği bulunamadı' }, { status: 400 });
@@ -119,16 +149,17 @@ export async function POST(
     try {
       payload = await request.json();
     } catch (error) {
-      return NextResponse.json({ message: 'Geçersiz istek gövdesi' }, { status: 400 });
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      return NextResponse.json({ message: getErrorMessage(errorObj, 'validation', 'Request body parsing') }, { status: 400 });
     }
 
     if (typeof payload.approved !== 'boolean') {
-      return NextResponse.json({ message: 'approved alanı zorunludur' }, { status: 400 });
+      return NextResponse.json({ message: getErrorMessage(new Error('approved field is required'), 'validation') }, { status: 400 });
     }
 
     const rpcName = payload.approved ? 'approve_automation' : 'reject_automation';
 
-    console.log('[DEBUG] api/admin/automations/[id] - Calling RPC', {
+    logger.debug('Calling RPC', {
       automationId,
       rpcName,
       adminId: user.id,
@@ -140,16 +171,15 @@ export async function POST(
     });
 
     if (rpcError) {
-      console.error('[DEBUG] api/admin/automations/[id] - RPC error', {
+      logger.error('RPC error', rpcError, {
         automationId,
         rpcName,
-        error: rpcError.message,
-        code: rpcError.code,
       });
-      return NextResponse.json({ message: rpcError.message }, { status: 400 });
+      const category = getErrorCategory(rpcError);
+      return NextResponse.json({ message: getErrorMessage(rpcError, category, 'Automation update') }, { status: 400 });
     }
 
-    console.log('[DEBUG] api/admin/automations/[id] - Success', {
+    logger.info('Success', {
       automationId,
       rpcName,
       adminId: user.id,
@@ -157,21 +187,24 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'İşlem başarısız oldu';
-    const errorStack = error instanceof Error && process.env.NODE_ENV === 'development' ? error.stack : undefined;
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('POST error', errorObj);
     
-    console.error('[DEBUG] api/admin/automations/[id] - POST error', {
-      message: errorMessage,
-      stack: errorStack,
-    });
-    
+    const category = getErrorCategory(errorObj);
     return NextResponse.json(
-      { message: errorMessage },
+      { message: getErrorMessage(errorObj, category, 'Automation operation') },
       { status: 500 }
     );
   }
 }
 
+/**
+ * Delete an automation
+ * 
+ * @param request - The incoming request
+ * @param params - Route parameters containing automation ID
+ * @returns Success or error response
+ */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> | { id: string } }
@@ -180,9 +213,7 @@ export async function DELETE(
     const resolvedParams = params instanceof Promise ? await params : params;
     const automationId = resolvedParams.id;
 
-    console.log('[DEBUG] api/admin/automations/[id] - DELETE request', {
-      automationId,
-    });
+    logger.debug('DELETE request', { automationId });
 
     if (!automationId) {
       return NextResponse.json({ message: 'Otomasyon kimliği bulunamadı' }, { status: 400 });
@@ -194,7 +225,7 @@ export async function DELETE(
     }
     const { supabase, user } = context;
 
-    console.log('[DEBUG] api/admin/automations/[id] - Deleting automation', {
+    logger.debug('Deleting automation', {
       automationId,
       adminId: user.id,
     });
@@ -205,30 +236,25 @@ export async function DELETE(
       .eq('id', automationId);
 
     if (error) {
-      console.error('[DEBUG] api/admin/automations/[id] - Delete error', {
+      logger.error('Delete error', error, {
         automationId,
-        error: error.message,
-        code: error.code,
       });
-      return NextResponse.json({ message: error.message }, { status: 400 });
+      const category = getErrorCategory(error);
+      return NextResponse.json({ message: getErrorMessage(error, category, 'Automation deletion') }, { status: 400 });
     }
 
-    console.log('[DEBUG] api/admin/automations/[id] - Delete success', {
+    logger.info('Delete success', {
       automationId,
     });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Silme işlemi başarısız oldu';
-    const errorStack = error instanceof Error && process.env.NODE_ENV === 'development' ? error.stack : undefined;
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('DELETE error', errorObj);
     
-    console.error('[DEBUG] api/admin/automations/[id] - DELETE error', {
-      message: errorMessage,
-      stack: errorStack,
-    });
-    
+    const category = getErrorCategory(errorObj);
     return NextResponse.json(
-      { message: errorMessage },
+      { message: getErrorMessage(errorObj, category, 'Automation deletion') },
       { status: 500 }
     );
   }
