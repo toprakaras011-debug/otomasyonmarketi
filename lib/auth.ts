@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { logger } from './logger';
 
 // Admin email list - matches callback route
 const ADMIN_EMAILS = [
@@ -840,4 +841,71 @@ export const updatePassword = async (newPassword: string) => {
 
     throw new Error(error?.message || 'Şifre güncellenemedi. Lütfen tekrar deneyin.');
   }
+};
+
+/**
+ * Sign in with OAuth provider (Google, GitHub, etc.)
+ * 
+ * @param provider - OAuth provider name ('google' | 'github')
+ * @param redirectTo - URL to redirect after successful authentication
+ * @returns Promise that resolves when OAuth flow is initiated
+ * 
+ * @example
+ * ```ts
+ * await signInWithOAuth('google', '/dashboard');
+ * ```
+ */
+export const signInWithOAuth = async (
+  provider: 'google' | 'github',
+  redirectTo: string = '/dashboard'
+) => {
+  try {
+    logger.debug('OAuth sign in initiated', { provider, redirectTo });
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+
+    if (error) {
+      logger.error('OAuth sign in error', error);
+      throw new Error(error.message || `${provider} ile giriş yapılamadı. Lütfen tekrar deneyin.`);
+    }
+
+    logger.info('OAuth sign in successful', { provider, url: data.url });
+    return data;
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('OAuth sign in exception', errorObj);
+    throw errorObj;
+  }
+};
+
+/**
+ * Sign up with OAuth provider (Google, GitHub, etc.)
+ * This is essentially the same as signInWithOAuth since OAuth providers
+ * handle both sign-in and sign-up automatically.
+ * 
+ * @param provider - OAuth provider name ('google' | 'github')
+ * @param redirectTo - URL to redirect after successful authentication
+ * @returns Promise that resolves when OAuth flow is initiated
+ * 
+ * @example
+ * ```ts
+ * await signUpWithOAuth('google', '/dashboard');
+ * ```
+ */
+export const signUpWithOAuth = async (
+  provider: 'google' | 'github',
+  redirectTo: string = '/dashboard'
+) => {
+  // OAuth providers handle both sign-in and sign-up automatically
+  // So we can use the same function
+  return signInWithOAuth(provider, redirectTo);
 };
