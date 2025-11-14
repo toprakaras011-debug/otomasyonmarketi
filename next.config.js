@@ -157,6 +157,15 @@ const nextConfig = {
         ]
       },
       {
+        source: '/auth/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, max-age=0'
+          }
+        ]
+      },
+      {
         source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)',
         headers: [
           {
