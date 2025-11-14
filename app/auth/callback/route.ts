@@ -448,42 +448,15 @@ export async function GET(request: NextRequest) {
 
     // Validate session data
     if (!sessionData?.user) {
-      console.error('[DEBUG] callback/route.ts - No user in session data', {
-        hasSessionData: !!sessionData,
-        hasUser: !!sessionData?.user,
-        hasSession: !!sessionData?.session,
-        type,
-      });
-      
       if (type === 'recovery') {
         return NextResponse.redirect(new URL('/auth/reset-password?error=invalid_token', request.url));
       }
       
-      // Email verification is disabled - redirect all errors to signin
-      const errorType = 'oauth_failed';
-      const errorMessage = 'Oturum oluşturulamadı. Lütfen tekrar deneyin.';
-      
       const signinUrl = new URL('/auth/signin', request.url);
-      signinUrl.searchParams.set('error', errorType);
-      signinUrl.searchParams.set('message', errorMessage);
-      console.log('[DEBUG] callback/route.ts - No user in session, redirecting to signin', {
-        errorType,
-        errorMessage,
-      });
+      signinUrl.searchParams.set('error', 'oauth_failed');
+      signinUrl.searchParams.set('message', encodeURIComponent('Oturum oluşturulamadı. Lütfen tekrar deneyin.'));
       return NextResponse.redirect(signinUrl);
     }
-
-    console.log('[DEBUG] callback/route.ts - Session exchanged successfully', {
-      userId: sessionData.user.id,
-      userEmail: sessionData.user.email,
-      hasSession: !!sessionData.session,
-      sessionExpiresAt: sessionData.session?.expires_at,
-      provider: sessionData.user.app_metadata?.provider,
-      emailConfirmed: !!sessionData.user.email_confirmed_at,
-      userMetadata: sessionData.user.user_metadata,
-      appMetadata: sessionData.user.app_metadata,
-      timestamp: new Date().toISOString(),
-    });
 
     // ============================================
     // STEP 4: Handle Password Reset (Recovery)
