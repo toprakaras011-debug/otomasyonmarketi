@@ -388,7 +388,7 @@ export async function GET(request: NextRequest) {
             suggestion: 'User might already be registered via OAuth',
           });
           
-          userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Hesabınız zaten oluşturulmuş olabilir. Lütfen normal giriş yapmayı deneyin veya OAuth ile tekrar giriş yapın.';
+          userFriendlyMessage = 'Giriş bağlantısı geçersiz veya süresi dolmuş. Hesabınız zaten oluşturulmuş ancak OAuth kullanıcıları şifre ile giriş yapamaz. Lütfen OAuth ile tekrar giriş yapın.';
         } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
           userFriendlyMessage = 'Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.';
         }

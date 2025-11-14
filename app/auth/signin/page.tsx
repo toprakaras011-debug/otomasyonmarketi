@@ -72,15 +72,17 @@ export default function SignInPage() {
         
         if (suggestsUserExists) {
           toast.error('OAuth Girişi Başarısız', {
-            duration: 10000,
-            description: decodedMessage,
+            duration: 12000,
+            description: 'Hesabınız zaten oluşturulmuş ancak giriş bağlantısı geçersiz. OAuth kullanıcıları şifre ile giriş yapamaz. Lütfen OAuth ile tekrar giriş yapın.',
             action: {
-              label: 'Normal Giriş Yap',
+              label: 'OAuth ile Tekrar Giriş Yap',
               onClick: () => {
-                // Focus email input if available
-                const emailInput = document.getElementById('email') as HTMLInputElement;
-                if (emailInput) {
-                  emailInput.focus();
+                // Trigger OAuth flow again
+                // User can click the OAuth button manually
+                // Just scroll to OAuth buttons
+                const oauthSection = document.querySelector('[data-oauth-section]');
+                if (oauthSection) {
+                  oauthSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
               },
             },
@@ -356,7 +358,7 @@ export default function SignInPage() {
 
           <CardContent className="space-y-6">
             {/* OAuth Buttons */}
-            <div className="space-y-3">
+            <div className="space-y-3" data-oauth-section>
               <Button
                 type="button"
                 onClick={async () => {
