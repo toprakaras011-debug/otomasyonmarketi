@@ -366,8 +366,23 @@ export default function SignInPage() {
                   setOauthLoading('google');
                   try {
                     console.log('[DEBUG] signin/page.tsx - Calling signInWithGoogle');
-                    await signInWithGoogle();
-                    console.log('[DEBUG] signin/page.tsx - signInWithGoogle returned successfully');
+                    const result = await signInWithGoogle();
+                    console.log('[DEBUG] signin/page.tsx - signInWithGoogle returned successfully', {
+                      hasUrl: !!result?.url,
+                      urlLength: result?.url?.length || 0,
+                    });
+                    
+                    // Redirect to OAuth URL if provided
+                    if (result?.url) {
+                      console.log('[DEBUG] signin/page.tsx - Redirecting to OAuth URL');
+                      window.location.href = result.url;
+                    } else {
+                      console.warn('[DEBUG] signin/page.tsx - No URL returned from signInWithGoogle');
+                      toast.error('OAuth URL alınamadı. Lütfen tekrar deneyin.', {
+                        duration: 6000,
+                      });
+                      setOauthLoading(null);
+                    }
                   } catch (error: any) {
                     console.error('[DEBUG] signin/page.tsx - Google OAuth error', {
                       message: error?.message,
@@ -378,8 +393,6 @@ export default function SignInPage() {
                     toast.error(error.message || 'Google ile giriş başarısız oldu', {
                       duration: 6000,
                     });
-                  } finally {
-                    console.log('[DEBUG] signin/page.tsx - Google OAuth button handler finished');
                     setOauthLoading(null);
                   }
                 }}
@@ -424,8 +437,23 @@ export default function SignInPage() {
                   setOauthLoading('github');
                   try {
                     console.log('[DEBUG] signin/page.tsx - Calling signInWithGithub');
-                    await signInWithGithub();
-                    console.log('[DEBUG] signin/page.tsx - signInWithGithub returned successfully');
+                    const result = await signInWithGithub();
+                    console.log('[DEBUG] signin/page.tsx - signInWithGithub returned successfully', {
+                      hasUrl: !!result?.url,
+                      urlLength: result?.url?.length || 0,
+                    });
+                    
+                    // Redirect to OAuth URL if provided
+                    if (result?.url) {
+                      console.log('[DEBUG] signin/page.tsx - Redirecting to OAuth URL');
+                      window.location.href = result.url;
+                    } else {
+                      console.warn('[DEBUG] signin/page.tsx - No URL returned from signInWithGithub');
+                      toast.error('OAuth URL alınamadı. Lütfen tekrar deneyin.', {
+                        duration: 6000,
+                      });
+                      setOauthLoading(null);
+                    }
                   } catch (error: any) {
                     console.error('[DEBUG] signin/page.tsx - GitHub OAuth error', {
                       message: error?.message,
@@ -436,8 +464,6 @@ export default function SignInPage() {
                     toast.error(error.message || 'GitHub ile giriş başarısız oldu', {
                       duration: 6000,
                     });
-                  } finally {
-                    console.log('[DEBUG] signin/page.tsx - GitHub OAuth button handler finished');
                     setOauthLoading(null);
                   }
                 }}

@@ -383,12 +383,21 @@ export default function SignUpPage() {
                 onClick={async () => {
                   setOauthLoading('google');
                   try {
-                    await signInWithGoogle();
+                    const result = await signInWithGoogle();
+                    
+                    // Redirect to OAuth URL if provided
+                    if (result?.url) {
+                      window.location.href = result.url;
+                    } else {
+                      toast.error('OAuth URL alınamadı. Lütfen tekrar deneyin.', {
+                        duration: 6000,
+                      });
+                      setOauthLoading(null);
+                    }
                   } catch (error: any) {
                     toast.error(error.message || 'Google ile giriş başarısız oldu', {
                       duration: 6000,
                     });
-                  } finally {
                     setOauthLoading(null);
                   }
                 }}
@@ -431,12 +440,21 @@ export default function SignUpPage() {
                 onClick={async () => {
                   setOauthLoading('github');
                   try {
-                    await signInWithGithub();
+                    const result = await signInWithGithub();
+                    
+                    // Redirect to OAuth URL if provided
+                    if (result?.url) {
+                      window.location.href = result.url;
+                    } else {
+                      toast.error('OAuth URL alınamadı. Lütfen tekrar deneyin.', {
+                        duration: 6000,
+                      });
+                      setOauthLoading(null);
+                    }
                   } catch (error: any) {
                     toast.error(error.message || 'GitHub ile giriş başarısız oldu', {
                       duration: 6000,
                     });
-                  } finally {
                     setOauthLoading(null);
                   }
                 }}
