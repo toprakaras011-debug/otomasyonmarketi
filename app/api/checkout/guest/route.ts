@@ -104,10 +104,15 @@ export async function POST(request: Request) {
       total,
       message: 'Sipariş başarıyla oluşturuldu',
     });
-  } catch (error: any) {
-    console.error('Guest checkout error:', error);
+  } catch (error: unknown) {
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Guest checkout error', errorObj);
+
+    const category = getErrorCategory(errorObj);
+    const errorMessage = getErrorMessage(errorObj, category, 'Misafir ödeme işlemi başarısız oldu');
+
     return NextResponse.json(
-      { message: error.message || 'Bir hata oluştu' },
+      { message: errorMessage },
       { status: 500 }
     );
   }
