@@ -160,15 +160,17 @@ function NavbarComponent() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo - Ultra Futuristic */}
-          <Link href="/" prefetch={true} className="group relative flex items-center space-x-3">
+          <Link href="/" prefetch={true} className="group relative flex items-center space-x-3" style={{ position: 'relative' }}>
             <motion.div 
               className="relative"
+              style={{ position: 'relative' }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               {/* Outer glow */}
               <motion.div 
                 className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 opacity-0 blur-xl group-hover:opacity-75 transition-opacity duration-300"
+                style={{ position: 'absolute' }}
                 animate={{
                   rotate: [0, 360],
                 }}
@@ -176,12 +178,13 @@ function NavbarComponent() {
               />
               
               {/* Main logo container */}
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 shadow-lg shadow-purple-500/50">
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-pink-500 to-blue-600 shadow-lg shadow-purple-500/50" style={{ position: 'relative' }}>
                 <Zap className="h-7 w-7 text-white" />
                 
                 {/* Inner shine effect */}
                 <motion.div
                   className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/0 via-white/20 to-white/0"
+                  style={{ position: 'absolute' }}
                   animate={{
                     x: [-20, 20],
                     opacity: [0, 1, 0],
@@ -215,6 +218,7 @@ function NavbarComponent() {
                 >
                   <motion.div
                     className="relative px-5 py-2.5 text-sm font-semibold transition-all rounded-xl overflow-hidden min-h-[44px] flex items-center justify-center"
+                    style={{ position: 'relative' }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.97 }}
                   >
@@ -224,10 +228,12 @@ function NavbarComponent() {
                         <motion.div
                           layoutId="navbar-active-desktop"
                           className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-xl shadow-lg shadow-purple-500/40"
+                          style={{ position: 'absolute' }}
                           transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                         />
                         <motion.div
                           className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 rounded-xl opacity-50 blur-xl"
+                          style={{ position: 'absolute' }}
                           animate={{ opacity: [0.3, 0.5, 0.3] }}
                           transition={{ duration: 2, repeat: Infinity }}
                         />
@@ -237,14 +243,14 @@ function NavbarComponent() {
                     {/* Hover effect - elegant glow and border */}
                     {!isActive && (
                       <>
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-blue-500/0 opacity-0 group-hover:from-purple-500/10 group-hover:via-pink-500/10 group-hover:to-blue-500/10 group-hover:opacity-100 transition-all duration-300" />
-                        <div className="absolute inset-0 rounded-xl border border-purple-500/0 group-hover:border-purple-500/30 transition-all duration-300" />
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 via-pink-500/0 to-blue-500/0 opacity-0 group-hover:from-purple-500/10 group-hover:via-pink-500/10 group-hover:to-blue-500/10 group-hover:opacity-100 transition-all duration-300" style={{ position: 'absolute' }} />
+                        <div className="absolute inset-0 rounded-xl border border-purple-500/0 group-hover:border-purple-500/30 transition-all duration-300" style={{ position: 'absolute' }} />
                         {/* Shine effect */}
                         <motion.div
                           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/0 to-transparent group-hover:via-white/10"
+                          style={{ position: 'absolute', width: '50%' }}
                           animate={{ x: ['-200%', '200%'] }}
                           transition={{ duration: 0, repeat: 0 }}
-                          style={{ width: '50%' }}
                         />
                       </>
                     )}
