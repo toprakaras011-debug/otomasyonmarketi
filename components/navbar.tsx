@@ -145,20 +145,17 @@ function NavbarComponent() {
         }}
       >
         <div
-          className={`w-full h-full transition-all duration-300 gpu-accelerated ${
+          className={`relative w-full h-full transition-all duration-300 gpu-accelerated ${
             scrolled
               ? 'border-b border-purple-500/20 bg-background/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(139,92,246,0.15)]'
               : 'border-b border-border/20 bg-background/40 backdrop-blur-xl'
           }`}
+          style={{ position: 'relative' }}
         >
-      {/* Animated gradient line */}
-      <motion.div 
-        className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent"
-        animate={{
-          opacity: [0.3, 0.8, 0.3],
-        }}
-        transition={{ duration: 3, repeat: Infinity }}
-      />
+          {/* Animated gradient line */}
+          <div 
+            className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500 to-transparent animate-gradient-pulse"
+          />
 
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
