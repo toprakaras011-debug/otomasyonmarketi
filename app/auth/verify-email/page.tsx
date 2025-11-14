@@ -1,52 +1,31 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 /**
- * Email verification page - DISABLED
- * This page now redirects directly to dashboard since email verification is optional
+ * Email verification page - REMOVED
+ * This page now immediately redirects to signin since email verification is disabled
  */
 export default function VerifyEmailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Email verification is disabled - redirect to dashboard
-    // If user is logged in, redirect to dashboard
-    // Otherwise redirect to signin
-    const checkAndRedirect = async () => {
-      try {
-        const { createClient } = await import('@supabase/supabase-js');
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-        );
+    // Email verification is completely disabled
+    // Immediately redirect to signin page
+    // If email is provided in query, pass it to signin
+    const email = searchParams.get('email');
+    
+    if (email) {
+      // Redirect to signin with email pre-filled
+      router.replace(`/auth/signin?email=${encodeURIComponent(email)}`);
+    } else {
+      // Just redirect to signin
+      router.replace('/auth/signin');
+    }
+  }, [router, searchParams]);
 
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          // User is logged in, redirect to dashboard
-          router.push('/dashboard');
-        } else {
-          // User is not logged in, redirect to signin
-          router.push('/auth/signin');
-        }
-      } catch (error) {
-        // On error, redirect to signin
-        router.push('/auth/signin');
-      }
-    };
-
-    checkAndRedirect();
-  }, [router]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-600 mx-auto" />
-        <p className="text-sm text-muted-foreground">Yönlendiriliyorsunuz...</p>
-      </div>
-    </div>
-  );
+  // Return nothing - page will redirect immediately
+  return null;
 }
