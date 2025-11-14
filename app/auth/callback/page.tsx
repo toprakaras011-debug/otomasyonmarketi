@@ -6,16 +6,17 @@ import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 
 /**
- * OAuth Callback Page - Client-Side Handler
+ * Auth Callback Page - Client-Side Handler
  * 
- * This page handles OAuth callbacks on the client-side to ensure
- * PKCE code_verifier can be accessed from localStorage.
+ * This page handles all auth callbacks (OAuth, email verification, password recovery)
+ * on the client-side to ensure PKCE code_verifier can be accessed from localStorage.
  * 
  * The flow:
- * 1. OAuth provider redirects here with ?code=...
+ * 1. OAuth provider / Email verification / Password recovery redirects here with ?code=...
  * 2. Client-side Supabase client exchanges code for session
- * 3. Code_verifier is read from localStorage (where it was stored during signInWithOAuth)
- * 4. Session is established and user is redirected
+ * 3. For OAuth: Code_verifier is read from localStorage (where it was stored during signInWithOAuth)
+ * 4. For Email/Recovery: Code is exchanged directly (no code_verifier needed)
+ * 5. Session is established and user is redirected
  */
 export default function OAuthCallbackPage() {
   const router = useRouter();
@@ -130,17 +131,61 @@ export default function OAuthCallbackPage() {
           return;
         }
 
-        logger.debug('OAuth callback - Session established', {
+        logger.debug('Callback - Session established', {
           userId: sessionData.user.id,
           userEmail: sessionData.user.email,
           provider: sessionData.user.app_metadata?.provider,
+          type,
         });
+
+        // Handle password recovery - redirect to reset password page
+        if (type === 'recovery') {
+          logger.debug('Callback - Password recovery, redirecting to reset password');
+          router.push('/auth/reset-password');
+          return;
+        }
+
+        // Handle email verification - ensure profile exists
+        if (type === 'email' || type === 'signup') {
+          try {
+            // Ensure user profile exists
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('id, role, is_admin')
+              .eq('id', sessionData.user.id)
+              .maybeSingle();
+
+            if (!profile) {
+              // Profile doesn't exist - create it
+              const userEmail = sessionData.user.email?.toLowerCase() || '';
+              const username = userEmail.split('@')[0] || `user-${Date.now()}`;
+              
+              const { error: profileError } = await supabase
+                .from('user_profiles')
+                .insert({
+                  id: sessionData.user.id,
+                  username,
+                  full_name: sessionData.user.user_metadata?.full_name || sessionData.user.user_metadata?.name || null,
+                  avatar_url: sessionData.user.user_metadata?.avatar_url || sessionData.user.user_metadata?.picture || null,
+                  is_developer: false,
+                  developer_approved: false,
+                  role: ['ftnakras01@gmail.com'].includes(userEmail) ? 'admin' : 'user',
+                  is_admin: ['ftnakras01@gmail.com'].includes(userEmail),
+                });
+
+              if (profileError) {
+                logger.error('Callback - Profile creation error', profileError);
+              }
+            }
+          } catch (profileError) {
+            logger.warn('Callback - Profile handling error', profileError);
+          }
+        }
 
         // Get redirect URL from query params or default to dashboard
         const redirectTo = searchParams.get('redirect') || '/dashboard';
 
         // Determine final redirect based on user role
-        // First, try to get user profile to check admin status
         try {
           const { data: profile } = await supabase
             .from('user_profiles')
@@ -156,17 +201,18 @@ export default function OAuthCallbackPage() {
 
           const finalRedirect = isAdmin ? '/admin/dashboard' : redirectTo;
 
-          logger.debug('OAuth callback - Redirecting', {
+          logger.debug('Callback - Redirecting', {
             finalRedirect,
             isAdmin,
             userEmail,
+            type,
           });
 
           // Redirect to final destination
           router.push(finalRedirect);
         } catch (profileError) {
           // If profile fetch fails, just redirect to default
-          logger.warn('OAuth callback - Profile fetch failed, redirecting to default', profileError);
+          logger.warn('Callback - Profile fetch failed, redirecting to default', profileError);
           router.push(redirectTo);
         }
       } catch (error) {
