@@ -546,28 +546,19 @@ export const signIn = async (email: string, password: string) => {
       });
     }
 
-    // Check if email is verified
-    // OAuth users (Google, GitHub) have their email verified by the provider
-    // Only check for email/password users
+    // Email verification check - removed to allow login without email verification
+    // Users can login immediately after signup, email verification is optional
     const isOAuthUser = data.user.app_metadata?.provider && data.user.app_metadata.provider !== 'email';
     
-    console.log('[DEBUG] lib/auth.ts - signIn email verification check', {
+    console.log('[DEBUG] lib/auth.ts - signIn email verification check (optional)', {
       isOAuthUser,
       provider: data.user.app_metadata?.provider,
       emailConfirmed: !!data.user.email_confirmed_at,
       emailConfirmedAt: data.user.email_confirmed_at,
     });
     
-    if (!isOAuthUser && !data.user.email_confirmed_at) {
-      console.warn('[DEBUG] lib/auth.ts - signIn email not verified, signing out', {
-        isOAuthUser,
-        emailConfirmed: !!data.user.email_confirmed_at,
-        userId: data.user.id,
-      });
-      // Sign out the user since email is not verified
-      await supabase.auth.signOut();
-      throw new Error('E-posta adresiniz henüz doğrulanmamış. Lütfen e-posta kutunuzu kontrol edin ve doğrulama linkine tıklayın.');
-    }
+    // Email verification is now optional - users can login without verifying email
+    // This allows immediate access after signup
 
     console.log('[DEBUG] lib/auth.ts - signIn waiting for session to be established (100ms)');
     // Wait a moment to ensure session is fully established
