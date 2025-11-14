@@ -370,7 +370,27 @@ export async function GET(request: NextRequest) {
 
   try {
     // Exchange code for session immediately - OAuth codes are single-use and expire quickly
+    logger.debug('OAuth code exchange starting', {
+      codeLength: code.length,
+      codePrefix: code.substring(0, 10),
+      origin: requestUrl.origin,
+      pathname: requestUrl.pathname,
+      type,
+    });
+
+    const exchangeStartTime = Date.now();
     const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    const exchangeDuration = Date.now() - exchangeStartTime;
+
+    logger.debug('OAuth code exchange completed', {
+      duration: `${exchangeDuration}ms`,
+      hasSession: !!sessionData?.session,
+      hasUser: !!sessionData?.user,
+      hasError: !!exchangeError,
+      errorMessage: exchangeError?.message,
+      errorCode: (exchangeError as any)?.code,
+      errorStatus: (exchangeError as any)?.status,
+    });
     
     if (exchangeError) {
       console.error('[DEBUG] callback/route.ts - Code exchange error', {
