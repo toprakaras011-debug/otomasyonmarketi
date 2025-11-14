@@ -371,13 +371,7 @@ export async function GET(request: NextRequest) {
   );
 
   try {
-    console.log('[DEBUG] callback/route.ts - Exchanging code for session', {
-      codeLength: code.length,
-      codePreview: code.substring(0, 20) + '...',
-      type: type || 'oauth',
-    });
-
-    // Exchange code for session
+    // Exchange code for session immediately - OAuth codes are single-use and expire quickly
     const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     
     if (exchangeError) {

@@ -86,6 +86,7 @@ Supabase Dashboard'da **Authentication** > **URL Configuration** bölümünde:
    https://otomasyonmagazasi.com/**
    https://www.otomasyonmagazasi.com/**
    http://localhost:3000/** (development için)
+   http://localhost:3001/** (development için - alternatif port)
    ```
 
 ## 🧪 Test Etme
