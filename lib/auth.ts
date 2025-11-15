@@ -129,7 +129,9 @@ export const signUp = async (
             .maybeSingle();
 
           // Profile exists - username conflict
-          if (profileByUsername && profileByUsername.username === trimmedUsername) {
+          type ProfileData = { id: string; username: string } | null;
+          const profile = profileByUsername as ProfileData;
+          if (profile && profile.username === trimmedUsername) {
             throw new AuthError(
               'Username already exists',
               'USERNAME_EXISTS',
