@@ -85,6 +85,8 @@ const nextConfig = {
     },
     optimizeServerReact: true,
     memoryBasedWorkersCount: true,
+    // Enable segment cache to fix Next.js 16 bug
+    segmentCache: true,
   },
   // Turbopack configuration (Next.js 16+)
   // Turbopack automatically handles code splitting and optimization
