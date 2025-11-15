@@ -70,13 +70,20 @@ function HeroComponent({ initialStats }: HeroProps) {
   const opacity = useTransform(scrollYProgress, [0, 1], isMobile ? [1, 1] : [1, 0.3]);
 
   const [stats, setStats] = useState({
-    ...initialStats,
+    automations: initialStats?.automations ?? 1,
+    developers: initialStats?.developers ?? 3,
+    users: initialStats?.users ?? 1,
+    integrations: initialStats?.integrations ?? 1,
+    estimatedHours: initialStats?.estimatedHours ?? 60,
+    efficiencyMultiplier: initialStats?.efficiencyMultiplier ?? 8,
     loading: false,
   });
 
   useEffect(() => {
     setIsMounted(true);
-    setStats({ ...initialStats, loading: false });
+    if (initialStats) {
+      setStats({ ...initialStats, loading: false });
+    }
     // Detect mobile for performance optimization
     setIsMobile(window.innerWidth < 768);
     // Ensure container has explicit position for framer-motion scroll tracking

@@ -22,7 +22,7 @@ export type HeroStats = {
 export const getHeroStats = async (): Promise<HeroStats> => {
   "use cache";
   cacheTag("hero-stats");
-  cacheLife("minutes", 5);
+  cacheLife("minutes");
   
   try {
     const supabase = getSupabaseAdmin();
