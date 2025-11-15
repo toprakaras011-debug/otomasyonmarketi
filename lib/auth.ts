@@ -933,7 +933,7 @@ export const signInWithOAuth = async (
     }
 
     const origin = window.location.origin;
-    // Use client-side callback page instead of server-side route
+    // Use server-side route handler for secure cookie-based session management
     const callbackUrl = `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`;
     
     logger.debug('OAuth sign in initiated', { 
