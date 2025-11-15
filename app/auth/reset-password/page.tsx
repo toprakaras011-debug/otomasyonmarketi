@@ -48,14 +48,7 @@ function ResetPasswordForm() {
                            !window.location.search.includes('type=recovery');
       
       if (isOAuthError || isFromOAuthCallback || hasOAuthParams) {
-        // No logging to avoid blocking route {
-          error,
-          isOAuthError,
-          isFromOAuthCallback,
-          hasOAuthParams,
-          referrer: typeof document !== 'undefined' ? document.referrer : 'N/A',
-          url: typeof window !== 'undefined' ? window.location.href : 'N/A',
-        });
+        // No logging to avoid blocking route
         router.replace('/auth/signin?error=oauth_failed&message=OAuth girişi başarısız oldu. Lütfen tekrar deneyin.');
         return;
       }
