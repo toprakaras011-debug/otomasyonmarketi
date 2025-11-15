@@ -950,7 +950,8 @@ export const signInWithOAuth = async (
       localStorage.removeItem(testKey);
       logger.debug('OAuth - localStorage is available');
     } catch (storageError) {
-      logger.error('OAuth - localStorage not available', storageError);
+      const errorObj = storageError instanceof Error ? storageError : new Error(String(storageError));
+      logger.error('OAuth - localStorage not available', errorObj);
       throw new Error('Tarayıcı depolama erişimi engellenmiş. Lütfen tarayıcı ayarlarınızı kontrol edin.');
     }
 
