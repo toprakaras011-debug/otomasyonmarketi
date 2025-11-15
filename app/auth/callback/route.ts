@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { ADMIN_EMAILS } from '@/lib/config';
 
 /**
  * OAuth Callback Route Handler - Server-Side
@@ -226,8 +227,7 @@ export async function GET(request: Request) {
           // Profile doesn't exist - create it
           const userEmail = sessionData.user.email?.toLowerCase() || '';
           const username = userEmail.split('@')[0] || `user-${Date.now()}`;
-          const adminEmails = ['ftnakras01@gmail.com'].map(e => e.toLowerCase());
-          const isAdmin = adminEmails.includes(userEmail);
+          const isAdmin = ADMIN_EMAILS.includes(userEmail);
 
           // Get user metadata from OAuth provider
           const fullName = sessionData.user.user_metadata?.full_name || 
@@ -267,6 +267,42 @@ export async function GET(request: Request) {
             });
           }
         } else {
+          // Profile exists - check if user should be admin
+          const userEmail = sessionData.user.email?.toLowerCase() || '';
+          const shouldBeAdmin = ADMIN_EMAILS.includes(userEmail);
+          const isCurrentlyAdmin = profile.role === 'admin' || profile.is_admin === true;
+          
+          // Update profile if user should be admin but isn't
+          if (shouldBeAdmin && !isCurrentlyAdmin) {
+            logger.debug('OAuth callback route - Updating existing profile to admin', {
+              userId: sessionData.user.id,
+              userEmail,
+            });
+            
+            const { error: updateError } = await supabase
+              .from('user_profiles')
+              .update({
+                role: 'admin',
+                is_admin: true,
+              })
+              .eq('id', sessionData.user.id);
+            
+            if (updateError) {
+              logger.error('OAuth callback - Failed to update profile to admin', updateError, {
+                userId: sessionData.user.id,
+                userEmail,
+              });
+            } else {
+              logger.debug('OAuth callback route - Profile updated to admin successfully', {
+                userId: sessionData.user.id,
+                userEmail,
+              });
+              // Update local profile object for redirect logic
+              profile.role = 'admin';
+              profile.is_admin = true;
+            }
+          }
+          
           logger.debug('OAuth callback route - Profile already exists', {
             userId: sessionData.user.id,
             profileRole: profile.role,
@@ -292,8 +328,7 @@ export async function GET(request: Request) {
           .maybeSingle();
 
         const userEmail = sessionData.user.email?.toLowerCase() || '';
-        const adminEmails = ['ftnakras01@gmail.com'].map(e => e.toLowerCase());
-        const isAdminEmail = adminEmails.includes(userEmail);
+        const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
         const isAdmin = 
           (profile && (profile.role === 'admin' || profile.is_admin === true)) ||
           isAdminEmail;
