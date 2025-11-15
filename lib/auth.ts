@@ -207,6 +207,24 @@ export const signUp = async (
       }
     }
 
+    // Check if username already exists before creating profile
+    // This prevents duplicate username errors
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('id, username')
+      .ilike('username', trimmedUsername)
+      .maybeSingle();
+
+    if (existingProfile && existingProfile.username.toLowerCase() === trimmedUsername.toLowerCase()) {
+      throw new AuthError(
+        'Username already exists',
+        'USERNAME_EXISTS',
+        'Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.',
+        true,
+        409
+      );
+    }
+
     // Use upsert instead of insert to handle potential race conditions
     // This prevents errors if profile already exists
     // Note: RLS policy requires auth.uid() = id, so session must be established

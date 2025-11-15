@@ -33,23 +33,29 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if username exists
+    // Check if username exists (case-insensitive)
+    // Use ilike for case-insensitive comparison
     const { data, error } = await supabase
       .from('user_profiles')
       .select('id, username')
-      .eq('username', username)
+      .ilike('username', username)
       .maybeSingle();
 
     if (error) {
-      // If it's a RLS error, we can't check - assume available
+      // If it's a RLS error, we can't check - assume available to allow signup
       if (error.code === 'PGRST301' || error.code === '42501') {
-        return NextResponse.json({ available: true });
+        return NextResponse.json({ 
+          available: true,
+          message: 'Kullanıcı adı kullanılabilir.' 
+        });
       }
       
-      return NextResponse.json(
-        { available: false, error: 'Kullanıcı adı kontrol edilemedi.' },
-        { status: 500 }
-      );
+      // For other errors, log but assume available to not block signup
+      // The actual signup will fail if username is truly taken
+      return NextResponse.json({ 
+        available: true,
+        message: 'Kullanıcı adı kontrol edilemedi, ancak kayıt denenebilir.' 
+      });
     }
 
     // Username is available if no data is returned
