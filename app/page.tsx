@@ -1,12 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
 import { Suspense } from 'react';
 import { Navbar } from '@/components/navbar';
-import { Hero } from '@/components/hero';
-import { getHeroStats } from '@/lib/data/hero-stats';
 import { AuthRedirectHandler } from '@/components/auth-redirect-handler';
+import { HeroStatsLoaderWithSuspense } from '@/components/hero-stats-loader';
 
 // Lazy load non-critical components for better initial page load
 const CategoriesSection = dynamic(() => import('@/components/categories-section').then(mod => ({ default: mod.CategoriesSection })), {
@@ -26,15 +24,6 @@ const Footer = dynamic(() => import('@/components/footer').then(mod => ({ defaul
 
 
 export default function Home() {
-  const [heroStats, setHeroStats] = useState<any>(null);
-
-  useEffect(() => {
-    async function fetchStats() {
-      const stats = await getHeroStats();
-      setHeroStats(stats);
-    }
-    fetchStats();
-  }, []);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -109,7 +98,7 @@ export default function Home() {
       <main className="min-h-screen pt-0 w-full overflow-x-hidden">
         <AuthRedirectHandler />
         <Navbar />
-        <Hero initialStats={heroStats} />
+        <HeroStatsLoaderWithSuspense />
         <CategoriesSection />
         <Suspense fallback={<div className="h-96 animate-pulse bg-muted/10" />}>
           <FeaturedAutomations />

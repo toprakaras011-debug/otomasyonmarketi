@@ -92,10 +92,10 @@ const nextConfig = {
   // Turbopack automatically handles code splitting and optimization
   // No need for manual webpack config - Turbopack is faster and handles this automatically
   // Note: Turbopack root is automatically detected from package.json location
-  // Enable route prefetching
+  // Enable route prefetching - optimized for better performance
   onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
+    maxInactiveAge: 60 * 1000, // Keep pages in memory longer (60s instead of 25s)
+    pagesBufferLength: 5, // Buffer more pages (5 instead of 2)
   },
   // Production optimizations
   productionBrowserSourceMaps: false,

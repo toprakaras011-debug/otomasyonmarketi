@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { cacheTag, cacheLife } from 'next/cache';
 
 export type HeroStats = {
   automations: number;
@@ -19,6 +20,9 @@ export type HeroStats = {
  * Cache will automatically revalidate after 5 minutes.
  */
 export const getHeroStats = async (): Promise<HeroStats> => {
+  "use cache";
+  cacheTag("hero-stats");
+  cacheLife("minutes", 5);
   
   try {
     const supabase = getSupabaseAdmin();
