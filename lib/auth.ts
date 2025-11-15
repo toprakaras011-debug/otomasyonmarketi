@@ -217,7 +217,7 @@ export const signUp = async (
 
     type ExistingProfile = { id: string; username: string } | null;
     const profile = existingProfile as ExistingProfile;
-    if (profile && profile.username.toLowerCase() === trimmedUsername.toLowerCase()) {
+    if (profile && profile.username && profile.username.toLowerCase() === trimmedUsername.toLowerCase()) {
       throw new AuthError(
         'Username already exists',
         'USERNAME_EXISTS',
