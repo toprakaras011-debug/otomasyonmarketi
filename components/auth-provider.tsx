@@ -59,15 +59,7 @@ export function AuthProvider({
           .maybeSingle(); // ✅ Use maybeSingle instead of single to handle missing profiles gracefully
         
         if (error) {
-          console.error('[DEBUG] auth-provider.tsx - Profile fetch error:', {
-            message: error.message || 'Unknown error',
-            code: error.code,
-            details: (error as any).details,
-            hint: (error as any).hint,
-            name: error.name,
-            userId: user.id,
-            pathname,
-          });
+          // No logging to avoid blocking route - error is handled silently
           // ✅ Admin hesapları için özel hata yönetimi
           if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
             // Profile bulunamadı - bu normal olabilir, null döndür
@@ -76,11 +68,11 @@ export function AuthProvider({
           }
           // Invalid API key hatası
           if (error.message?.includes('Invalid API key') || error.code === 'PGRST301') {
-            console.warn('Supabase API key invalid. Check .env.local file.');
+            // No logging to avoid blocking route
             setProfile(null);
             return null;
           }
-          // Diğer hatalar için de null döndür ama log'la
+          // Diğer hatalar için de null döndür
           setProfile(null);
           return null;
         } else {
@@ -88,12 +80,7 @@ export function AuthProvider({
           return data;
         }
       } catch (error: any) {
-        console.error('Profile fetch exception:', {
-          message: error?.message || 'Unknown error',
-          name: error?.name,
-          code: error?.code,
-          stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-        });
+        // No logging to avoid blocking route - error is handled silently
         setProfile(null);
         return null;
       } finally {
@@ -125,9 +112,7 @@ export function AuthProvider({
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          if (process.env.NODE_ENV === 'development') {
-            console.error('Session check error:', error);
-          }
+          // No logging to avoid blocking route - error is handled silently
           // If there's an error but we have initialUser, keep it
           if (!initialUser) {
             setUser(null);
@@ -166,9 +151,7 @@ export function AuthProvider({
           await fetchUserProfile(sessionUser, true);
         }
       } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Session check exception:', error);
-        }
+        // No logging to avoid blocking route - error is handled silently
         // Keep initial data on error
       } finally {
         // Mark initial load as complete
@@ -283,7 +266,7 @@ export function AuthProvider({
               router.push('/');
             }
           } catch (error) {
-            console.error('Auto-logout error:', error);
+            // No logging to avoid blocking route - error is handled silently
           }
         }
       }, INACTIVITY_TIMEOUT);

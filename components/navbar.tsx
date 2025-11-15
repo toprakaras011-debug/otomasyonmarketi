@@ -95,7 +95,7 @@ function NavbarComponent() {
     try {
       const { error } = await signOut();
       if (error) {
-        console.error('Sign out error:', error);
+        // No logging to avoid blocking route - error is handled silently
         // Even if there's an error, try to clear local state and redirect
       }
       
@@ -105,7 +105,7 @@ function NavbarComponent() {
       // Verify session is actually cleared
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        console.warn('Session still exists after signOut, forcing clear');
+        // No logging to avoid blocking route - session clear is handled silently
         // Force clear if session still exists
         if (typeof window !== 'undefined') {
           localStorage.clear();
@@ -117,7 +117,7 @@ function NavbarComponent() {
       // Use replace to prevent back button issues
       window.location.replace('/');
     } catch (error) {
-      console.error('Sign out error:', error);
+      // No logging to avoid blocking route - error is handled silently
       // Force redirect even on error
       // Clear local storage
       if (typeof window !== 'undefined') {

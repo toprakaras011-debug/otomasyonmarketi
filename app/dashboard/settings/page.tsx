@@ -215,16 +215,17 @@ export default function SettingsPage() {
 
     setSavingPayment(true);
     
-    // Timeout koruması (30 saniye - optimized for network reliability)
+    // Timeout koruması (60 saniye - increased for slow networks and retries)
     let timeoutCleared = false;
     const timeoutId = setTimeout(() => {
       if (!timeoutCleared) {
         setSavingPayment(false);
         toast.error('İşlem zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.', {
-          duration: 6000,
+          duration: 8000,
+          description: 'Bağlantı sorunu yaşıyorsanız, sayfayı yenileyip tekrar deneyin.',
         });
       }
-    }, 30000); // Optimized: 30s for network reliability
+    }, 60000); // Increased to 60s to accommodate retries
     
     try {
       console.log('[DEBUG] dashboard/settings - handleSavePayment START', {
@@ -261,24 +262,55 @@ export default function SettingsPage() {
 
       // Use upsert instead of update to handle cases where profile doesn't exist
       // This prevents "cannot coerce the result to a single JSON object" error
+      // Increase timeout for Supabase operations
       const upsertStartTime = Date.now();
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert(
-          {
-            id: user.id,
-            ...cleanUpdateData,
-          },
-          {
-            onConflict: 'id',
-          }
-        )
-        .select()
-        .maybeSingle();
+      
+      // Retry mechanism for network issues
+      let lastError: any = null;
+      let data: any = null;
+      let error: any = null;
+      const maxRetries = 2;
+      
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (attempt > 0) {
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+        
+        const result = await supabase
+          .from('user_profiles')
+          .upsert(
+            {
+              id: user.id,
+              ...cleanUpdateData,
+            },
+            {
+              onConflict: 'id',
+            }
+          )
+          .select()
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
+        
+        // If successful or non-retryable error, break
+        if (!error || (error.code !== 'PGRST301' && !error.message?.includes('timeout') && !error.message?.includes('network'))) {
+          break;
+        }
+        
+        lastError = error;
+      }
+      
+      // Use last error if all retries failed
+      if (error && lastError) {
+        error = lastError;
+      }
       
       const upsertDuration = Date.now() - upsertStartTime;
       console.log('[DEBUG] dashboard/settings - handleSavePayment - Upsert completed', {
         duration: `${upsertDuration}ms`,
+        attempts: maxRetries + 1,
         hasData: !!data,
         hasError: !!error,
         error: error ? {

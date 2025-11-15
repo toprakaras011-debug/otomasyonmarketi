@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import AutomationsClient from './AutomationsClient';
 import { CATEGORY_DEFINITIONS } from '@/lib/constants/categories';
+import { logger } from '@/lib/logger';
 
-export const revalidate = 300; // Cache for 5 minutes - better performance
-export const dynamic = 'force-static'; // Force static generation
+// Note: revalidate and dynamic exports removed - not compatible with cacheComponents: true in Next.js 16
+// Caching is handled by cacheComponents configuration
 
 export default async function AutomationsPage() {
   try {
@@ -51,7 +52,10 @@ export default async function AutomationsPage() {
       .order('name');
 
     if (automationsError || categoriesError) {
-      console.error('Automations page error:', { automationsError, categoriesError });
+      logger.error('Automations page error', new Error(automationsError?.message || categoriesError?.message || 'Unknown error'), {
+        automationsError: automationsError?.message,
+        categoriesError: categoriesError?.message,
+      });
       return (
         <div className="container mx-auto px-4 py-12">
           <p className="text-red-500">Liste yüklenemedi: {automationsError?.message || categoriesError?.message}</p>
@@ -193,7 +197,8 @@ export default async function AutomationsPage() {
       </>
     );
   } catch (error: any) {
-    console.error('Automations page exception:', error);
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Automations page exception', errorObj);
     return (
       <div className="container mx-auto px-4 py-12">
         <p className="text-red-500">Bir hata oluştu: {error?.message || 'Bilinmeyen hata'}</p>

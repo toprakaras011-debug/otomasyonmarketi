@@ -39,7 +39,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Cart load error:', error);
+      // No logging to avoid blocking route - error is handled silently
     }
   }, []);
 
@@ -49,7 +49,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch (error) {
-      console.error('Cart save error:', error);
+      // No logging to avoid blocking route - error is handled silently
     }
   }, [items, mounted]);
 

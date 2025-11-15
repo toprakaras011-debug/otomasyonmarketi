@@ -74,7 +74,7 @@ export async function POST(request: Request) {
           fileSizeLimit: 100 * 1024 * 1024, // 100 MB
         });
         if (updateError) {
-          console.warn(`Failed to update file size limit for bucket ${bucketName}:`, updateError);
+          logger.warn('Failed to update file size limit for bucket', { bucketName, error: updateError.message });
         }
       } catch (updateErr) {
         // Silently fail - bucket exists and works, update is optional

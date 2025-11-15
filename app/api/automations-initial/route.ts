@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
-export const dynamic = 'force-dynamic';
+// Note: dynamic export removed - not compatible with cacheComponents: true in Next.js 16
+// API routes are dynamic by default
 
 export async function GET() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;

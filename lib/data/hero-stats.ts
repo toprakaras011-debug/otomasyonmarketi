@@ -1,4 +1,4 @@
-import { unstable_cache } from 'next/cache';
+import { cacheTag, cacheLife } from 'next/cache';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export type HeroStats = {
@@ -10,14 +10,33 @@ export type HeroStats = {
   efficiencyMultiplier: number;
 };
 
-const fetchHeroStats = async (): Promise<HeroStats> => {
+/**
+ * Fetches hero stats from Supabase
+ * 
+ * This function uses "use cache" to cache the results for better performance.
+ * It returns fallback values silently if any error occurs to avoid blocking route rendering.
+ * 
+ * Cache can be revalidated by calling revalidateTag("hero-stats") from a server action or webhook.
+ * Cache will automatically revalidate after 5 minutes.
+ */
+export const getHeroStats = async (): Promise<HeroStats> => {
+  'use cache';
+  
+  // This cache can be revalidated by webhook or server action
+  // when you call revalidateTag("hero-stats")
+  cacheTag('hero-stats');
+  
+  // This cache will revalidate after 5 minutes even if no explicit
+  // revalidate instruction was received
+  cacheLife('minutes', 5);
+  
   try {
     let supabase;
     try {
       supabase = getSupabaseAdmin();
     } catch (adminError) {
-      console.error('Supabase admin client error:', adminError);
-      // Return fallback if admin client fails
+      // Return fallback if admin client fails (silently for Next.js 16 cacheComponents compatibility)
+      // No console.error to avoid blocking route issues
       return {
         automations: 1,
         developers: 3,
@@ -76,8 +95,8 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
       efficiencyMultiplier: Math.max(efficiencyMultiplier, 8),
     };
   } catch (error) {
-    console.error('Error fetching hero stats:', error);
-    // Return fallback values with minimums
+    // Return fallback values with minimums (silently for Next.js 16 cacheComponents compatibility)
+    // No console.error to avoid blocking route issues
     return {
       automations: 1,
       developers: 3,
@@ -88,8 +107,3 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
     };
   }
 };
-
-export const getHeroStats = unstable_cache(fetchHeroStats, ['hero-stats'], {
-  revalidate: 300, // 5 minutes - better caching for performance
-  tags: ['hero-stats'],
-});

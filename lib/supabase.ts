@@ -1,43 +1,49 @@
 import { createClient } from '@supabase/supabase-js';
-import { logger } from './logger';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabaseFunctionsUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? `${supabaseUrl}/functions/v1`;
+// No module-level process.env to avoid blocking route
+// Environment variables are accessed at runtime when client is created
 
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  logger.warn('Supabase environment variables not set. Some features may not work.', {
-    hasSupabaseUrl: !!supabaseUrl,
-    hasSupabaseAnonKey: !!supabaseAnonKey,
-    isBrowser: typeof window !== 'undefined',
-  });
-  // Create a dummy client to prevent crashes, but it won't work
-} else {
-  logger.debug('Supabase client initialized', {
-    hasSupabaseUrl: !!supabaseUrl,
-    hasSupabaseAnonKey: !!supabaseAnonKey,
-    isBrowser: typeof window !== 'undefined',
-  });
+// Lazy initialization function to access process.env only when needed
+function getSupabaseConfig() {
+  // Access process.env at runtime, not at module level
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const supabaseFunctionsUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? `${supabaseUrl}/functions/v1`;
+
+  return {
+    url: supabaseUrl || 'https://placeholder.supabase.co',
+    anonKey: supabaseAnonKey || 'placeholder-key',
+    functionsUrl: supabaseFunctionsUrl,
+  };
 }
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key',
-  {
-    auth: {
-      persistSession: true, // ✅ Explicitly enable session persistence
-      autoRefreshToken: true, // ✅ Auto-refresh tokens (Supabase handles this automatically)
-      detectSessionInUrl: true, // ✅ Detect session in URL (for OAuth callbacks)
-      storage: typeof window !== 'undefined' ? window.localStorage : undefined, // ✅ Use localStorage in browser
-      storageKey: 'supabase.auth.token', // ✅ Consistent storage key
-      flowType: 'pkce', // ✅ Use PKCE flow for better security and stability
-      debug: false, // Disable Supabase debug logs in all environments // ✅ Enable debug in development
-    },
-    functions: {
-      url: supabaseFunctionsUrl,
-    },
+// Create client lazily to avoid module-level process.env access
+let supabaseClient: ReturnType<typeof createClient> | null = null;
+
+function createSupabaseClient() {
+  if (supabaseClient) {
+    return supabaseClient;
+  }
+
+  const config = getSupabaseConfig();
+
+  supabaseClient = createClient(
+    config.url,
+    config.anonKey,
+    {
+      auth: {
+        persistSession: true, // ✅ Explicitly enable session persistence
+        autoRefreshToken: true, // ✅ Auto-refresh tokens (Supabase handles this automatically)
+        detectSessionInUrl: true, // ✅ Detect session in URL (for OAuth callbacks)
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined, // ✅ Use localStorage in browser
+        storageKey: 'supabase.auth.token', // ✅ Consistent storage key
+        flowType: 'pkce', // ✅ Use PKCE flow for better security and stability
+        debug: false, // Disable Supabase debug logs in all environments
+      },
+      functions: {
+        url: config.functionsUrl,
+      },
     // Global options
     global: {
       headers: {
@@ -52,7 +58,42 @@ export const supabase = createClient(
       },
     },
   } as any
-);
+  );
+
+  return supabaseClient;
+}
+
+// Export lazy-initialized client using Proxy
+// This ensures process.env is only accessed when the client is actually used
+// Don't call createSupabaseClient() at module level - use Proxy to defer initialization
+// Only initialize on client-side to avoid SSR blocking route issues
+export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_target, prop) {
+    // Only access process.env on client-side to avoid blocking route
+    if (typeof window === 'undefined') {
+      // Server-side: return a no-op object to avoid blocking
+      // The actual client will be created when used in client components
+      return () => {};
+    }
+    
+    const client = createSupabaseClient();
+    const value = (client as any)[prop];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  },
+  set(_target, prop, value) {
+    // Only access process.env on client-side to avoid blocking route
+    if (typeof window === 'undefined') {
+      return true; // No-op on server-side
+    }
+    
+    const client = createSupabaseClient();
+    (client as any)[prop] = value;
+    return true;
+  },
+});
 
 export type UserProfile = {
   id: string;

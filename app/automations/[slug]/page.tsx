@@ -3,8 +3,10 @@ import { notFound } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import AutomationDetailClient from './AutomationDetailClient';
+import { logger } from '@/lib/logger';
 
-export const revalidate = 60; // Revalidate every 60 seconds
+// Note: revalidate export removed - not compatible with cacheComponents: true in Next.js 16
+// Caching is handled by cacheComponents configuration
 
 export default async function AutomationDetailPage({ params }: { params: Promise<{ slug: string }> | { slug: string } }) {
   const supabase = await createClient();
@@ -15,9 +17,7 @@ export default async function AutomationDetailPage({ params }: { params: Promise
   // Block access to test/debug slugs
   const blockedSlugs = ['test', 'debug', 'demo', 'example'];
   if (blockedSlugs.includes(resolvedParams.slug.toLowerCase())) {
-    console.log('[DEBUG] automations/[slug]/page.tsx - Blocked slug access', {
-      slug: resolvedParams.slug,
-    });
+    logger.debug('Blocked slug access', { slug: resolvedParams.slug });
     notFound();
   }
 

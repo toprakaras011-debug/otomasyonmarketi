@@ -19,7 +19,18 @@ import { logger } from '@/lib/logger';
  * - NEXT_PUBLIC_SUPABASE_ANON_KEY
  * - NEXT_PUBLIC_SITE_URL (optional, defaults to request origin)
  */
+
+// Note: This route handler uses request.url which requires dynamic rendering
+// Route handlers are dynamic by default with cacheComponents: true
+// No need for dynamic/runtime exports - they're incompatible with cacheComponents
+
 export async function GET(request: Request) {
+  // Bail out of prerendering immediately - this route handler uses request.url
+  // This is required for cacheComponents: true compatibility
+  if (typeof request.url === 'undefined') {
+    return new NextResponse('Route handler cannot be prerendered', { status: 500 });
+  }
+
   try {
     // Verify environment variables first (critical check)
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -124,14 +135,29 @@ export async function GET(request: Request) {
         type,
       });
 
-      const redirectPath = type === 'recovery' ? '/auth/reset-password' : '/auth/signin';
-      const errorType = type === 'recovery' 
-        ? 'invalid_token' 
-        : (type === 'email' || type === 'signup' ? 'verification_failed' : 'oauth_failed');
+      // Handle different error types with appropriate messages
+      let redirectPath = '/auth/signin';
+      let errorType = 'oauth_failed';
+      let errorMessage = 'Giriş başarısız oldu. Lütfen tekrar deneyin.';
+
+      if (type === 'recovery') {
+        redirectPath = '/auth/reset-password';
+        errorType = 'invalid_token';
+        errorMessage = 'Şifre sıfırlama linki geçersiz veya süresi dolmuş.';
+      } else if (type === 'email' || type === 'signup') {
+        // Email verification errors
+        errorType = 'verification_failed';
+        errorMessage = exchangeError.message?.includes('invalid') || exchangeError.message?.includes('expired')
+          ? 'E-posta doğrulama linki geçersiz veya süresi dolmuş. Lütfen yeni bir doğrulama e-postası isteyin.'
+          : 'E-posta doğrulama başarısız oldu. Lütfen tekrar deneyin.';
+      } else {
+        // OAuth errors
+        errorMessage = exchangeError.message || 'OAuth girişi başarısız oldu. Lütfen tekrar deneyin.';
+      }
 
       const redirectUrl = new URL(redirectPath, requestUrl.origin);
       redirectUrl.searchParams.set('error', errorType);
-      redirectUrl.searchParams.set('message', exchangeError.message || 'Giriş başarısız oldu. Lütfen tekrar deneyin.');
+      redirectUrl.searchParams.set('message', errorMessage);
 
       return NextResponse.redirect(redirectUrl);
     }
@@ -257,34 +283,46 @@ export async function GET(request: Request) {
       }
     }
 
-    // Determine final redirect based on user role
-    try {
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('role, is_admin')
-        .eq('id', sessionData.user.id)
-        .maybeSingle();
+      // Determine final redirect based on user role
+      try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('role, is_admin')
+          .eq('id', sessionData.user.id)
+          .maybeSingle();
 
-      const userEmail = sessionData.user.email?.toLowerCase() || '';
-      const adminEmails = ['ftnakras01@gmail.com'].map(e => e.toLowerCase());
-      const isAdminEmail = adminEmails.includes(userEmail);
-      const isAdmin = 
-        (profile && (profile.role === 'admin' || profile.is_admin === true)) ||
-        isAdminEmail;
+        const userEmail = sessionData.user.email?.toLowerCase() || '';
+        const adminEmails = ['ftnakras01@gmail.com'].map(e => e.toLowerCase());
+        const isAdminEmail = adminEmails.includes(userEmail);
+        const isAdmin = 
+          (profile && (profile.role === 'admin' || profile.is_admin === true)) ||
+          isAdminEmail;
 
-      const finalRedirect = isAdmin ? '/admin/dashboard' : redirectTo;
+        // Determine final redirect - session is already established
+        // For email verification (type=signup or type=email), redirect directly to dashboard
+        // The session is already established, so user is already logged in
+        const finalRedirect = isAdmin ? '/admin/dashboard' : '/dashboard';
+        
+        logger.debug('OAuth callback route - Email verification successful, redirecting to dashboard', {
+          userId: sessionData.user.id,
+          userEmail,
+          isAdmin,
+          type,
+          finalRedirect,
+        });
 
-      logger.debug('OAuth callback route - Redirecting', {
-        finalRedirect,
-        isAdmin,
-        userEmail,
-        type,
-      });
-
-      // Create response with redirect
-      // Cookies are already set by the Supabase server client
-      const redirectUrl = new URL(finalRedirect, requestUrl.origin);
-      return NextResponse.redirect(redirectUrl);
+        // Create response with redirect
+        // Cookies are already set by the Supabase server client
+        // Session is established, so user is already logged in
+        const redirectUrl = new URL(finalRedirect, requestUrl.origin);
+        
+        // Add success message for email verification (optional - can be shown on dashboard)
+        if (type === 'signup' || type === 'email') {
+          redirectUrl.searchParams.set('verified', 'true');
+          redirectUrl.searchParams.set('email', sessionData.user.email || '');
+        }
+        
+        return NextResponse.redirect(redirectUrl);
     } catch (profileError) {
       // If profile fetch fails, just redirect to default
       const errorContext = profileError instanceof Error 
@@ -299,9 +337,25 @@ export async function GET(request: Request) {
     logger.error('OAuth callback route - Unexpected error', errorObj);
 
     const requestUrl = new URL(request.url);
+    const type = requestUrl.searchParams.get('type');
+    
+    // Use appropriate error message based on callback type
+    let errorType = 'oauth_failed';
+    let errorMessage = 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+    
+    if (type === 'recovery') {
+      errorType = 'invalid_token';
+      errorMessage = 'Şifre sıfırlama sırasında bir hata oluştu. Lütfen tekrar deneyin.';
+    } else if (type === 'signup' || type === 'email') {
+      errorType = 'verification_failed';
+      errorMessage = 'E-posta doğrulama sırasında bir hata oluştu. Lütfen tekrar deneyin veya yeni bir doğrulama e-postası isteyin.';
+    } else {
+      errorMessage = 'OAuth girişi sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+    }
+
     const redirectUrl = new URL('/auth/signin', requestUrl.origin);
-    redirectUrl.searchParams.set('error', 'oauth_failed');
-    redirectUrl.searchParams.set('message', 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+    redirectUrl.searchParams.set('error', errorType);
+    redirectUrl.searchParams.set('message', errorMessage);
 
     return NextResponse.redirect(redirectUrl);
   }

@@ -37,7 +37,8 @@ const timeBasedThemeInitScript = `
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
   } catch (error) {
-    console.warn('Theme initialization failed', error);
+    // Theme initialization failed - silently handle for Next.js 16 cacheComponents compatibility
+    // logger.warn('Theme initialization failed', error);
   }
 })();
 `;

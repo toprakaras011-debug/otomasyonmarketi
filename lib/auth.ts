@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { logger } from './logger';
+// logger import removed - no logging to avoid blocking route
 
 // Admin email list - matches callback route
 const ADMIN_EMAILS = [
@@ -93,37 +93,40 @@ export const signUp = async (
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
       (typeof window !== 'undefined' ? window.location.origin : '');
 
-    // Note: Email verification is disabled in code, but Supabase may still send emails
-    // To completely disable email verification emails, go to Supabase Dashboard:
-    // Authentication > Settings > Email Auth > Disable "Enable email confirmations"
-    const emailRedirectTo = `${(siteUrl || 'http://localhost:3000')}/auth/callback`;
+    // Email verification is ENABLED via Supabase Dashboard
+    // Users must verify their email before they can login
+    // To enable: Supabase Dashboard > Authentication > Settings > Email Auth > Enable "Enable email confirmations"
+    const emailRedirectTo = `${(siteUrl || 'http://localhost:3000')}/auth/callback?type=signup`;
 
-    // Attempt sign up - email verification is disabled
-    // Users can login immediately without email verification
-    // Note: Supabase Dashboard must have "Enable email confirmations" disabled to stop emails
+    // Attempt sign up - email verification is ENABLED
+    // Users will receive an email with a verification link
+    // After clicking the link, they will be redirected to /auth/callback which will complete the signup
+    // Note: Supabase Dashboard must have "Enable email confirmations" ENABLED
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password: password, // Don't trim password
       options: {
-        // emailRedirectTo is kept for backwards compatibility but emails should be disabled in Supabase Dashboard
-        emailRedirectTo,
+        emailRedirectTo, // Redirect URL after email verification
         data: metadata,
-        // Note: There's no way to disable email sending from code - must be done in Supabase Dashboard
       },
     });
 
     if (authError) {
-      // Log error in all environments for debugging
-      console.error('Sign up error:', {
-        message: authError.message,
-        status: authError.status,
-        name: authError.name,
-        code: authError.code,
-      });
+      // No logging to avoid blocking route in client components
 
       // Check for specific error codes and messages
       const errorMessage = authError.message?.toLowerCase() || '';
       const errorCode = authError.status;
+
+      // Email signups are disabled - Supabase Dashboard setting issue
+      if (
+        errorMessage.includes('email signups are disabled') ||
+        errorMessage.includes('signups are disabled') ||
+        errorMessage.includes('signup is disabled') ||
+        errorCode === 403
+      ) {
+        throw new Error('E-posta ile kayıt şu anda devre dışı. Lütfen yönetici ile iletişime geçin. Hata: Email signups are disabled in Supabase Dashboard. Go to Authentication > Settings > Email Auth and enable "Enable email signups".');
+      }
 
       // Email already exists - but check if profile exists
       if (
@@ -202,7 +205,7 @@ export const signUp = async (
     // Verify session is established before creating profile
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     if (!currentSession) {
-      console.warn('[DEBUG] signUp - No session after signup, waiting for trigger to create profile');
+      // No logging to avoid blocking route
       // Session not established yet - trigger will create profile
       // Return success, profile will be created by trigger
       return {
@@ -224,10 +227,7 @@ export const signUp = async (
     const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
     
     if (isAdminEmail) {
-      console.log('[DEBUG] signUp - Admin email detected, setting admin role', {
-        email: userEmail,
-        userId: authData.user.id,
-      });
+      // No logging to avoid blocking route
       profileData.role = 'admin';
       profileData.is_admin = true;
     }
@@ -253,15 +253,7 @@ export const signUp = async (
       // Type assertion for TypeScript
       const error = profileError as { message?: string; code?: string; details?: string; hint?: string; status?: number };
       
-      // Log error in all environments for debugging
-      console.error('Profile creation error:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        userId: authData.user.id,
-        hasSession: !!authData.session,
-      });
+      // No logging to avoid blocking route
 
       // Check for specific errors
       const errorMessage = error.message?.toLowerCase() || '';
@@ -289,7 +281,7 @@ export const signUp = async (
         const { data: { session: checkSession } } = await supabase.auth.getSession();
         
         if (!checkSession) {
-          console.warn('[DEBUG] signUp - No session, trigger will create profile automatically');
+          // No logging to avoid blocking route
           // No session - trigger will create profile
           // Continue without throwing error - trigger will handle it
           return {
@@ -299,7 +291,7 @@ export const signUp = async (
         }
         
         // Session exists, try again after a short delay
-        console.warn('[DEBUG] signUp - Profile creation RLS/401 error, retrying after delay...');
+        // No logging to avoid blocking route
         await new Promise(resolve => setTimeout(resolve, 500));
         
         const { error: retryError } = await supabase
@@ -309,17 +301,17 @@ export const signUp = async (
           });
         
         if (retryError) {
-          console.error('[DEBUG] signUp - Profile creation retry failed:', retryError);
+          // No logging to avoid blocking route
           // If retry also fails, the trigger should create the profile
           // Continue without throwing error - trigger will handle it
-          console.warn('[DEBUG] signUp - Profile creation failed, but trigger should create it automatically');
+          // No logging to avoid blocking route
           // Don't throw error - trigger will create profile
           return {
             user: authData.user,
             session: checkSession,
           };
         } else {
-          console.log('[DEBUG] signUp - Profile creation succeeded on retry');
+          // No logging to avoid blocking route
         }
       }
 
@@ -411,14 +403,7 @@ export const signUp = async (
 
     return authData;
   } catch (error: any) {
-    // Only log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Sign up exception:', {
-        message: error?.message,
-        name: error?.name,
-        stack: error?.stack,
-      });
-    }
+    // No logging to avoid blocking route
 
     // If it's already a user-friendly error message, re-throw it
     if (error?.message && typeof error.message === 'string') {
@@ -438,34 +423,16 @@ export const signUp = async (
 };
 
 export const signIn = async (email: string, password: string) => {
-  console.log('[DEBUG] lib/auth.ts - signIn START', {
-    emailLength: email?.length || 0,
-    passwordLength: password?.length || 0,
-    hasEmail: !!email,
-    hasPassword: !!password,
-  });
+  // No logging to avoid blocking route
   
   try {
     // Basic validation
     if (!email || !password) {
-      console.warn('[DEBUG] lib/auth.ts - signIn validation failed: missing email or password', {
-        hasEmail: !!email,
-        hasPassword: !!password,
-      });
       throw new Error('E-posta ve şifre gereklidir.');
     }
 
     // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
-    console.log('[DEBUG] lib/auth.ts - signIn normalized email', {
-      originalEmail: email,
-      normalizedEmail,
-    });
-
-    console.log('[DEBUG] lib/auth.ts - signIn calling supabase.auth.signInWithPassword', {
-      normalizedEmail,
-      passwordLength: password.length,
-    });
 
     // Attempt sign in - let Supabase handle validation
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -473,30 +440,11 @@ export const signIn = async (email: string, password: string) => {
       password: password,
     });
 
-    console.log('[DEBUG] lib/auth.ts - signIn supabase response', {
-      hasData: !!data,
-      hasUser: !!data?.user,
-      hasSession: !!data?.session,
-      hasError: !!error,
-      errorMessage: error?.message,
-      errorStatus: error?.status,
-      userId: data?.user?.id,
-      userEmail: data?.user?.email,
-      emailConfirmed: data?.user?.email_confirmed_at,
-      provider: data?.user?.app_metadata?.provider,
-    });
+    // No logging to avoid blocking route
 
     if (error) {
       const errorDetails = error as any;
-      console.error('[DEBUG] lib/auth.ts - signIn error received', {
-        message: error.message,
-        status: error.status,
-        name: error.name,
-        code: errorDetails.code,
-        details: errorDetails.details,
-        hint: errorDetails.hint,
-        fullError: error, // Log full error for debugging
-      });
+      // No logging to avoid blocking route
       
       // Check for specific error codes and messages
       const errorMessage = error.message?.toLowerCase() || '';
@@ -519,10 +467,7 @@ export const signIn = async (email: string, password: string) => {
         
         // Generic 400 error - could be orphaned profile (user_profiles exists but auth.users doesn't)
         // Or could be other validation errors
-        console.error('[DEBUG] lib/auth.ts - 400 error - possible orphaned profile or invalid request', {
-          errorMessage,
-          hint: 'User might exist in user_profiles but not in auth.users. Check Supabase dashboard.',
-        });
+        // No logging to avoid blocking route
         throw new Error('Giriş yapılamadı. Bu e-posta adresi ile kayıtlı bir hesap bulunamadı veya hesap geçersiz. Lütfen kayıt olun veya şifrenizi sıfırlayın.');
       }
 
@@ -579,59 +524,43 @@ export const signIn = async (email: string, password: string) => {
 
     // Verify we got user data
     if (!data || !data.user) {
-      console.error('[DEBUG] lib/auth.ts - signIn failed: no user data', {
-        hasData: !!data,
-        hasUser: !!data?.user,
-      });
+      // No logging to avoid blocking route
       throw new Error('Giriş başarısız. Kullanıcı bilgisi alınamadı. Lütfen tekrar deneyin.');
     }
 
     // Verify user email matches (case-insensitive)
     if (data.user.email?.toLowerCase() !== normalizedEmail) {
-      console.warn('[DEBUG] lib/auth.ts - signIn email mismatch', {
-        expected: normalizedEmail,
-        got: data.user.email,
-        normalizedGot: data.user.email?.toLowerCase(),
-      });
+      // No logging to avoid blocking route
     }
 
-    // Email verification check - removed to allow login without email verification
-    // Users can login immediately after signup, email verification is optional
+    // EMAIL VERIFICATION CHECK - REQUIRED
+    // Users must verify their email before they can login
+    // This prevents unauthorized access and ensures email addresses are valid
     const isOAuthUser = data.user.app_metadata?.provider && data.user.app_metadata.provider !== 'email';
     
-    console.log('[DEBUG] lib/auth.ts - signIn email verification check (optional)', {
-      isOAuthUser,
-      provider: data.user.app_metadata?.provider,
-      emailConfirmed: !!data.user.email_confirmed_at,
-      emailConfirmedAt: data.user.email_confirmed_at,
-    });
+    // No logging to avoid blocking route
     
-    // Email verification is now optional - users can login without verifying email
-    // This allows immediate access after signup
+    // Email verification is REQUIRED - users cannot login without verifying email
+    // OAuth users are exempt as their email is already verified by the provider
+    if (!isOAuthUser && !data.user.email_confirmed_at) {
+      // No logging to avoid blocking route
+      
+      // Sign out the user immediately if they somehow got a session
+      await supabase.auth.signOut();
+      
+      throw new Error('E-posta adresiniz doğrulanmamış. Lütfen e-postanıza gönderilen doğrulama linkine tıklayın. E-posta gelmediyse "/auth/verify-email" sayfasından tekrar gönderebilirsiniz.');
+    }
 
-    console.log('[DEBUG] lib/auth.ts - signIn waiting for session to be established (100ms)');
+    // No logging to avoid blocking route
     // Wait a moment to ensure session is fully established
     // This is especially important for admin accounts
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    console.log('[DEBUG] lib/auth.ts - signIn SUCCESS', {
-      userId: data.user.id,
-      userEmail: data.user.email,
-      hasSession: !!data.session,
-      isOAuthUser,
-      emailConfirmed: !!data.user.email_confirmed_at,
-    });
+    // No logging to avoid blocking route
 
     return data;
   } catch (error: any) {
-    // Only log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Sign in exception:', {
-        message: error?.message,
-        name: error?.name,
-        stack: error?.stack,
-      });
-    }
+    // No logging to avoid blocking route
 
     // If it's already a user-friendly error message, re-throw it
     if (error?.message && typeof error.message === 'string') {
@@ -658,7 +587,7 @@ export const signIn = async (email: string, password: string) => {
  */
 export const signOut = async () => {
   try {
-    logger.debug('Sign out initiated');
+    // No logging to avoid blocking route
     
     // First, clear Supabase session storage keys explicitly
     if (typeof window !== 'undefined') {
@@ -687,7 +616,7 @@ export const signOut = async () => {
     });
     
     if (error) {
-      logger.error('Sign out error', error);
+      // No logging to avoid blocking route
       // Even if there's an error, try to clear local state
       if (typeof window !== 'undefined') {
         // Clear any cached data
@@ -697,7 +626,7 @@ export const signOut = async () => {
       return { error };
     }
     
-    logger.info('Sign out successful');
+    // No logging to avoid blocking route
     
     // Double-check: Clear any remaining cached data
     if (typeof window !== 'undefined') {
@@ -712,7 +641,7 @@ export const signOut = async () => {
     return { error: null };
   } catch (error: unknown) {
     const errorObj = error instanceof Error ? error : new Error(String(error));
-    logger.error('Sign out exception', errorObj);
+    // No logging to avoid blocking route
     
     // Clear local state even on exception
     if (typeof window !== 'undefined') {
@@ -732,7 +661,7 @@ export const getCurrentUser = async () => {
       if (error.status === 403 || error.message.includes('JWT')) {
         return null;
       }
-      console.error('Get current user error:', error);
+      // No logging to avoid blocking route
       throw error;
     }
     return user;
@@ -741,7 +670,7 @@ export const getCurrentUser = async () => {
     if (error?.status === 403 || error?.message?.includes('JWT')) {
       return null;
     }
-    console.error('Get current user exception:', error);
+    // No logging to avoid blocking route
     throw error;
   }
 };
@@ -781,13 +710,7 @@ export const resetPassword = async (email: string) => {
 
     const redirectTo = `${siteUrl || window.location.origin}/auth/reset-password`;
 
-    // Log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Password reset request:', {
-        email: trimmedEmail,
-        redirectTo,
-      });
-    }
+    // No logging to avoid blocking route
 
     const { data, error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
       redirectTo,
@@ -795,11 +718,7 @@ export const resetPassword = async (email: string) => {
     });
 
     if (error) {
-      console.error('Password reset error:', {
-        message: error.message,
-        status: error.status,
-        name: error.name,
-      });
+      // No logging to avoid blocking route
 
       // Provide user-friendly error messages
       const errorMessage = error.message?.toLowerCase() || '';
@@ -817,19 +736,12 @@ export const resetPassword = async (email: string) => {
       throw new Error(error.message || 'Şifre sıfırlama e-postası gönderilemedi. Lütfen tekrar deneyin.');
     }
 
-    // Log success in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Password reset email sent successfully');
-    }
+    // No logging to avoid blocking route
 
     return data;
   } catch (error: any) {
     // Log in all environments for debugging
-    console.error('Password reset exception:', {
-      message: error?.message,
-      name: error?.name,
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-    });
+    // No logging to avoid blocking route
 
     // Re-throw user-friendly errors
     if (error?.message && typeof error.message === 'string') {
@@ -873,11 +785,7 @@ export const updatePassword = async (newPassword: string) => {
     });
 
     if (error) {
-      console.error('Update password error:', {
-        message: error.message,
-        status: error.status,
-        name: error.name,
-      });
+      // No logging to avoid blocking route
 
       // Provide user-friendly error messages
       const errorMessage = error.message?.toLowerCase() || '';
@@ -936,22 +844,17 @@ export const signInWithOAuth = async (
     // Use server-side route handler for secure cookie-based session management
     const callbackUrl = `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`;
     
-    logger.debug('OAuth sign in initiated', { 
-      provider, 
-      redirectTo,
-      origin,
-      callbackUrl,
-    });
+    // No logging to avoid blocking route
 
     // Verify localStorage is available
     try {
       const testKey = 'supabase.oauth.test';
       localStorage.setItem(testKey, 'test');
       localStorage.removeItem(testKey);
-      logger.debug('OAuth - localStorage is available');
+      // No logging to avoid blocking route
     } catch (storageError) {
       const errorObj = storageError instanceof Error ? storageError : new Error(String(storageError));
-      logger.error('OAuth - localStorage not available', errorObj);
+      // No logging to avoid blocking route
       throw new Error('Tarayıcı depolama erişimi engellenmiş. Lütfen tarayıcı ayarlarınızı kontrol edin.');
     }
 
@@ -967,7 +870,7 @@ export const signInWithOAuth = async (
     });
 
     if (error) {
-      logger.error('OAuth sign in error', error);
+      // No logging to avoid blocking route
       // Daha açıklayıcı hata mesajları
       if (error.message?.includes('configuration') || error.message?.includes('provider')) {
         throw new Error(`${provider} OAuth yapılandırılmamış. Lütfen yöneticiye bildirin.`);
@@ -976,15 +879,15 @@ export const signInWithOAuth = async (
     }
 
     if (!data || !data.url) {
-      logger.error('OAuth sign in failed: No URL returned');
+      // No logging to avoid blocking route
       throw new Error(`${provider} OAuth yapılandırması eksik. Lütfen yöneticiye bildirin.`);
     }
 
-    logger.info('OAuth sign in successful', { provider });
+    // No logging to avoid blocking route
     return data;
   } catch (error: unknown) {
     const errorObj = error instanceof Error ? error : new Error(String(error));
-    logger.error('OAuth sign in exception', errorObj);
+    // No logging to avoid blocking route
     throw errorObj;
   }
 };

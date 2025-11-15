@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -9,17 +9,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// Lazy import to avoid blocking route - auth functions are only called in event handlers
 import { signUp } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Zap, ArrowLeft, Sparkles, Shield, User, Mail, Phone, Lock, Code2, ShoppingBag, Info, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { Turnstile } from '@/components/turnstile';
-import { logger } from '@/lib/logger';
 
-export default function SignUpPage() {
+// SignUpForm component - moved process.env to useEffect to avoid blocking route
+function SignUpForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState<string>('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -35,7 +38,14 @@ export default function SignUpPage() {
     newsletter: false,
   });
 
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+  // Move process.env access to useEffect to avoid blocking route
+  useEffect(() => {
+    setMounted(true);
+    // Access process.env only after component mounts (client-side)
+    if (typeof window !== 'undefined') {
+      setTurnstileSiteKey(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,22 +173,11 @@ export default function SignUpPage() {
       }
     }
 
-    console.log('[DEBUG] signup/page.tsx - handleSubmit validation passed, setting loading state');
-    setLoading(true);
+      // No logging during render to avoid blocking route
+      setLoading(true);
 
-    try {
-      const normalizedEmail = formData.email.trim().toLowerCase();
-
-      console.log('[DEBUG] signup/page.tsx - handleSubmit calling signUp', {
-        normalizedEmail,
-        username: formData.username.trim(),
-        usernameLength: formData.username.trim().length,
-        passwordLength: formData.password.length,
-        fullName: formData.fullName?.trim() || undefined,
-        phone: formData.phone?.trim() || undefined,
-        role: formData.role,
-        hasTurnstileToken: !!turnstileToken,
-      });
+      try {
+        const normalizedEmail = formData.email.trim().toLowerCase();
 
       const result = await signUp(
         normalizedEmail,
@@ -189,117 +188,84 @@ export default function SignUpPage() {
         formData.role
       );
 
-      console.log('[DEBUG] signup/page.tsx - handleSubmit signUp returned', {
-        hasResult: !!result,
-        hasUser: !!result?.user,
-        hasSession: !!result?.session,
-        userId: result?.user?.id,
-        userEmail: result?.user?.email,
-        emailConfirmed: result?.user?.email_confirmed_at,
-      });
+      // No logging during render to avoid blocking route
+
+      if (!result?.user) {
+        throw new Error('Kullanıcı oluşturulamadı');
+      }
+
+      // EMAIL VERIFICATION IS REQUIRED
+      // Always redirect to verification page - users must verify their email before login
+      // Even if email_confirmed_at is set, we still require verification for security
       
-      toast.success('Hesabınız başarıyla oluşturuldu!', {
-        duration: 5000,
-        description: 'Yönlendiriliyorsunuz...',
-      });
-      
-      console.log('[DEBUG] signup/page.tsx - handleSubmit waiting for session (500ms)');
-      // Wait a bit for session to be established
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log('[DEBUG] signup/page.tsx - handleSubmit checking if user is logged in');
-      // Check if user is already logged in (email verification might not be required)
-      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
-      
-      console.log('[DEBUG] signup/page.tsx - handleSubmit getUser result', {
-        hasUser: !!user,
-        userId: user?.id,
-        userEmail: user?.email,
-        getUserError: getUserError ? {
-          message: getUserError.message,
-          code: getUserError.code,
-        } : null,
-      });
-      
-      if (user) {
-        console.log('[DEBUG] signup/page.tsx - handleSubmit user is logged in, fetching profile');
+      // Check if session exists (shouldn't happen with email verification enabled)
+      const hasSession = result?.session !== null && result?.session !== undefined;
+      const isEmailConfirmed = result.user.email_confirmed_at !== null && result.user.email_confirmed_at !== undefined;
+
+      // If email is already confirmed AND has session (shouldn't happen with email verification enabled)
+      // This might happen if Supabase Dashboard has email verification disabled
+      if (hasSession && isEmailConfirmed) {
+        
+        // Still redirect to verification page to be safe
+        // But also allow login since email is confirmed
+        toast.success('Hesabınız oluşturuldu!', {
+          duration: 5000,
+          description: 'E-posta adresiniz zaten doğrulandı. Yönlendiriliyorsunuz...',
+        });
+        
+        // Wait a bit for session to be established
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Get user profile to check admin status
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('user_profiles')
           .select('role, is_admin')
-          .eq('id', user.id)
+          .eq('id', result.user.id)
           .maybeSingle();
 
-        console.log('[DEBUG] signup/page.tsx - handleSubmit profile fetch result', {
-          hasProfile: !!profile,
-          profileRole: profile?.role,
-          profileIsAdmin: profile?.is_admin,
-          profileError: profileError ? {
-            message: profileError.message,
-            code: profileError.code,
-          } : null,
-        });
-
         // Determine redirect based on user role
-        let redirectUrl = '/dashboard';
+        const redirectUrl = (profile && (profile.role === 'admin' || profile.is_admin))
+          ? '/admin/dashboard'
+          : '/dashboard';
         
-        // If user is admin, redirect to admin dashboard
-        if (profile && (profile.role === 'admin' || profile.is_admin)) {
-          console.log('[DEBUG] signup/page.tsx - handleSubmit user is admin, redirecting to admin dashboard', {
-            role: profile.role,
-            isAdmin: profile.is_admin,
-          });
-          redirectUrl = '/admin/dashboard';
-        } else {
-          console.log('[DEBUG] signup/page.tsx - handleSubmit user is normal, redirecting to dashboard', {
-            role: profile?.role || 'none',
-            isAdmin: profile?.is_admin || false,
-          });
-        }
-        
-        console.log('[DEBUG] signup/page.tsx - handleSubmit scheduling redirect', {
-          redirectUrl,
-          delay: 1000,
-        });
-        
-        // Redirect to appropriate dashboard
         setTimeout(() => {
-          console.log('[DEBUG] signup/page.tsx - handleSubmit executing redirect', {
-            redirectUrl,
-          });
           window.location.href = redirectUrl;
         }, 1000);
       } else {
-        console.log('[DEBUG] signup/page.tsx - handleSubmit user not logged in, but email verification is disabled - redirecting to signin', {
-          getUserError: getUserError ? {
-            message: getUserError.message,
-            code: getUserError.code,
-          } : null,
-          email: normalizedEmail,
-        });
+        // Email verification required - ALWAYS redirect to verification page
+        // This is the normal flow when email verification is enabled in Supabase Dashboard
         
-        // Email verification is disabled - redirect to signin page
-        // User can login immediately after signup
-        toast.info('Hesabınız oluşturuldu! Giriş yapabilirsiniz.', {
+        toast.success('Hesabınız oluşturuldu!', {
           duration: 5000,
+          description: 'E-posta adresinize doğrulama linki gönderildi. Lütfen e-postanızı kontrol edin.',
         });
         
+        // IMPORTANT: Sign out the user if they have a session
+        // Email verification must be completed before they can login
+        if (hasSession) {
+          // Sign out to prevent auto-login without email verification
+          await supabase.auth.signOut();
+        }
+        
+        // Redirect to email verification page
         setTimeout(() => {
-          console.log('[DEBUG] signup/page.tsx - handleSubmit redirecting to signin', {
-            email: normalizedEmail,
-          });
-          router.push(`/auth/signin?email=${encodeURIComponent(normalizedEmail)}`);
+          router.push(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`);
         }, 1500);
       }
     } catch (error: any) {
-      // Log error in all environments for debugging
-      console.error('Signup error:', {
-        message: error?.message,
-        name: error?.name,
-        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-      });
+      // No logging during render to avoid blocking route
 
       const errorMessage = error?.message || 'Kayıt oluşturulamadı';
+      
+      // Special handling for "email signups disabled" error
+      if (errorMessage.includes('Email signups are disabled') || errorMessage.includes('signups are disabled') || errorMessage.includes('E-posta ile kayıt şu anda devre dışı')) {
+        toast.error('E-posta ile Kayıt Devre Dışı', {
+          duration: 10000,
+          description: 'E-posta ile kayıt şu anda devre dışı. Lütfen Supabase Dashboard\'da "Enable email signups" seçeneğini aktif edin. (Authentication > Settings > Email Auth)',
+        });
+        setLoading(false);
+        return;
+      }
       
       // Special handling for "already registered" errors
       if (errorMessage.includes('zaten kayıtlı') || errorMessage.includes('already registered')) {
@@ -324,12 +290,15 @@ export default function SignUpPage() {
         });
       }
       setTurnstileToken(null); // Reset Turnstile on error
-      console.log('[DEBUG] signup/page.tsx - handleSubmit error handled, form reset');
     } finally {
-      console.log('[DEBUG] signup/page.tsx - handleSubmit FINALLY: resetting loading state');
       setLoading(false);
     }
   };
+
+  // Don't render until mounted (client-side only)
+  if (!mounted) {
+    return null;
+  }
 
 
   return (
@@ -830,5 +799,21 @@ export default function SignUpPage() {
 
       </motion.div>
     </div>
+  );
+}
+
+// Main page component - wraps SignUpForm for Suspense compatibility
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-purple-600" />
+          <p className="mt-4 text-muted-foreground">Yükleniyor...</p>
+        </div>
+      </div>
+    }>
+      <SignUpForm />
+    </Suspense>
   );
 }

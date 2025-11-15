@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 // Admin email list - matches auth.ts and callback route
 const ADMIN_EMAILS = [
@@ -64,11 +65,10 @@ export async function GET() {
       } : null,
     });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Admin check status error', errorObj);
     
-    console.error('[DEBUG] api/admin/check-status - Error', {
-      message: errorMessage,
-    });
+    const errorMessage = errorObj.message;
     
     return NextResponse.json(
       { 

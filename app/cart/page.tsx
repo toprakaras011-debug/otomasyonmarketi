@@ -14,10 +14,15 @@ import { Trash2, ShoppingCart, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CartPage() {
-  const { items, remove, clear, total } = useCart();
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
+  
+  // Only access cart context after mount to prevent prerender issues
+  const cartContext = mounted ? useCart() : { items: [], remove: () => {}, clear: () => {}, total: 0 };
+  const { items, remove, clear, total } = cartContext;
 
   useEffect(() => {
+    setMounted(true);
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
@@ -25,8 +30,25 @@ export default function CartPage() {
     load();
   }, []);
 
-  
-  
+  // Prevent hydration mismatch - show loading state until mounted
+  if (!mounted) {
+    return (
+      <>
+        <Navbar />
+        <main className="relative min-h-screen overflow-hidden bg-background">
+          <div className="container relative mx-auto px-4 py-16">
+            <div className="flex items-center justify-center p-20">
+              <div className="text-center">
+                <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+                <p className="text-muted-foreground">Yükleniyor...</p>
+              </div>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <Navbar />
@@ -220,7 +242,7 @@ export default function CartPage() {
             </motion.div>
           </div>
         )}
-              </div>
+      </div>
       </main>
     </>
   );

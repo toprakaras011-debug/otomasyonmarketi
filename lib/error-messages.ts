@@ -17,7 +17,8 @@
  * ```
  */
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+// No module-level process.env to avoid blocking route
+// isDevelopment is checked at runtime inside functions
 
 /**
  * Generic error messages for production
@@ -43,7 +44,11 @@ export function getErrorMessage(
   category: keyof typeof GENERIC_ERRORS = 'default',
   operation?: string
 ): string {
-  // In development, show detailed error
+  // In development, show detailed error (checked at runtime, not module-level)
+  const isDevelopment = typeof window !== 'undefined' 
+    ? false // Client-side - always use generic messages
+    : (process.env.NODE_ENV === 'development');
+  
   if (isDevelopment && error instanceof Error) {
     return `${operation ? `${operation}: ` : ''}${error.message}`;
   }

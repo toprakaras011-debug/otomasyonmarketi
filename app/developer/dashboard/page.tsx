@@ -416,30 +416,61 @@ export default function DeveloperDashboardPage() {
 
     setSavingPayment(true);
     
-    // Timeout koruması (20 saniye - optimized)
+    // Timeout koruması (60 saniye - increased for slow networks and retries)
     let timeoutCleared = false;
     const timeoutId = setTimeout(() => {
       if (!timeoutCleared) {
         setSavingPayment(false);
-        toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
+        toast.error('İşlem zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.', {
+          duration: 8000,
+          description: 'Bağlantı sorunu yaşıyorsanız, sayfayı yenileyip tekrar deneyin.',
+        });
       }
-    }, 20000); // Optimized: 20s for better reliability
+    }, 60000); // Increased to 60s to accommodate retries
     
     try {
       const cleanIban = paymentData.iban.replace(/[\s\-_.,]/g, '').toUpperCase();
       
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .update({
-          full_name: paymentData.full_name.trim(),
-          tc_no: paymentData.tc_no.trim(),
-          tax_office: paymentData.tax_office.trim(),
-          iban: cleanIban,
-          bank_name: bankName,
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
+      // Retry mechanism for network issues
+      let lastError: any = null;
+      let data: any = null;
+      let error: any = null;
+      const maxRetries = 2;
+      
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        if (attempt > 0) {
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+        
+        const result = await supabase
+          .from('user_profiles')
+          .update({
+            full_name: paymentData.full_name.trim(),
+            tc_no: paymentData.tc_no.trim(),
+            tax_office: paymentData.tax_office.trim(),
+            iban: cleanIban,
+            bank_name: bankName,
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+        
+        data = result.data;
+        error = result.error;
+        
+        // If successful or non-retryable error, break
+        if (!error || (error.code !== 'PGRST301' && !error.message?.includes('timeout') && !error.message?.includes('network'))) {
+          break;
+        }
+        
+        lastError = error;
+      }
+      
+      // Use last error if all retries failed
+      if (error && lastError) {
+        error = lastError;
+      }
 
       clearTimeout(timeoutId);
       timeoutCleared = true;

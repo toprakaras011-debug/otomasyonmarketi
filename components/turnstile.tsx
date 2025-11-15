@@ -64,7 +64,7 @@ export function Turnstile({
           
           widgetIdRef.current = widgetId;
         } catch (error) {
-          console.error('Turnstile render error:', error);
+          // No logging to avoid blocking route
         }
       }
     };
@@ -85,7 +85,7 @@ export function Turnstile({
       const timeout = setTimeout(() => {
         clearInterval(interval);
         if (!window.turnstile) {
-          console.warn('Turnstile script failed to load');
+          // No logging to avoid blocking route
         }
       }, 10000);
 
@@ -96,7 +96,7 @@ export function Turnstile({
           try {
             window.turnstile.remove(widgetIdRef.current);
           } catch (error) {
-            console.error('Turnstile remove error:', error);
+            // No logging to avoid blocking route
           }
         }
       };
@@ -107,7 +107,7 @@ export function Turnstile({
         try {
           window.turnstile.remove(widgetIdRef.current);
         } catch (error) {
-          console.error('Turnstile remove error:', error);
+          // No logging to avoid blocking route
         }
       }
     };
@@ -118,7 +118,7 @@ export function Turnstile({
       try {
         window.turnstile.reset(widgetIdRef.current);
       } catch (error) {
-        console.error('Turnstile reset error:', error);
+        // No logging to avoid blocking route
       }
     }
   };

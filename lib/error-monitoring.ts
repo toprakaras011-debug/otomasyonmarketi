@@ -25,6 +25,7 @@ interface ErrorReport {
 
 class ErrorMonitoring {
   private static instance: ErrorMonitoring;
+  private static counter: number = 0;
   private isProduction: boolean;
   private sessionId: string;
 
@@ -46,7 +47,12 @@ class ErrorMonitoring {
   }
 
   private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use Date.now() and counter instead of Math.random() for Next.js 16 cacheComponents compatibility
+    // Math.random() causes prerender issues in server components
+    ErrorMonitoring.counter = (ErrorMonitoring.counter + 1) % 1000000;
+    const timestamp = Date.now();
+    const counter = ErrorMonitoring.counter.toString(36).padStart(6, '0');
+    return `session_${timestamp}_${counter}`;
   }
 
   private initializeGlobalErrorHandlers(): void {

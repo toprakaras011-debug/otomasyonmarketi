@@ -25,6 +25,7 @@ interface WebVitalsMetric {
 
 class PerformanceMonitoring {
   private static instance: PerformanceMonitoring;
+  private static counter: number = 0;
   private sessionId: string;
   private metrics: PerformanceMetric[] = [];
   private isProduction: boolean;
@@ -47,7 +48,12 @@ class PerformanceMonitoring {
   }
 
   private generateSessionId(): string {
-    return `perf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use Date.now() and counter instead of Math.random() for Next.js 16 cacheComponents compatibility
+    // Math.random() causes prerender issues in server components
+    PerformanceMonitoring.counter = (PerformanceMonitoring.counter + 1) % 1000000;
+    const timestamp = Date.now();
+    const counter = PerformanceMonitoring.counter.toString(36).padStart(6, '0');
+    return `perf_${timestamp}_${counter}`;
   }
 
   private initializeWebVitals(): void {

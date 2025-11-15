@@ -79,7 +79,8 @@ const sanitizeConfirmUrl = (email?: string | null) => {
   return '/auth/confirm';
 };
 
-export default function ConfirmEmailPage() {
+// ConfirmEmailForm component - uses useSearchParams (requires Suspense)
+function ConfirmEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchParamsKey = useMemo(() => searchParams.toString(), [searchParams]);
@@ -454,5 +455,21 @@ export default function ConfirmEmailPage() {
         </Card>
       </motion.div>
     </div>
+  );
+}
+
+// Main page component - wraps ConfirmEmailForm in Suspense
+export default function ConfirmEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-purple-600" />
+          <p className="mt-4 text-muted-foreground">Yükleniyor...</p>
+        </div>
+      </div>
+    }>
+      <ConfirmEmailForm />
+    </Suspense>
   );
 }

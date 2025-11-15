@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Star, TrendingUp, Sparkles, ArrowRight, Zap } from 'lucide-react';
 
-// Cache for 10 minutes for better performance (balance between freshness and speed)
-export const revalidate = 600;
+// Note: revalidate export removed - not compatible with cacheComponents: true in Next.js 16
+// Caching is handled by cacheComponents configuration
 
 async function getFeaturedAutomations(): Promise<Automation[]> {
   const { data, error } = await supabase
