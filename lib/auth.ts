@@ -215,7 +215,9 @@ export const signUp = async (
       .ilike('username', trimmedUsername)
       .maybeSingle();
 
-    if (existingProfile && existingProfile.username.toLowerCase() === trimmedUsername.toLowerCase()) {
+    type ExistingProfile = { id: string; username: string } | null;
+    const profile = existingProfile as ExistingProfile;
+    if (profile && profile.username.toLowerCase() === trimmedUsername.toLowerCase()) {
       throw new AuthError(
         'Username already exists',
         'USERNAME_EXISTS',
