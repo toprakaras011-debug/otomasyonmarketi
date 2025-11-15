@@ -1,4 +1,7 @@
+'use client';
+
 import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
 import { Suspense } from 'react';
 import { Navbar } from '@/components/navbar';
 import { Hero } from '@/components/hero';
@@ -21,15 +24,17 @@ const Footer = dynamic(() => import('@/components/footer').then(mod => ({ defaul
   ssr: true, // Keep SSR for SEO
 });
 
-// Hero Stats Component - Wrapped in Suspense for Next.js 16 cacheComponents compatibility
-async function HeroStatsLoader() {
-  // getHeroStats already has error handling and fallback values
-  // No need for try-catch here - it will always return valid stats
-  const heroStats = await getHeroStats();
-  return <Hero initialStats={heroStats} />;
-}
 
-export default async function Home() {
+export default function Home() {
+  const [heroStats, setHeroStats] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchStats() {
+      const stats = await getHeroStats();
+      setHeroStats(stats);
+    }
+    fetchStats();
+  }, []);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -104,11 +109,11 @@ export default async function Home() {
       <main className="min-h-screen pt-0 w-full overflow-x-hidden">
         <AuthRedirectHandler />
         <Navbar />
-        <Suspense fallback={<div className="h-96 animate-pulse bg-muted/10" />}>
-          <HeroStatsLoader />
-        </Suspense>
+        <Hero initialStats={heroStats} />
         <CategoriesSection />
-        <FeaturedAutomations />
+        <Suspense fallback={<div className="h-96 animate-pulse bg-muted/10" />}>
+          <FeaturedAutomations />
+        </Suspense>
         <Footer />
       </main>
     </>

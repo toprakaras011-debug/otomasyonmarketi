@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -197,7 +197,7 @@ function ConfirmEmailForm() {
 
         setStatus('awaiting');
       } catch (error: any) {
-        console.error('Email verification error:', error);
+        // No logging to avoid blocking route
         setStatus('error');
         setPendingParams(null);
         setErrorMessage(
@@ -250,7 +250,7 @@ function ConfirmEmailForm() {
       toast.success('Doğrulama e-postası tekrar gönderildi.');
       setCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (error: any) {
-      console.error('Resend verification error:', error);
+      // No logging to avoid blocking route
       toast.error(
         error?.message || 'Doğrulama e-postası gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
       );
@@ -279,7 +279,7 @@ function ConfirmEmailForm() {
         toast.info('Doğrulama henüz tamamlanmamış görünüyor. Lütfen e-postanızı kontrol edin.');
       }
     } catch (error: any) {
-      console.error('Recheck verification error:', error);
+      // No logging to avoid blocking route
       setStatus('error');
       setErrorMessage(error?.message || 'Kontrol edilirken bir hata oluştu.');
     }

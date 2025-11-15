@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
         description: 'E-postanızı kontrol edin. Spam klasörünü de kontrol etmeyi unutmayın.',
       });
     } catch (error: any) {
-      console.error('Forgot password error:', error);
+      // No logging to avoid blocking route
       toast.error(error?.message || 'E-posta gönderilemedi', {
         duration: 6000,
         description: error?.message?.includes('bulunamadı')

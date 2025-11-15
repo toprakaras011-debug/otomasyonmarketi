@@ -5,6 +5,7 @@ import type { NextRequest } from 'next/server';
 import { logger } from '@/lib/logger';
 import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
+
 /**
  * Check if a user exists in the database
  * GET /api/check-user?email=user@example.com

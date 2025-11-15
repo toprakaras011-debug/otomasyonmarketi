@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -37,8 +40,16 @@ async function getFeaturedAutomations(): Promise<Automation[]> {
   return data as any;
 }
 
-export default async function FeaturedAutomationsServer() {
-  const automations = await getFeaturedAutomations();
+export default function FeaturedAutomationsServer() {
+  const [automations, setAutomations] = useState<Automation[]>([]);
+
+  useEffect(() => {
+    async function loadAutomations() {
+      const data = await getFeaturedAutomations();
+      setAutomations(data);
+    }
+    loadAutomations();
+  }, []);
   if (automations.length === 0) return null;
 
   return (

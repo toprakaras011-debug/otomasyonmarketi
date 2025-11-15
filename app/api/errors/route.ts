@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         const supabase = await createClient();
         
         // Create error_logs table if it doesn't exist (you can run this migration separately)
-        await supabase.from('error_logs').insert({
+        await (((supabase.from as any) as any) as any)('error_logs').insert({
           message: enhancedReport.message.substring(0, 1000), // Limit message length
           stack: enhancedReport.stack?.substring(0, 5000), // Limit stack length
           level: enhancedReport.level,

@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import { Inter, Poppins } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { CartProvider } from '@/components/cart-context';
@@ -306,26 +307,11 @@ export const metadata: Metadata = {
   category: 'technology',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Optimize: Only fetch essential profile fields for initial render
-  let profile: any = null;
-  if (user) {
-    const { data } = await supabase
-      .from('user_profiles')
-      .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
-      .eq('id', user.id)
-      .maybeSingle();
-    profile = data ?? null;
-  }
 
   return (
     <html lang="tr" suppressHydrationWarning data-scroll-behavior="smooth">
@@ -388,23 +374,25 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
-        <ErrorBoundary>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <CartProvider>
-              <AuthProvider initialUser={user ?? null} initialProfile={profile}>
-                {children}
-                <CookieConsent />
-                <SpeedInsights />
-                <Analytics />
-              </AuthProvider>
-            </CartProvider>
-          </ThemeProvider>
-        </ErrorBoundary>
+        <Suspense fallback={<div>Yükleniyor...</div>}>
+          <ErrorBoundary>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <CartProvider>
+                <AuthProvider>
+                  {children}
+                  <CookieConsent />
+                  <SpeedInsights />
+                  <Analytics />
+                </AuthProvider>
+              </CartProvider>
+            </ThemeProvider>
+          </ErrorBoundary>
+        </Suspense>
         {/* Toaster outside ErrorBoundary - FIXED POSITION */}
         <Toaster />
       </body>

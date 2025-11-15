@@ -1,4 +1,3 @@
-import { cacheTag, cacheLife } from 'next/cache';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
 export type HeroStats = {
@@ -20,23 +19,10 @@ export type HeroStats = {
  * Cache will automatically revalidate after 5 minutes.
  */
 export const getHeroStats = async (): Promise<HeroStats> => {
-  'use cache';
-  
-  // This cache can be revalidated by webhook or server action
-  // when you call revalidateTag("hero-stats")
-  cacheTag('hero-stats');
-  
-  // This cache will revalidate after 5 minutes even if no explicit
-  // revalidate instruction was received
-  cacheLife('minutes', 5);
   
   try {
-    let supabase;
-    try {
-      supabase = getSupabaseAdmin();
-    } catch (adminError) {
-      // Return fallback if admin client fails (silently for Next.js 16 cacheComponents compatibility)
-      // No console.error to avoid blocking route issues
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
       return {
         automations: 1,
         developers: 3,
@@ -59,7 +45,7 @@ export const getHeroStats = async (): Promise<HeroStats> => {
         .eq('is_developer', true)
         .eq('developer_approved', true),
       // Count all user profiles (no filter to get total users)
-      supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
+      ((supabase.from as any) as any)('user_profiles').select('id', { count: 'exact', head: true }),
       supabase
         .from('automations')
         .select('tags')

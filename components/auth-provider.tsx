@@ -24,12 +24,12 @@ const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 export function AuthProvider({ 
   children, 
-  initialUser, 
-  initialProfile 
+  initialUser = null, 
+  initialProfile = null 
 }: { 
   children: ReactNode, 
-  initialUser: User | null, 
-  initialProfile: any 
+  initialUser?: User | null, 
+  initialProfile?: any 
 }) {
   const pathname = usePathname();
   const router = useRouter();

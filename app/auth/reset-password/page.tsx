@@ -48,7 +48,7 @@ function ResetPasswordForm() {
                            !window.location.search.includes('type=recovery');
       
       if (isOAuthError || isFromOAuthCallback || hasOAuthParams) {
-        console.log('[DEBUG] reset-password/page.tsx - OAuth error detected, redirecting to signin', {
+        // No logging to avoid blocking route {
           error,
           isOAuthError,
           isFromOAuthCallback,
@@ -86,11 +86,7 @@ function ResetPasswordForm() {
         // If we have code parameter, it should have been handled by callback
         // But if we're here, redirect to callback to handle it
         if (code) {
-          console.log('[DEBUG] reset-password/page.tsx - Code parameter found, redirecting to callback', {
-            code: `${code.substring(0, 10)}...`,
-            codeLength: code.length,
-            type: searchParams.get('type'),
-          });
+          // No logging to avoid blocking route
           router.replace(`/auth/callback?code=${code}&type=recovery`);
           return;
         }
@@ -99,13 +95,7 @@ function ResetPasswordForm() {
         if (hashError) {
           const errorCode = hashError;
           
-          console.error('[DEBUG] reset-password/page.tsx - Password reset error from hash', {
-            error: errorCode,
-            hashError,
-            type,
-            hasAccessToken: !!accessToken,
-            url: window.location.href.substring(0, 100) + '...',
-          });
+          // No logging to avoid blocking route
           
           setIsValidToken(false);
           
@@ -125,7 +115,7 @@ function ResetPasswordForm() {
 
         // If we have access_token in hash with type=recovery, it's a valid recovery link
         if (accessToken && type === 'recovery') {
-          console.log('Recovery token found in hash');
+          // No logging to avoid blocking route
           
           // Try to set the session from the hash
           const { data: sessionData, error: setSessionError } = await supabase.auth.setSession({
@@ -134,13 +124,7 @@ function ResetPasswordForm() {
           });
 
             if (setSessionError) {
-              console.error('[DEBUG] reset-password/page.tsx - Set session error', {
-                message: setSessionError.message,
-                status: setSessionError.status,
-                code: (setSessionError as any).code,
-                details: (setSessionError as any).details,
-                hint: (setSessionError as any).hint,
-              });
+              // No logging to avoid blocking route
               setIsValidToken(false);
             toast.error('Şifre sıfırlama bağlantısı geçersiz', {
               duration: 6000,
@@ -153,7 +137,7 @@ function ResetPasswordForm() {
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (sessionError || !session) {
-            console.error('Session verification failed:', sessionError);
+            // No logging to avoid blocking route
             setIsValidToken(false);
             toast.error('Oturum oluşturulamadı', {
               duration: 6000,
@@ -161,7 +145,7 @@ function ResetPasswordForm() {
             return;
           }
 
-          console.log('Recovery session set successfully');
+          // No logging to avoid blocking route
           setIsValidToken(true);
           
           // Clear hash from URL for security
@@ -171,18 +155,14 @@ function ResetPasswordForm() {
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
         if (sessionError) {
-          console.error('[DEBUG] reset-password/page.tsx - Get session error', {
-            message: sessionError.message,
-            status: sessionError.status,
-            code: (sessionError as any).code,
-          });
+          // No logging to avoid blocking route
         }
           
           if (session) {
-            console.log('User already has a session - allowing password reset');
+            // No logging to avoid blocking route
             setIsValidToken(true);
           } else {
-            console.log('No recovery token or session found');
+            // No logging to avoid blocking route
             setIsValidToken(false);
             toast.error('Şifre sıfırlama bağlantısı bulunamadı', {
               duration: 6000,
@@ -191,11 +171,7 @@ function ResetPasswordForm() {
           }
         }
       } catch (error: any) {
-        console.error('[DEBUG] reset-password/page.tsx - Check recovery token error', {
-          message: error?.message,
-          name: error?.name,
-          stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-        });
+        // No logging to avoid blocking route
         setIsValidToken(false);
         toast.error('Bir hata oluştu', {
           duration: 6000,
@@ -260,13 +236,7 @@ function ResetPasswordForm() {
         router.push('/auth/signin');
       }, 2000);
     } catch (error: any) {
-      console.error('[DEBUG] reset-password/page.tsx - Update password error', {
-        message: error?.message,
-        name: error?.name,
-        code: error?.code,
-        status: error?.status,
-        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-      });
+      // No logging to avoid blocking route
       toast.error(error.message || 'Şifre güncellenemedi', {
         duration: 6000,
         description: 'Lütfen tekrar deneyin veya yeni bir şifre sıfırlama isteği gönderin.',

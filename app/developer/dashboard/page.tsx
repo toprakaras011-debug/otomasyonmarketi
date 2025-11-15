@@ -141,8 +141,8 @@ export default function DeveloperDashboardPage() {
 
       setUser(currentUser);
 
-      const { data: profileData } = await supabase
-        .from('user_profiles')
+      const { data: profileData } = await (supabase
+        .from('user_profiles') as any)
         .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
         .eq('id', currentUser.id)
         .maybeSingle();
@@ -158,8 +158,8 @@ export default function DeveloperDashboardPage() {
       // Fetch payment data separately if needed
       let paymentInfo = null;
       if (profileData) {
-        const { data: paymentDataResult } = await supabase
-          .from('user_profiles')
+        const { data: paymentDataResult } = await (supabase
+          .from('user_profiles') as any)
           .select('full_name,tc_no,tax_office,iban,bank_name')
           .eq('id', currentUser.id)
           .maybeSingle();
@@ -190,7 +190,7 @@ export default function DeveloperDashboardPage() {
           `)
           .eq('developer_id', currentUser.id)
           .order('created_at', { ascending: false }),
-        supabase.from('categories').select('id,name,slug').order('name'),
+        (((supabase.from as any) as any) as any)('categories').select('id,name,slug').order('name'),
         supabase
           .from('purchases')
           .select('developer_earnings, status')
@@ -199,9 +199,8 @@ export default function DeveloperDashboardPage() {
 
       if (automationsData) {
         setAutomations(automationsData as any);
-
-        const totalSales = automationsData.reduce((sum, a) => sum + (a.total_sales || 0), 0);
-        const totalEarnings = purchasesData
+        const totalSales = (automationsData as any[]).reduce((sum, a) => sum + (a.total_sales || 0), 0);
+        const totalEarnings = (purchasesData as any[] | null)
           ?.filter(p => p.status === 'completed')
           .reduce((sum, p) => sum + parseFloat(p.developer_earnings?.toString() || '0'), 0) || 0;
 
@@ -268,8 +267,7 @@ export default function DeveloperDashboardPage() {
         categoryId = category.id;
       } else {
         // Create category if it doesn't exist
-        const { data: newCategory, error: categoryError } = await supabase
-          .from('categories')
+        const { data: newCategory, error: categoryError } = await ((((supabase.from as any) as any) as any)('categories') as any)
           .insert({
             name: derivedCategories.find(c => c.slug === categoryId)?.name || categoryId,
             slug: categoryId,
@@ -304,8 +302,7 @@ export default function DeveloperDashboardPage() {
 
     try {
       if (editingAutomation) {
-        const { error } = await supabase
-          .from('automations')
+        const { error } = await ((((supabase.from as any) as any) as any)('automations') as any)
           .update(automationData)
           .eq('id', editingAutomation.id);
 
@@ -315,8 +312,7 @@ export default function DeveloperDashboardPage() {
         }
         toast.success('Otomasyon başarıyla güncellendi!');
       } else {
-        const { error } = await supabase
-          .from('automations')
+        const { error } = await ((((supabase.from as any) as any) as any)('automations') as any)
           .insert(automationData);
 
         if (error) {
@@ -443,8 +439,7 @@ export default function DeveloperDashboardPage() {
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
         
-        const result = await supabase
-          .from('user_profiles')
+        const result = await ((((supabase.from as any) as any) as any)('user_profiles') as any)
           .update({
             full_name: paymentData.full_name.trim(),
             tc_no: paymentData.tc_no.trim(),

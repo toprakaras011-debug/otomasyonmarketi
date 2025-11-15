@@ -121,18 +121,20 @@ export default function CategoriesPage() {
         .order('name');
 
       if (data) {
+        const typedData = data as { id: string; name: string; slug: string; description: string | null }[];
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         const oneWeekAgoIso = oneWeekAgo.toISOString();
 
-        const statsPromises = data.map(async (category) => {
-          const { data: automations } = await supabase
+        const statsPromises = typedData.map(async (category) => {
+          const { data: automationsData } = await supabase
             .from('automations')
             .select('id, total_sales, rating_avg')
             .eq('category_id', category.id)
             .eq('is_published', true)
             .eq('admin_approved', true);
 
+          const automations = automationsData as { id: string; total_sales: number | null; rating_avg: number | null }[] | null;
           const automationCount = automations?.length ?? 0;
           const automationIds = automations?.map((a) => a.id) ?? [];
 

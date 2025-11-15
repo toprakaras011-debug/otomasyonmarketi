@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
@@ -7,22 +8,47 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-// Lazy import to avoid blocking route - auth functions are only called in event handlers
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { signUp } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { TIMEOUTS } from '@/lib/constants';
 import { toast } from 'sonner';
-import { Zap, ArrowLeft, Sparkles, Shield, User, Mail, Phone, Lock, Code2, ShoppingBag, Info, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { 
+  Zap, 
+  Loader2, 
+  ArrowLeft, 
+  User, 
+  Mail, 
+  Phone, 
+  Lock, 
+  CheckCircle2, 
+  Shield, 
+  Sparkles, 
+  AlertCircle, 
+  ShoppingBag, 
+  Code2 
+} from 'lucide-react';
 import { Turnstile } from '@/components/turnstile';
 
-// SignUpForm component - moved process.env to useEffect to avoid blocking route
+// SignUpForm component
 function SignUpForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [turnstileSiteKey, setTurnstileSiteKey] = useState<string>('');
+  const [usernameStatus, setUsernameStatus] = useState<{
+    checking: boolean;
+    available: boolean | null;
+    message: string;
+  }>({
+    checking: false,
+    available: null,
+    message: '',
+  });
+  const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -30,6 +56,7 @@ function SignUpForm() {
     username: '',
     fullName: '',
     phone: '',
+    phoneCode: '+90',
     role: 'user' as 'user' | 'developer',
     terms: false,
     kvkk: false,
@@ -38,35 +65,100 @@ function SignUpForm() {
     newsletter: false,
   });
 
-  // Move process.env access to useEffect to avoid blocking route
   useEffect(() => {
     setMounted(true);
-    // Access process.env only after component mounts (client-side)
     if (typeof window !== 'undefined') {
       setTurnstileSiteKey(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '');
     }
   }, []);
 
+  // Real-time username validation
+  useEffect(() => {
+    const username = formData.username.trim();
+    
+    // Clear previous timeout
+    if (usernameCheckTimeout) {
+      clearTimeout(usernameCheckTimeout);
+    }
+    
+    // Reset status if username is empty
+    if (!username) {
+      setUsernameStatus({
+        checking: false,
+        available: null,
+        message: '',
+      });
+      return;
+    }
+    
+    // Validate format first
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!usernameRegex.test(username)) {
+      setUsernameStatus({
+        checking: false,
+        available: false,
+        message: 'Kullanıcı adı sadece harf, rakam, alt çizgi ve tire içerebilir',
+      });
+      return;
+    }
+    
+    if (username.length < 3) {
+      setUsernameStatus({
+        checking: false,
+        available: false,
+        message: 'Kullanıcı adı en az 3 karakter olmalıdır',
+      });
+      return;
+    }
+    
+    if (username.length > 30) {
+      setUsernameStatus({
+        checking: false,
+        available: false,
+        message: 'Kullanıcı adı en fazla 30 karakter olabilir',
+      });
+      return;
+    }
+    
+    // Debounce: wait 500ms before checking
+    setUsernameStatus({
+      checking: true,
+      available: null,
+      message: 'Kontrol ediliyor...',
+    });
+    
+    const timeout = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
+        const data = await response.json();
+        
+        setUsernameStatus({
+          checking: false,
+          available: data.available,
+          message: data.message || (data.available ? 'Kullanıcı adı kullanılabilir' : 'Bu kullanıcı adı zaten kullanılıyor'),
+        });
+      } catch (error) {
+        setUsernameStatus({
+          checking: false,
+          available: null,
+          message: 'Kontrol edilemedi',
+        });
+      }
+    }, 500);
+    
+    setUsernameCheckTimeout(timeout);
+    
+    // Cleanup
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, [formData.username]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate Turnstile token
-    if (!!turnstileSiteKey && !turnstileToken) {
-      toast.error('Lütfen güvenlik doğrulamasını tamamlayın', {
-        duration: 4000,
-      });
-      return;
-    }
-
-    // Client-side validation
-    if (!formData.email?.trim()) {
-      toast.error('E-posta adresi gereklidir', {
-        duration: 4000,
-      });
-      return;
-    }
-
-    // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim().toLowerCase())) {
       toast.error('Geçerli bir e-posta adresi giriniz', {
@@ -96,6 +188,21 @@ function SignUpForm() {
       return;
     }
 
+    // Check if username is available
+    if (usernameStatus.available === false) {
+      toast.error(usernameStatus.message || 'Bu kullanıcı adı zaten kullanılıyor', {
+        duration: 4000,
+      });
+      return;
+    }
+    
+    if (usernameStatus.checking) {
+      toast.error('Lütfen kullanıcı adı kontrolünün tamamlanmasını bekleyin', {
+        duration: 4000,
+      });
+      return;
+    }
+    
     // Username format validation
     const usernameRegex = /^[a-zA-Z0-9_-]+$/;
     if (!usernameRegex.test(formData.username.trim())) {
@@ -136,8 +243,17 @@ function SignUpForm() {
     // Phone validation (if provided)
     if (formData.phone?.trim()) {
       const phoneDigits = formData.phone.replace(/\D/g, '');
-      if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
-        toast.error('Geçerli bir telefon numarası giriniz (10 veya 11 haneli)', {
+      if (formData.phoneCode === '+90') {
+        // Turkish phone validation: 10 digits
+        if (phoneDigits.length !== 10) {
+          toast.error('Geçerli bir telefon numarası giriniz (10 haneli)', {
+            duration: 4000,
+          });
+          return;
+        }
+      } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+        // International phone validation: 7-15 digits
+        toast.error('Geçerli bir telefon numarası giriniz', {
           duration: 4000,
         });
         return;
@@ -173,18 +289,18 @@ function SignUpForm() {
       }
     }
 
-      // No logging during render to avoid blocking route
-      setLoading(true);
+    // No logging during render to avoid blocking route
+    setLoading(true);
 
-      try {
-        const normalizedEmail = formData.email.trim().toLowerCase();
+    try {
+      const normalizedEmail = formData.email.trim().toLowerCase();
 
       const result = await signUp(
         normalizedEmail,
         formData.password,
         formData.username.trim(),
         formData.fullName?.trim() || undefined,
-        formData.phone?.trim() || undefined,
+        formData.phone?.trim() ? `${formData.phoneCode}${formData.phone.replace(/\D/g, '')}` : undefined,
         formData.role
       );
 
@@ -214,14 +330,16 @@ function SignUpForm() {
         });
         
         // Wait a bit for session to be established
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, TIMEOUTS.PROFILE_RETRY));
         
         // Get user profile to check admin status
-        const { data: profile } = await supabase
+        type UserProfile = { role: string | null; is_admin: boolean | null };
+        const { data } = await supabase
           .from('user_profiles')
           .select('role, is_admin')
           .eq('id', result.user.id)
           .maybeSingle();
+        const profile = data as UserProfile | null;
 
         // Determine redirect based on user role
         const redirectUrl = (profile && (profile.role === 'admin' || profile.is_admin))
@@ -230,7 +348,7 @@ function SignUpForm() {
         
         setTimeout(() => {
           window.location.href = redirectUrl;
-        }, 1000);
+        }, TIMEOUTS.REDIRECT_DELAY);
       } else {
         // Email verification required - ALWAYS redirect to verification page
         // This is the normal flow when email verification is enabled in Supabase Dashboard
@@ -250,7 +368,7 @@ function SignUpForm() {
         // Redirect to email verification page
         setTimeout(() => {
           router.push(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`);
-        }, 1500);
+        }, TIMEOUTS.EMAIL_VERIFICATION_REDIRECT);
       }
     } catch (error: any) {
       // No logging during render to avoid blocking route
@@ -263,12 +381,9 @@ function SignUpForm() {
           duration: 10000,
           description: 'E-posta ile kayıt şu anda devre dışı. Lütfen Supabase Dashboard\'da "Enable email signups" seçeneğini aktif edin. (Authentication > Settings > Email Auth)',
         });
-        setLoading(false);
-        return;
-      }
-      
-      // Special handling for "already registered" errors
-      if (errorMessage.includes('zaten kayıtlı') || errorMessage.includes('already registered')) {
+        setTurnstileToken(null);
+      } else if (errorMessage.includes('zaten kayıtlı') || errorMessage.includes('already registered')) {
+        // Special handling for "already registered" errors
         toast.error(errorMessage, {
           duration: 8000,
           description: 'Bu e-posta ile giriş yapmayı deneyin veya şifrenizi sıfırlayın.',
@@ -277,6 +392,7 @@ function SignUpForm() {
             onClick: () => router.push('/auth/signin'),
           },
         });
+        setTurnstileToken(null);
       } else {
         toast.error(errorMessage, {
           duration: 6000,
@@ -288,8 +404,8 @@ function SignUpForm() {
             ? 'Lütfen şifre sıfırlama sayfasını kullanın veya destek ekibiyle iletişime geçin.'
             : undefined,
         });
+        setTurnstileToken(null); // Reset Turnstile on error
       }
-      setTurnstileToken(null); // Reset Turnstile on error
     } finally {
       setLoading(false);
     }
@@ -300,9 +416,8 @@ function SignUpForm() {
     return null;
   }
 
-
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-6">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
       {/* Advanced Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f12_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f12_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_110%)]" />
@@ -312,45 +427,47 @@ function SignUpForm() {
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
           }}
-          transition={{ duration: 8, repeat: Infinity }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
         />
         <motion.div
           className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-blue-600/30 blur-[120px]"
           animate={{
-            scale: [1, 1.3, 1],
+            scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
           }}
-          transition={{ duration: 10, repeat: Infinity, delay: 1 }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: 'easeInOut',
+            delay: 2,
+          }}
         />
       </div>
 
       <motion.div
+        className="relative z-10 w-full max-w-md"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md"
       >
-        <Card className="border-border/50 bg-card/80 backdrop-blur-xl shadow-2xl">
-          <CardHeader className="space-y-4 text-center">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", duration: 0.6 }}
-              className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/50"
-            >
+        <Card className="border-2 border-purple-500/20 bg-background/95 backdrop-blur-sm shadow-2xl">
+          <CardHeader className="space-y-3 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg">
               <Zap className="h-8 w-8 text-white" />
-            </motion.div>
-            <div>
-              <CardTitle className="text-3xl font-bold">Hesap Oluşturun</CardTitle>
-              <CardDescription className="mt-2 text-base">
-                Otomasyonlarınızı yönetmeye başlayın
-              </CardDescription>
             </div>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Hesap Oluşturun
+            </CardTitle>
+            <CardDescription className="text-base">
+              Otomasyonlarınızı yönetmeye başlayın
+            </CardDescription>
           </CardHeader>
-
-          <CardContent className="space-y-6">
-            {/* Email/Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information Section */}
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -368,18 +485,41 @@ function SignUpForm() {
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         required
-                        className="h-11 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        disabled={loading}
+                        className={`h-12 border-2 transition-colors ${
+                          usernameStatus.available === true
+                            ? 'border-green-500/50 focus:border-green-500'
+                            : usernameStatus.available === false
+                            ? 'border-red-500/50 focus:border-red-500'
+                            : 'border-purple-500/20 focus:border-purple-500'
+                        }`}
                       />
-                      {formData.username && formData.username.length >= 3 && (
-                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        {usernameStatus.checking && (
+                          <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                        )}
+                        {!usernameStatus.checking && usernameStatus.available === true && (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        )}
+                        {!usernameStatus.checking && usernameStatus.available === false && (
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                      {usernameStatus.message && (
+                        <p
+                          className={`text-xs mt-1 ${
+                            usernameStatus.available === true
+                              ? 'text-green-600 dark:text-green-400'
+                              : usernameStatus.available === false
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {usernameStatus.message}
+                        </p>
                       )}
                     </div>
-                    <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 border border-amber-200 dark:border-amber-800/50">
-                      <Shield className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                      <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Kalıcıdır, değiştirilemez</span>
-                    </div>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="fullName" className="text-sm font-medium flex items-center gap-1.5">
                       <Sparkles className="h-4 w-4 text-muted-foreground" />
@@ -392,7 +532,8 @@ function SignUpForm() {
                       placeholder="Adınız Soyadınız"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="h-11 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      disabled={loading}
+                      className="h-12 border-2 border-purple-500/20 focus:border-purple-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -416,7 +557,8 @@ function SignUpForm() {
                       onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                       required
                       autoComplete="email"
-                      className="h-11 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      disabled={loading}
+                      className="h-12 border-2 border-purple-500/20 focus:border-purple-500 transition-colors"
                     />
                     {formData.email && formData.email.includes('@') && (
                       <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
@@ -431,20 +573,48 @@ function SignUpForm() {
                     <span className="text-sm text-muted-foreground">(Opsiyonel)</span>
                   </Label>
                   <div className="flex gap-2">
-                    <div className="flex items-center rounded-lg border border-input bg-background px-3 text-sm text-muted-foreground">
-                      <span className="text-sm font-medium">🇹🇷 +90</span>
-                    </div>
+                    <Select
+                      value={formData.phoneCode}
+                      onValueChange={(value) => setFormData({ ...formData, phoneCode: value })}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className="w-[120px] h-12 border-2 border-purple-500/20 focus:border-purple-500 transition-colors">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+90">🇹🇷 +90</SelectItem>
+                        <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                        <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                        <SelectItem value="+49">🇩🇪 +49</SelectItem>
+                        <SelectItem value="+33">🇫🇷 +33</SelectItem>
+                        <SelectItem value="+39">🇮🇹 +39</SelectItem>
+                        <SelectItem value="+34">🇪🇸 +34</SelectItem>
+                        <SelectItem value="+31">🇳🇱 +31</SelectItem>
+                        <SelectItem value="+32">🇧🇪 +32</SelectItem>
+                        <SelectItem value="+41">🇨🇭 +41</SelectItem>
+                        <SelectItem value="+43">🇦🇹 +43</SelectItem>
+                        <SelectItem value="+46">🇸🇪 +46</SelectItem>
+                        <SelectItem value="+47">🇳🇴 +47</SelectItem>
+                        <SelectItem value="+45">🇩🇰 +45</SelectItem>
+                        <SelectItem value="+358">🇫🇮 +358</SelectItem>
+                        <SelectItem value="+7">🇷🇺 +7</SelectItem>
+                        <SelectItem value="+971">🇦🇪 +971</SelectItem>
+                        <SelectItem value="+966">🇸🇦 +966</SelectItem>
+                        <SelectItem value="+20">🇪🇬 +20</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="555 123 45 67"
+                      placeholder={formData.phoneCode === '+90' ? '555 123 45 67' : 'Telefon numarası'}
                       value={formData.phone}
                       onChange={(e) => {
                         // Remove all non-digit characters
                         const value = e.target.value.replace(/\D/g, '');
-                        // Format: 5XX XXX XX XX (max 10 digits)
+                        // Format based on country code
                         let formatted = value;
-                        if (value.length > 0) {
+                        if (formData.phoneCode === '+90') {
+                          // Turkish format: 5XX XXX XX XX (max 10 digits)
                           formatted = value.slice(0, 10);
                           if (formatted.length > 3) {
                             formatted = `${formatted.slice(0, 3)} ${formatted.slice(3)}`;
@@ -455,6 +625,9 @@ function SignUpForm() {
                           if (formatted.length > 10) {
                             formatted = `${formatted.slice(0, 10)} ${formatted.slice(10, 12)}`;
                           }
+                        } else {
+                          // International format: just numbers
+                          formatted = value;
                         }
                         setFormData({ ...formData, phone: formatted });
                       }}
@@ -463,11 +636,14 @@ function SignUpForm() {
                         setFormData({ ...formData, phone: digits });
                       }}
                       autoComplete="tel"
-                      maxLength={13}
-                      className="h-11 flex-1 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      maxLength={formData.phoneCode === '+90' ? 13 : 15}
+                      disabled={loading}
+                      className="h-12 flex-1 border-2 border-purple-500/20 focus:border-purple-500 transition-colors"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">Türkiye (+90) - 10 haneli numara</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.phoneCode === '+90' ? 'Türkiye (+90) - 10 haneli numara' : 'Telefon numaranızı girin'}
+                  </p>
                 </div>
               </div>
 
@@ -489,7 +665,8 @@ function SignUpForm() {
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required
                         minLength={8}
-                        className="h-11 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        disabled={loading}
+                      className="h-12 border-2 border-purple-500/20 focus:border-purple-500 transition-colors"
                       />
                       {formData.password && (() => {
                         const hasUpperCase = /[A-Z]/.test(formData.password);
@@ -540,7 +717,8 @@ function SignUpForm() {
                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         required
                         minLength={8}
-                        className="h-11 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        disabled={loading}
+                      className="h-12 border-2 border-purple-500/20 focus:border-purple-500 transition-colors"
                       />
                       {formData.confirmPassword && formData.password === formData.confirmPassword && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
@@ -762,33 +940,36 @@ function SignUpForm() {
 
               <Button
                 type="submit"
-                className="w-full h-10 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02] text-sm"
-                disabled={loading || (!!turnstileSiteKey && !turnstileToken)}
+                disabled={loading || (turnstileSiteKey ? !turnstileToken : false)}
+                className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg transition-all hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <span className="flex items-center">
-                    <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Kayıt oluşturuluyor...
-                  </span>
+                  </>
                 ) : (
-                  'Kayıt Ol'
+                  <>
+                    <Zap className="mr-2 h-4 w-4" />
+                    Kayıt Ol
+                  </>
                 )}
               </Button>
             </form>
 
-            <div className="space-y-4 pt-4 border-t">
-              <p className="text-center text-sm text-muted-foreground">
-                Zaten hesabınız var mı?{' '}
-                <Link href="/auth/signin" className="font-semibold text-purple-600 hover:text-purple-500 transition-colors">
-                  Giriş Yap
-                </Link>
-              </p>
+            <div className="mt-6 text-center">
+              <Link
+                href="/auth/signin"
+                className="text-muted-foreground hover:text-foreground hover:underline transition-colors text-sm"
+              >
+                Zaten hesabınız var mı? Giriş yapın
+              </Link>
+            </div>
+
+            <div className="mt-6 text-center">
               <Link
                 href="/"
-                className="flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Ana Sayfaya Dön

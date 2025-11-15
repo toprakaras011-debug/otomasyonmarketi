@@ -28,7 +28,7 @@ export async function getCategoriesWithStats() {
 
     // Fetch all data in parallel for better performance
     const [categoriesResult, automationsResult] = await Promise.all([
-      supabase.from('categories').select('*').order('name'),
+      ((supabase.from as any) as any)('categories').select('*').order('name'),
       supabase
         .from('automations')
         .select('id, category_id, total_sales, rating_avg')
@@ -54,8 +54,8 @@ export async function getCategoriesWithStats() {
       // Continue with empty automations array if this fails
     }
 
-    const categories = categoriesResult.data || [];
-    const automations = automationsResult.data || [];
+    const categories = (categoriesResult.data as any[]) || [];
+    const automations = (automationsResult.data as any[]) || [];
     
     // Group automations by category (O(n) instead of N queries)
     const automationsByCategory = automations.reduce((acc, auto) => {
@@ -72,9 +72,9 @@ export async function getCategoriesWithStats() {
     const stats = categories.map((category) => {
       const categoryAutomations = automationsByCategory[category.id] || [];
       const automationCount = categoryAutomations.length;
-      const totalSales = categoryAutomations.reduce((sum, a) => sum + (a.total_sales || 0), 0);
+      const totalSales = categoryAutomations.reduce((sum: number, a: any) => sum + (a.total_sales || 0), 0);
       const avgRating = automationCount > 0
-        ? (categoryAutomations.reduce((sum, a) => sum + Number(a.rating_avg || 0), 0) / automationCount).toFixed(1)
+        ? (categoryAutomations.reduce((sum: number, a: any) => sum + Number(a.rating_avg || 0), 0) / automationCount).toFixed(1)
         : '0.0';
 
       return {

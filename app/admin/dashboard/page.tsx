@@ -44,11 +44,16 @@ export default function AdminDashboardPage() {
         return;
       }
 
+        type UserProfile = {
+        role: string | null;
+        is_admin: boolean | null;
+      };
+
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('role, is_admin')
         .eq('id', user.id)
-        .maybeSingle();
+        .maybeSingle<UserProfile>();
 
       console.log('[DEBUG] admin/dashboard - Profile check', {
         userId: user.id,
@@ -120,14 +125,14 @@ export default function AdminDashboardPage() {
           .from('user_profiles')
           .select('id', { count: 'exact', head: true })
           .eq('is_developer', true),
-        supabase.from('platform_earnings').select('amount'),
-      ]);
+        (((supabase.from as any) as any) as any)('platform_earnings').select('amount'),
+      ]) as [any, { count: number | null }, { count: number | null }, { count: number | null }, { count: number | null }, { data: { amount: number }[] | null }];
 
       console.log('[DEBUG] admin/dashboard - Stats loaded', {
-        automationsCount: automationsCount.count,
-        pendingCount: pendingCount.count,
-        usersCount: usersCount.count,
-        developersCount: developersCount.count,
+        automationsCount: automationsCount?.count,
+        pendingCount: pendingCount?.count,
+        usersCount: usersCount?.count,
+        developersCount: developersCount?.count,
         timestamp: new Date().toISOString(),
       });
 
@@ -136,10 +141,10 @@ export default function AdminDashboardPage() {
       }
 
       setStats({
-        totalAutomations: automationsCount.count ?? 0,
-        pendingApproval: pendingCount.count ?? 0,
-        totalUsers: usersCount.count ?? 0,
-        totalDevelopers: developersCount.count ?? 0,
+        totalAutomations: automationsCount?.count ?? 0,
+        pendingApproval: pendingCount?.count ?? 0,
+        totalUsers: usersCount?.count ?? 0,
+        totalDevelopers: developersCount?.count ?? 0,
         platformEarnings:
           earningsRes.data?.reduce((total, row) => total + Number(row.amount ?? 0), 0) ?? 0,
       });

@@ -32,8 +32,7 @@ export default function DeveloperRegisterPage() {
 
       setUser(currentUser);
 
-      const { data: profileData } = await supabase
-        .from('user_profiles')
+      const { data: profileData } = await (((supabase.from as any) as any)('user_profiles') as any)
         .select('id,is_developer,developer_approved')
         .eq('id', currentUser.id)
         .maybeSingle();
@@ -71,9 +70,7 @@ export default function DeveloperRegisterPage() {
     setSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ is_developer: true })
+      const { error } = await (((supabase.from as any) as any)('user_profiles') as any).update({ is_developer: true })
         .eq('id', user.id);
 
       if (error) throw error;

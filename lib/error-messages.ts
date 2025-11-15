@@ -166,6 +166,9 @@ export function sanitizeError(error: unknown): Record<string, any> {
   };
 
   // Only include stack in development
+  const isDevelopment = typeof window !== 'undefined' 
+    ? false // Client-side - always use generic messages
+    : (process.env.NODE_ENV === 'development');
   if (isDevelopment && error.stack) {
     sanitized.stack = error.stack;
   }

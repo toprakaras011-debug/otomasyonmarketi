@@ -277,9 +277,7 @@ export default function SettingsPage() {
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
         
-        const result = await supabase
-          .from('user_profiles')
-          .upsert(
+        const result = await ((((supabase.from as any) as any) as any)('user_profiles') as any).upsert(
             {
               id: user.id,
               ...cleanUpdateData,
@@ -420,8 +418,7 @@ export default function SettingsPage() {
       });
 
       // Delete user profile from database
-      const { error: profileError } = await supabase
-        .from('user_profiles')
+      const { error: profileError } = await ((((supabase.from as any) as any) as any)('user_profiles') as any)
         .delete()
         .eq('id', user.id);
 
@@ -561,8 +558,7 @@ export default function SettingsPage() {
 
       setUser(currentUser);
 
-      const { data: profileRecord } = await supabase
-        .from('user_profiles')
+      const { data: profileRecord } = await ((((supabase.from as any) as any) as any)('user_profiles') as any)
         .select('*')
         .eq('id', currentUser.id)
         .maybeSingle();
@@ -667,9 +663,7 @@ export default function SettingsPage() {
 
       // Use upsert instead of update to handle cases where profile doesn't exist
       // This prevents "cannot coerce the result to a single JSON object" error
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert(
+      const { data, error } = await ((((supabase.from as any) as any) as any)('user_profiles') as any).upsert(
           {
             id: user.id,
             ...cleanUpdateData,

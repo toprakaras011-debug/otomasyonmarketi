@@ -1,10 +1,8 @@
 import { supabase } from './supabase';
+import { ADMIN_EMAILS, getEmailRedirectUrl } from './config';
+import { VALIDATION, TIMEOUTS, RETRY_CONFIG } from './constants';
+import { parseAuthError, parseProfileError, retryWithBackoff, AuthError } from './utils/error-handler';
 // logger import removed - no logging to avoid blocking route
-
-// Admin email list - matches callback route
-const ADMIN_EMAILS = [
-  'ftnakras01@gmail.com',
-].map(email => email.toLowerCase());
 
 export const signUp = async (
   email: string,
@@ -35,14 +33,13 @@ export const signUp = async (
     const normalizedEmail = trimmedEmail.toLowerCase();
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedEmail)) {
+    if (!VALIDATION.EMAIL.REGEX.test(normalizedEmail)) {
       throw new Error('Geçerli bir e-posta adresi giriniz.');
     }
 
     // Password validation
-    if (password.length < 6) {
-      throw new Error('Şifre en az 6 karakter olmalıdır.');
+    if (password.length < VALIDATION.PASSWORD.MIN_LENGTH) {
+      throw new Error(`Şifre en az ${VALIDATION.PASSWORD.MIN_LENGTH} karakter olmalıdır.`);
     }
 
     // Username validation
@@ -50,30 +47,38 @@ export const signUp = async (
     if (!trimmedUsername) {
       throw new Error('Kullanıcı adı boş olamaz.');
     }
-    if (trimmedUsername.length < 3) {
-      throw new Error('Kullanıcı adı en az 3 karakter olmalıdır.');
+    if (trimmedUsername.length < VALIDATION.USERNAME.MIN_LENGTH) {
+      throw new Error(`Kullanıcı adı en az ${VALIDATION.USERNAME.MIN_LENGTH} karakter olmalıdır.`);
     }
-    if (trimmedUsername.length > 30) {
-      throw new Error('Kullanıcı adı en fazla 30 karakter olabilir.');
+    if (trimmedUsername.length > VALIDATION.USERNAME.MAX_LENGTH) {
+      throw new Error(`Kullanıcı adı en fazla ${VALIDATION.USERNAME.MAX_LENGTH} karakter olabilir.`);
     }
-    // Username should only contain alphanumeric characters, underscores, and hyphens
-    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
-    if (!usernameRegex.test(trimmedUsername)) {
+    if (!VALIDATION.USERNAME.REGEX.test(trimmedUsername)) {
       throw new Error('Kullanıcı adı sadece harf, rakam, alt çizgi ve tire içerebilir.');
     }
 
     // Phone validation (if provided)
     let normalizedPhone = phone?.trim() || null;
     if (normalizedPhone) {
-      // Remove all non-digit characters
-      normalizedPhone = normalizedPhone.replace(/\D/g, '');
-      // Turkish phone numbers should be 10 digits (without country code) or 11 digits (with leading 0)
-      if (normalizedPhone.length !== 10 && normalizedPhone.length !== 11) {
-        throw new Error('Geçerli bir telefon numarası giriniz (10 veya 11 haneli).');
-      }
-      // If 11 digits and starts with 0, remove the leading 0
-      if (normalizedPhone.length === 11 && normalizedPhone.startsWith('0')) {
-        normalizedPhone = normalizedPhone.substring(1);
+      // Remove all non-digit characters except +
+      normalizedPhone = normalizedPhone.replace(/[^\d+]/g, '');
+      
+      // Check if phone includes country code (starts with +)
+      if (normalizedPhone.startsWith('+')) {
+        // International format: validate length
+        const digitsOnly = normalizedPhone.substring(1);
+        if (digitsOnly.length < VALIDATION.PHONE.INTERNATIONAL_MIN || digitsOnly.length > VALIDATION.PHONE.INTERNATIONAL_MAX) {
+          throw new Error(`Geçerli bir telefon numarası giriniz (${VALIDATION.PHONE.INTERNATIONAL_MIN}-${VALIDATION.PHONE.INTERNATIONAL_MAX} haneli).`);
+        }
+      } else {
+        // Turkish phone numbers should be 10 digits (without country code) or 11 digits (with leading 0)
+        if (normalizedPhone.length !== VALIDATION.PHONE.TURKEY_LENGTH && normalizedPhone.length !== VALIDATION.PHONE.TURKEY_LENGTH + 1) {
+          throw new Error(`Geçerli bir telefon numarası giriniz (${VALIDATION.PHONE.TURKEY_LENGTH} veya ${VALIDATION.PHONE.TURKEY_LENGTH + 1} haneli).`);
+        }
+        // If 11 digits and starts with 0, remove the leading 0
+        if (normalizedPhone.length === VALIDATION.PHONE.TURKEY_LENGTH + 1 && normalizedPhone.startsWith('0')) {
+          normalizedPhone = normalizedPhone.substring(1);
+        }
       }
     }
 
@@ -89,14 +94,10 @@ export const signUp = async (
       metadata.phone = normalizedPhone;
     }
 
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-      (typeof window !== 'undefined' ? window.location.origin : '');
-
     // Email verification is ENABLED via Supabase Dashboard
     // Users must verify their email before they can login
     // To enable: Supabase Dashboard > Authentication > Settings > Email Auth > Enable "Enable email confirmations"
-    const emailRedirectTo = `${(siteUrl || 'http://localhost:3000')}/auth/callback?type=signup`;
+    const emailRedirectTo = getEmailRedirectUrl('signup');
 
     // Attempt sign up - email verification is ENABLED
     // Users will receive an email with a verification link
@@ -113,31 +114,14 @@ export const signUp = async (
 
     if (authError) {
       // No logging to avoid blocking route in client components
-
-      // Check for specific error codes and messages
-      const errorMessage = authError.message?.toLowerCase() || '';
-      const errorCode = authError.status;
-
-      // Email signups are disabled - Supabase Dashboard setting issue
-      if (
-        errorMessage.includes('email signups are disabled') ||
-        errorMessage.includes('signups are disabled') ||
-        errorMessage.includes('signup is disabled') ||
-        errorCode === 403
-      ) {
-        throw new Error('E-posta ile kayıt şu anda devre dışı. Lütfen yönetici ile iletişime geçin. Hata: Email signups are disabled in Supabase Dashboard. Go to Authentication > Settings > Email Auth and enable "Enable email signups".');
-      }
-
-      // Email already exists - but check if profile exists
-      if (
-        errorMessage.includes('user already registered') ||
-        errorMessage.includes('already registered') ||
-        errorMessage.includes('email already exists') ||
-        errorCode === 422
-      ) {
-        // Check if profile exists - if not, this might be an orphaned account
+      
+      // Use error handler utility
+      const parsedError = parseAuthError(authError, { operation: 'Kayıt', email: normalizedEmail, username: trimmedUsername });
+      
+      // Special handling for email already exists - check if profile exists
+      if (parsedError.code === 'USER_EXISTS') {
         try {
-          // Try to get profile by username
+          // Check if username is already taken
           const { data: profileByUsername } = await supabase
             .from('user_profiles')
             .select('id, username')
@@ -146,52 +130,33 @@ export const signUp = async (
 
           // Profile exists - username conflict
           if (profileByUsername && profileByUsername.username === trimmedUsername) {
-            throw new Error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
+            throw new AuthError(
+              'Username already exists',
+              'USERNAME_EXISTS',
+              'Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.',
+              true,
+              409
+            );
           }
 
           // If username is available but email is registered, it's likely an orphaned account
-          // (user exists in auth.users but not in user_profiles)
-          // This happens when account is deleted but auth record remains
-          // We can't create profile here because we don't have the user's auth token
-          // Provide helpful message
-          throw new Error('Bu e-posta adresi kayıtlı görünüyor ancak profil bulunamadı. Bu durum genellikle hesap silme işleminden sonra oluşur. Lütfen giriş yapın veya şifre sıfırlama sayfasını kullanın. Eğer sorun devam ederse destek ekibiyle iletişime geçin.');
+          throw new AuthError(
+            'Email registered but profile missing',
+            'ORPHANED_ACCOUNT',
+            'Bu e-posta adresi kayıtlı görünüyor ancak profil bulunamadı. Bu durum genellikle hesap silme işleminden sonra oluşur. Lütfen giriş yapın veya şifre sıfırlama sayfasını kullanın. Eğer sorun devam ederse destek ekibiyle iletişime geçin.',
+            true,
+            422
+          );
         } catch (profileError: any) {
-          // If profile check fails, check if it's our custom error
-          if (profileError.message && (profileError.message.includes('Bu e-posta') || profileError.message.includes('Bu kullanıcı'))) {
+          // If it's our custom AuthError, throw it
+          if (profileError instanceof AuthError) {
             throw profileError;
           }
           // Otherwise, continue with default error
         }
-
-        throw new Error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin veya şifrenizi sıfırlayın.');
       }
-
-      // Invalid email
-      if (errorMessage.includes('invalid email') || errorMessage.includes('email format')) {
-        throw new Error('Geçerli bir e-posta adresi giriniz.');
-      }
-
-      // Weak password
-      if (errorMessage.includes('password') && errorMessage.includes('weak')) {
-        throw new Error('Şifre çok zayıf. Daha güçlü bir şifre seçin.');
-      }
-
-      // Too many requests
-      if (errorCode === 429 || errorMessage.includes('too many requests') || errorMessage.includes('rate limit')) {
-        throw new Error('Çok fazla deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.');
-      }
-
-      // Network errors
-      if (
-        errorMessage.includes('network') ||
-        errorMessage.includes('fetch') ||
-        errorMessage.includes('failed to fetch')
-      ) {
-        throw new Error('Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.');
-      }
-
-      // Generic error
-      throw new Error(authError.message || 'Kayıt oluşturulamadı. Lütfen tekrar deneyin.');
+      
+      throw parsedError;
     }
 
     if (!authData.user) {
@@ -200,7 +165,7 @@ export const signUp = async (
 
     // Wait a moment to ensure session is fully established
     // This is important for RLS policies to work correctly
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, TIMEOUTS.SESSION_CHECK));
 
     // Verify session is established before creating profile
     const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -250,155 +215,60 @@ export const signUp = async (
       });
 
     if (profileError) {
-      // Type assertion for TypeScript
-      const error = profileError as { message?: string; code?: string; details?: string; hint?: string; status?: number };
-      
       // No logging to avoid blocking route
-
-      // Check for specific errors
-      const errorMessage = error.message?.toLowerCase() || '';
-      const errorCode = error.code;
-
-      // RLS policy violation or 401 Unauthorized
-      // Check error code, message, or hint for 401/RLS indicators
-      const is401Error = 
-        errorCode === 'PGRST301' ||
-        errorMessage.includes('401') ||
-        errorMessage.includes('unauthorized') ||
-        error.status === 401 ||
-        error.code === '401';
       
-      const isRLSError =
-        errorMessage.includes('row-level security') ||
-        errorMessage.includes('violates row-level security') ||
-        errorCode === '42501';
+      // Use error handler utility
+      const parsedError = parseProfileError(profileError, { operation: 'Profil oluşturma', userId: authData.user.id });
       
-      const is401OrRLSError = isRLSError || is401Error;
-      
-      if (is401OrRLSError) {
-        // This might happen if session is not fully established
+      // Handle RLS/401 errors with retry
+      if (parsedError.code === 'RLS_ERROR') {
         // Check if session exists
         const { data: { session: checkSession } } = await supabase.auth.getSession();
         
         if (!checkSession) {
-          // No logging to avoid blocking route
           // No session - trigger will create profile
-          // Continue without throwing error - trigger will handle it
           return {
             user: authData.user,
             session: null,
           };
         }
         
-        // Session exists, try again after a short delay
-        // No logging to avoid blocking route
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const { error: retryError } = await supabase
-          .from('user_profiles')
-          .upsert(profileData, {
-            onConflict: 'id',
-          });
-        
-        if (retryError) {
-          // No logging to avoid blocking route
-          // If retry also fails, the trigger should create the profile
-          // Continue without throwing error - trigger will handle it
-          // No logging to avoid blocking route
-          // Don't throw error - trigger will create profile
+        // Session exists, retry with exponential backoff
+        try {
+          await retryWithBackoff(
+            async () => {
+              const { error: retryError } = await supabase
+                .from('user_profiles')
+                .upsert(profileData, {
+                  onConflict: 'id',
+                });
+              
+              if (retryError) {
+                throw retryError;
+              }
+            },
+            RETRY_CONFIG.MAX_ATTEMPTS,
+            RETRY_CONFIG.INITIAL_DELAY,
+            RETRY_CONFIG.MAX_DELAY,
+            RETRY_CONFIG.BACKOFF_MULTIPLIER
+          );
+          
+          // Retry succeeded
           return {
             user: authData.user,
             session: checkSession,
           };
-        } else {
-          // No logging to avoid blocking route
+        } catch (retryError) {
+          // Retry failed - trigger will create profile
+          return {
+            user: authData.user,
+            session: checkSession,
+          };
         }
       }
-
-      // Username already exists - but only throw if it's not a 401/RLS error
-      const is401OrRLS = 
-        errorMessage.includes('row-level security') ||
-        errorMessage.includes('401') ||
-        errorMessage.includes('unauthorized') ||
-        errorCode === '42501' ||
-        errorCode === 'PGRST301' ||
-        (profileError as any)?.status === 401;
       
-      if (
-        (errorCode === '23505' ||
-        errorMessage.includes('unique') ||
-        errorMessage.includes('duplicate') ||
-        errorMessage.includes('already exists')) &&
-        !is401OrRLS
-      ) {
-        throw new Error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
-      }
-      
-      // If we get here and it's not a 401/RLS error, it's a different error
-      // But if it's 401/RLS, we already handled it above and returned
-      // So only throw if it's a different error
-      const isStill401OrRLS = 
-        errorMessage.includes('row-level security') ||
-        errorMessage.includes('violates row-level security') ||
-        errorCode === '42501' ||
-        errorCode === 'PGRST301' ||
-        (profileError as any)?.status === 401 ||
-        errorMessage.includes('401') ||
-        errorMessage.includes('unauthorized');
-      
-      if (!isStill401OrRLS) {
-        // This is a different error, throw it
-        throw new Error(profileError.message || 'Profil oluşturulamadı. Lütfen tekrar deneyin.');
-      }
-      
-      // If we get here, it was a 401/RLS error that we handled
-      // Return success - trigger will create profile
-      return {
-        user: authData.user,
-        session: authData.session,
-      };
-    }
-    
-    // If profileError exists but wasn't a 401/RLS error, handle other errors
-    // (This code should not be reached if 401/RLS was handled above)
-    // But TypeScript needs this check
-    if (profileError) {
-      const error = profileError as { message?: string; code?: string; status?: number };
-      const errorMessage = error.message?.toLowerCase() || '';
-      const errorCode = error.code;
-      
-      // Check if this is a 401/RLS error that we already handled
-      const is401OrRLS = 
-        errorMessage.includes('row-level security') ||
-        errorMessage.includes('violates row-level security') ||
-        errorCode === '42501' ||
-        errorCode === 'PGRST301' ||
-        error.status === 401 ||
-        errorMessage.includes('401') ||
-        errorMessage.includes('unauthorized');
-      
-      // Skip if already handled
-      if (is401OrRLS) {
-        // Already handled above, return success
-        return {
-          user: authData.user,
-          session: authData.session,
-        };
-      }
-      
-      // Column doesn't exist error
-      if (
-        errorCode === '42703' ||
-        errorMessage.includes('column') ||
-        errorMessage.includes('does not exist')
-      ) {
-        throw new Error('Veritabanı hatası: Profil kolonu bulunamadı. Lütfen yöneticiye bildirin.');
-      }
-
-      // Generic profile error with more details
-      throw new Error(
-        error.message || 'Profil oluşturulamadı. Lütfen tekrar deneyin.'
-      );
+      // Throw other errors
+      throw parsedError;
     }
 
     return authData;
@@ -554,29 +424,22 @@ export const signIn = async (email: string, password: string) => {
     // No logging to avoid blocking route
     // Wait a moment to ensure session is fully established
     // This is especially important for admin accounts
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, TIMEOUTS.SESSION_CHECK));
 
     // No logging to avoid blocking route
 
     return data;
   } catch (error: any) {
     // No logging to avoid blocking route
-
-    // If it's already a user-friendly error message, re-throw it
-    if (error?.message && typeof error.message === 'string') {
-      // Check if it's a user-friendly message (doesn't contain technical terms)
-      const technicalTerms = ['AuthApiError', 'Supabase', 'API', 'JWT', 'token'];
-      const isTechnicalError = technicalTerms.some(term => 
-        error.message.includes(term)
-      );
-
-      if (!isTechnicalError) {
-        throw error; // Re-throw user-friendly errors as-is
-      }
+    
+    // If it's already an AuthError, re-throw it
+    if (error instanceof AuthError) {
+      throw error;
     }
-
-    // Otherwise, provide a generic error
-    throw new Error(error?.message || 'Giriş yapılamadı. Lütfen tekrar deneyin.');
+    
+    // Use error handler utility
+    const parsedError = parseAuthError(error, { operation: 'Giriş', email });
+    throw parsedError;
   }
 };
 
@@ -631,7 +494,7 @@ export const signOut = async () => {
     // Double-check: Clear any remaining cached data
     if (typeof window !== 'undefined') {
       // Wait a bit for auth state change to propagate
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, TIMEOUTS.SESSION_CHECK));
       
       // Final cleanup
       localStorage.clear();

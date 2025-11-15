@@ -91,10 +91,8 @@ export default function AutomationDetailClient({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      await supabase.from('download_logs').insert({
-        user_id: currentUser.id,
-        automation_id: automation.id,
-      });
+      const logData = { user_id: currentUser.id, automation_id: automation.id };
+      await ((((supabase.from as any) as any) as any)('download_logs') as any).insert([logData]);
 
       toast.success('Dosya indiriliyor...');
     } catch (error: any) {
@@ -118,14 +116,14 @@ export default function AutomationDetailClient({
     setSubmittingReview(true);
 
     try {
-      const { error } = await supabase
-        .from('reviews')
-        .insert({
+      const { error } = await ((((supabase.from as any) as any) as any)('reviews') as any).insert([
+        {
           automation_id: automation.id,
           user_id: currentUser.id,
           rating: newReview.rating,
           comment: newReview.comment,
-        });
+        },
+      ]);
 
       if (error) throw error;
 

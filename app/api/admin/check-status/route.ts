@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
+
 // Admin email list - matches auth.ts and callback route
 const ADMIN_EMAILS = [
   'ftnakras01@gmail.com',
