@@ -32,7 +32,7 @@ type FeatureCard = {
 };
 
 type HeroProps = {
-  initialStats: HeroStats;
+  initialStats: HeroStats | null;
 };
 
 const pseudoRandom = (seed: number) => {
