@@ -106,6 +106,22 @@ export function AuthProvider({
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
+          // Handle refresh token errors gracefully
+          if (error.message?.includes('Refresh Token') || error.message?.includes('refresh_token')) {
+            // Invalid refresh token - clear session and sign out
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Invalid refresh token, clearing session:', error.message);
+            }
+            try {
+              await supabase.auth.signOut();
+            } catch (signOutError) {
+              // Ignore sign out errors
+            }
+            setUser(null);
+            setProfile(null);
+            return;
+          }
+          
           if (process.env.NODE_ENV === 'development') {
             console.error('Session check error:', error);
           }
@@ -173,46 +189,80 @@ export function AuthProvider({
     if (!isHydrated) return;
     
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Ignore initial session event to prevent flicker
-      if (event === 'INITIAL_SESSION') {
-        return;
-      }
-      
-      // Only show loading for SIGNED_IN and SIGNED_OUT (not TOKEN_REFRESHED)
-      const shouldShowLoading = event === 'SIGNED_IN' || event === 'SIGNED_OUT';
-      if (shouldShowLoading) {
-        setLoading(true);
-      }
-      
-      const currentUser = session?.user ?? null;
-      
-      // Only update user if it actually changed
-      setUser((prev: User | null) => {
-        // If user ID is the same, keep the previous object to prevent re-renders
-        if (prev?.id === currentUser?.id) return prev;
-        return currentUser;
-      });
-      
-      if (currentUser) {
-        // Fetch profile silently (without loading state for token refresh)
-        const shouldForceRefresh = event === 'SIGNED_IN' || event === 'USER_UPDATED';
-        const profileData = await fetchUserProfile(currentUser, shouldForceRefresh);
-        if (profileData) {
-          setProfile((prev: any) => {
-            // Only update if data actually changed
-            if (JSON.stringify(prev) === JSON.stringify(profileData)) return prev;
-            return profileData;
-          });
+      try {
+        // Ignore initial session event to prevent flicker
+        if (event === 'INITIAL_SESSION') {
+          return;
         }
-      } else {
-        setProfile(null);
-        profileFetchRef.current.clear();
-      }
-      
-      if (shouldShowLoading) {
+        
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          // Token refresh failed - session is invalid
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Token refresh failed, clearing session');
+          }
+          setUser(null);
+          setProfile(null);
+          profileFetchRef.current.clear();
+          return;
+        }
+        
+        // Only show loading for SIGNED_IN and SIGNED_OUT (not TOKEN_REFRESHED)
+        const shouldShowLoading = event === 'SIGNED_IN' || event === 'SIGNED_OUT';
+        if (shouldShowLoading) {
+          setLoading(true);
+        }
+        
+        const currentUser = session?.user ?? null;
+        
+        // Only update user if it actually changed
+        setUser((prev: User | null) => {
+          // If user ID is the same, keep the previous object to prevent re-renders
+          if (prev?.id === currentUser?.id) return prev;
+          return currentUser;
+        });
+        
+        if (currentUser) {
+          // Fetch profile silently (without loading state for token refresh)
+          const shouldForceRefresh = event === 'SIGNED_IN' || event === 'USER_UPDATED';
+          const profileData = await fetchUserProfile(currentUser, shouldForceRefresh);
+          if (profileData) {
+            setProfile((prev: any) => {
+              // Only update if data actually changed
+              if (JSON.stringify(prev) === JSON.stringify(profileData)) return prev;
+              return profileData;
+            });
+          }
+        } else {
+          setProfile(null);
+          profileFetchRef.current.clear();
+        }
+        
+        if (shouldShowLoading) {
+          setLoading(false);
+        }
+        setInitialLoad(false);
+      } catch (error: any) {
+        // Handle refresh token errors
+        if (error?.message?.includes('Refresh Token') || error?.message?.includes('refresh_token')) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Refresh token error in auth state change:', error.message);
+          }
+          // Clear invalid session
+          try {
+            await supabase.auth.signOut();
+          } catch (signOutError) {
+            // Ignore sign out errors
+          }
+          setUser(null);
+          setProfile(null);
+          profileFetchRef.current.clear();
+        } else if (process.env.NODE_ENV === 'development') {
+          console.error('Auth state change error:', error);
+        }
         setLoading(false);
+        setInitialLoad(false);
       }
-      setInitialLoad(false);
     });
 
     return () => {
