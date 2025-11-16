@@ -32,7 +32,7 @@ const buildUsernameCandidates = (params: {
       const normalized = normalizeUsername(value);
       return normalized && normalized.length >= 3 ? normalized : null;
     })
-    .filter(Boolean);
+    .filter((value): value is string => value !== null);
 
   candidates.push(...metaUsernames);
 
