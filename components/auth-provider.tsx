@@ -52,11 +52,40 @@ export function AuthProvider({
 
     const fetchPromise = (async () => {
       try {
+        // Check if user email is admin
+        const userEmail = user.email?.toLowerCase() || '';
+        const { ADMIN_EMAILS } = await import('@/lib/config');
+        const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
+        
         const { data, error } = await supabase
           .from('user_profiles')
           .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
           .eq('id', user.id)
           .maybeSingle(); // ✅ Use maybeSingle instead of single to handle missing profiles gracefully
+        
+        // Update profile if user should be admin but isn't
+        if (isAdminEmail && data) {
+          const profile = data as { id: string; role?: string | null; is_admin?: boolean | null };
+          if (!profile.is_admin || profile.role !== 'admin') {
+            try {
+              const { error: updateError } = await (supabase
+                .from('user_profiles') as any)
+                .update({
+                  role: 'admin',
+                  is_admin: true,
+                })
+                .eq('id', user.id);
+              
+              // Update local data if update succeeded
+              if (!updateError) {
+                profile.role = 'admin';
+                profile.is_admin = true;
+              }
+            } catch {
+              // Update failed - continue with existing data
+            }
+          }
+        }
         
         if (error) {
           // No logging to avoid blocking route - error is handled silently

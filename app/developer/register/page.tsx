@@ -47,7 +47,9 @@ export default function DeveloperRegisterPage() {
         }
       }
 
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     };
 
     fetchUser();
