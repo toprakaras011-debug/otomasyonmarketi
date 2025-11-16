@@ -74,30 +74,33 @@ export function AuthProvider({
           
           // Check if username is empty and create one if needed
           if (data && (!data.username || data.username.trim() === '')) {
-            // Silently ensure username exists
-            fetch('/api/auth/ensure-username', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-            })
-              .then(async (res) => {
-                if (res.ok) {
-                  const result = await res.json();
-                  if (result.success && result.username) {
-                    // Update profile with new username
-                    setProfile({ ...data, username: result.username });
-                    // Refresh profile from database
-                    fetchUserProfile(user, true);
-                  }
-                }
+            // Silently ensure username exists (only once per session)
+            const ensureUsernameKey = `ensure-username-${user.id}`;
+            if (!sessionStorage.getItem(ensureUsernameKey)) {
+              sessionStorage.setItem(ensureUsernameKey, 'true');
+              
+              fetch('/api/auth/ensure-username', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
               })
-              .catch((err) => {
-                if (process.env.NODE_ENV === 'development') {
-                  console.error('Error ensuring username:', err);
-                }
-              });
+                .then(async (res) => {
+                  if (res.ok) {
+                    const result = await res.json();
+                    if (result.success && result.username) {
+                      // Update profile with new username
+                      setProfile({ ...data, username: result.username });
+                    }
+                  }
+                })
+                .catch((err) => {
+                  if (process.env.NODE_ENV === 'development') {
+                    console.error('Error ensuring username:', err);
+                  }
+                });
+            }
           }
           
           return data;
