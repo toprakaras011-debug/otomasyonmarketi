@@ -161,7 +161,7 @@ class CacheManager {
   invalidateByTags(tags: string[]): number {
     let invalidated = 0;
     
-    for (const [key, item] of this.cache.entries()) {
+    for (const [key, item] of Array.from(this.cache.entries())) {
       if (item.tags && item.tags.some(tag => tags.includes(tag))) {
         this.cache.delete(key);
         invalidated++;
