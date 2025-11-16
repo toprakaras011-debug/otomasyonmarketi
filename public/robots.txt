@@ -1,0 +1,15 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow admin and API routes
+Disallow: /api/
+Disallow: /admin/
+Disallow: /developer/dashboard
+
+# Sitemaps
+Sitemap: https://otomasyonmagazasi.com/sitemap.xml
+Sitemap: https://otomasyonmagazasi.com/sitemap.xml
+
+# Crawl-delay for better performance
+Crawl-delay: 1
