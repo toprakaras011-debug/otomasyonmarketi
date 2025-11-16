@@ -184,6 +184,21 @@ export default function SignUpPage() {
       return;
     }
 
+    // Check username availability before submitting
+    if (usernameStatus.available === false) {
+      toast.error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (usernameStatus.checking) {
+      toast.error('Kullanıcı adı kontrol ediliyor, lütfen bekleyin...', {
+        duration: 3000,
+      });
+      return;
+    }
+
     if (!formData.password || formData.password.length < 6) {
       toast.error('Şifre en az 6 karakter olmalıdır', {
         duration: 4000,
