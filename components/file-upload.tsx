@@ -106,7 +106,7 @@ export function FileUpload({
               const compressedFile = new (globalThis as any).File(
                 [blob],
                 file.name,
-                { type: 'image/jpeg', lastModified: Date.now() }
+                { type: 'image/jpeg', lastModified: typeof window !== 'undefined' ? Date.now() : 0 }
               ) as File;
               resolve(compressedFile);
             },
@@ -191,8 +191,9 @@ export function FileUpload({
     const fileExt = (fileType === 'image' && bucketName === 'automation-images') 
       ? 'jpg' 
       : file.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}.${fileExt}`;
-    const uploadId = `${userId}-${Date.now()}-${fileName}`;
+    const timestamp = typeof window !== 'undefined' ? Date.now() : 0;
+    const fileName = `${userId}/${timestamp}.${fileExt}`;
+    const uploadId = `${userId}-${timestamp}-${fileName}`;
     uploadIdRef.current = uploadId;
 
     // Store fileToUpload in a variable accessible to uploadWithTimeout
@@ -245,7 +246,7 @@ export function FileUpload({
               });
 
             // Track upload progress (Supabase doesn't support progress callback, so we simulate)
-            const startTime = Date.now();
+            const startTime = typeof window !== 'undefined' ? Date.now() : 0;
             const totalSize = finalFileToUpload.size;
             
             progressInterval = setInterval(() => {
@@ -253,7 +254,7 @@ export function FileUpload({
                 if (progressInterval) clearInterval(progressInterval);
                 return;
               }
-              const elapsed = Date.now() - startTime;
+              const elapsed = typeof window !== 'undefined' ? Date.now() - startTime : 0;
               // Estimate progress based on time (rough estimate)
               const estimatedProgress = Math.min(95, (elapsed / timeoutMs) * 100);
               setUploadProgress(estimatedProgress);

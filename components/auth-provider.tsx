@@ -41,7 +41,7 @@ export function AuthProvider({
   const profileFetchRef = useRef<Map<string, Promise<any>>>(new Map());
   const lastPathnameRef = useRef<string>('');
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastActivityRef = useRef<number>(Date.now());
+  const lastActivityRef = useRef<number>(0);
 
   const fetchUserProfile = useCallback(async (user: User, force = false) => {
     // Prevent duplicate fetches
@@ -128,6 +128,11 @@ export function AuthProvider({
   useEffect(() => {
     // Mark as hydrated immediately
     setIsHydrated(true);
+    
+    // Initialize Date.now() on client-side only
+    if (typeof window !== 'undefined') {
+      lastActivityRef.current = Date.now();
+    }
     
     // Use server data as source of truth initially
     setUser(initialUser);
@@ -271,7 +276,9 @@ export function AuthProvider({
     /*
     // Reset activity timestamp
     const resetInactivityTimer = () => {
-      lastActivityRef.current = Date.now();
+      if (typeof window !== 'undefined') {
+        lastActivityRef.current = Date.now();
+      }
       
       // Clear existing timer
       if (inactivityTimerRef.current) {
@@ -280,6 +287,7 @@ export function AuthProvider({
 
       // Set new timer
       inactivityTimerRef.current = setTimeout(async () => {
+        if (typeof window === 'undefined') return;
         const timeSinceLastActivity = Date.now() - lastActivityRef.current;
         
         // Double-check: if more than timeout has passed, logout
