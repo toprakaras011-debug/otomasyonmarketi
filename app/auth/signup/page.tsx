@@ -47,6 +47,18 @@ export default function SignUpPage() {
     message: '',
   });
 
+  const [emailStatus, setEmailStatus] = useState<{
+    checking: boolean;
+    available: boolean | null;
+    valid: boolean | null;
+    message: string;
+  }>({
+    checking: false,
+    available: null,
+    valid: null,
+    message: '',
+  });
+
   // Password requirements
   const passwordRequirements = {
     minLength: formData.password.length >= 8,
@@ -123,6 +135,78 @@ export default function SignUpPage() {
 
   // Debounce username check
   const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [emailCheckTimeout, setEmailCheckTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // Check email availability and validity
+  const checkEmailAvailability = async (email: string) => {
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    // Reset status if email is empty
+    if (!trimmedEmail) {
+      setEmailStatus({
+        checking: false,
+        available: null,
+        valid: null,
+        message: '',
+      });
+      return;
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setEmailStatus({
+        checking: false,
+        available: null,
+        valid: false,
+        message: 'Geçerli bir e-posta adresi giriniz',
+      });
+      return;
+    }
+
+    setEmailStatus({
+      checking: true,
+      available: null,
+      valid: true,
+      message: 'Kontrol ediliyor...',
+    });
+
+    try {
+      const response = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: trimmedEmail }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (data.available) {
+        setEmailStatus({
+          checking: false,
+          available: true,
+          valid: true,
+          message: 'Bu e-posta adresi kullanılabilir',
+        });
+      } else {
+        setEmailStatus({
+          checking: false,
+          available: false,
+          valid: true,
+          message: data.error || 'Bu e-posta adresi zaten kayıtlı',
+        });
+      }
+    } catch (error) {
+      setEmailStatus({
+        checking: false,
+        available: null,
+        valid: true,
+        message: '',
+      });
+    }
+  };
 
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
@@ -148,6 +232,28 @@ export default function SignUpPage() {
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim().toLowerCase())) {
+      toast.error('Geçerli bir e-posta adresi giriniz', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Check email availability before submitting
+    if (emailStatus.available === false) {
+      toast.error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    if (emailStatus.checking) {
+      toast.error('E-posta adresi kontrol ediliyor, lütfen bekleyin...', {
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (emailStatus.valid === false) {
       toast.error('Geçerli bir e-posta adresi giriniz', {
         duration: 4000,
       });
@@ -542,16 +648,81 @@ export default function SignUpPage() {
                       type="email"
                       placeholder="ornek@email.com"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
+                      onChange={(e) => {
+                        const newEmail = e.target.value;
+                        setFormData({ ...formData, email: newEmail });
+                        
+                        // Clear previous timeout
+                        if (emailCheckTimeout) {
+                          clearTimeout(emailCheckTimeout);
+                        }
+                        
+                        // Debounce email check (500ms delay)
+                        if (newEmail.trim().length > 0) {
+                          const timeout = setTimeout(() => {
+                            checkEmailAvailability(newEmail);
+                          }, 500);
+                          setEmailCheckTimeout(timeout);
+                        } else {
+                          setEmailStatus({
+                            checking: false,
+                            available: null,
+                            valid: null,
+                            message: '',
+                          });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const trimmedEmail = e.target.value.trim().toLowerCase();
+                        setFormData({ ...formData, email: trimmedEmail });
+                        if (trimmedEmail) {
+                          checkEmailAvailability(trimmedEmail);
+                        }
+                      }}
                       required
                       autoComplete="email"
-                      className="h-11 pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      className={`h-11 pl-3 pr-10 transition-all duration-200 focus:ring-2 ${
+                        emailStatus.available === true && emailStatus.valid === true
+                          ? 'focus:ring-green-500/20 border-green-500/50'
+                          : emailStatus.available === false && emailStatus.valid === true
+                          ? 'focus:ring-red-500/20 border-red-500/50'
+                          : emailStatus.valid === false
+                          ? 'focus:ring-red-500/20 border-red-500/50'
+                          : 'focus:ring-purple-500/20'
+                      }`}
                     />
-                    {formData.email && formData.email.includes('@') && (
+                    {emailStatus.checking && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                    )}
+                    {!emailStatus.checking && emailStatus.available === true && emailStatus.valid === true && formData.email.trim().length > 0 && (
                       <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 animate-in fade-in-0 zoom-in-95 duration-200" />
                     )}
+                    {!emailStatus.checking && emailStatus.available === false && emailStatus.valid === true && formData.email.trim().length > 0 && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500 animate-in fade-in-0 zoom-in-95 duration-200" />
+                    )}
+                    {!emailStatus.checking && emailStatus.valid === false && formData.email.trim().length > 0 && (
+                      <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500 animate-in fade-in-0 zoom-in-95 duration-200" />
+                    )}
                   </div>
+                  {emailStatus.message && (
+                    <p className={`text-xs flex items-center gap-1.5 ${
+                      emailStatus.available === true && emailStatus.valid === true
+                        ? 'text-green-600 dark:text-green-400'
+                        : emailStatus.available === false && emailStatus.valid === true
+                        ? 'text-red-600 dark:text-red-400'
+                        : emailStatus.valid === false
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-muted-foreground'
+                    }`}>
+                      {emailStatus.available === true && emailStatus.valid === true && (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      )}
+                      {(emailStatus.available === false || emailStatus.valid === false) && (
+                        <AlertCircle className="h-3.5 w-3.5" />
+                      )}
+                      <span>{emailStatus.message}</span>
+                    </p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
