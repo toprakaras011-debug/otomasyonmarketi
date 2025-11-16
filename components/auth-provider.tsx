@@ -54,7 +54,7 @@ export function AuthProvider({
       try {
         const { data, error } = await supabase
           .from('user_profiles')
-          .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
+          .select('id,username,full_name,avatar_url,role,is_admin,is_developer,developer_approved')
           .eq('id', user.id)
           .maybeSingle(); // ✅ Use maybeSingle instead of single to handle missing profiles gracefully
         
@@ -86,15 +86,19 @@ export function AuthProvider({
                 },
                 credentials: 'include',
               })
-                .then(async (res) => {
-                  if (res.ok) {
-                    const result = await res.json();
-                    if (result.success && result.username) {
-                      // Update profile with new username
-                      setProfile({ ...data, username: result.username });
-                    }
+              .then(async (res) => {
+                if (res.ok) {
+                  const result = await res.json();
+                  if (result.success && result.username) {
+                    // Update profile with new username and full_name if available
+                    setProfile({ 
+                      ...data, 
+                      username: result.username,
+                      full_name: result.full_name || data.full_name,
+                    });
                   }
-                })
+                }
+              })
                 .catch((err) => {
                   if (process.env.NODE_ENV === 'development') {
                     console.error('Error ensuring username:', err);
