@@ -61,7 +61,18 @@ export async function getAutomations(): Promise<Automation[]> {
       return [];
     }
 
-    return (data || []).filter(
+    // Normalize Supabase relation format (array to object)
+    const normalized = (data || []).map((automation: any) => ({
+      ...automation,
+      category: Array.isArray(automation.category) 
+        ? (automation.category[0] || null)
+        : automation.category,
+      developer: Array.isArray(automation.developer) 
+        ? (automation.developer[0] || null)
+        : automation.developer,
+    }));
+
+    return normalized.filter(
       (automation: any) => !blockedSlugs.includes(automation.slug?.toLowerCase() || '')
     ) as Automation[];
   } catch {
