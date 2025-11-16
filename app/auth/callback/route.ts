@@ -195,12 +195,22 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     username = `kullanici${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   }
 
-  const fullName =
-    user.user_metadata?.full_name ||
-    user.user_metadata?.name ||
-    user.user_metadata?.user_name ||
-    user.email?.split('@')[0] ||
-    'Yeni Kullanıcı';
+  // Get full name from metadata - try multiple sources
+  let fullName: string | null = null;
+  
+  if (user.user_metadata?.full_name) {
+    fullName = user.user_metadata.full_name;
+  } else if (user.user_metadata?.name) {
+    fullName = user.user_metadata.name;
+  } else if (user.user_metadata?.given_name && user.user_metadata?.family_name) {
+    fullName = `${user.user_metadata.given_name} ${user.user_metadata.family_name}`.trim();
+  } else if (user.user_metadata?.user_name) {
+    fullName = user.user_metadata.user_name;
+  } else if (user.user_metadata?.display_name) {
+    fullName = user.user_metadata.display_name;
+  } else if (user.email) {
+    fullName = user.email.split('@')[0];
+  }
 
   // Get phone from metadata if available
   const phone = user.user_metadata?.phone || null;
@@ -221,6 +231,22 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     is_developer: false,
     developer_approved: false,
   });
+
+  if (insertError) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error creating user profile:', insertError);
+    }
+    // If insert fails due to duplicate, try to update instead
+    if (insertError.code === '23505') {
+      await supabase
+        .from('user_profiles')
+        .update({ 
+          username: username.trim(),
+          full_name: fullName || undefined,
+        })
+        .eq('id', user.id);
+    }
+  }
 
   if (insertError) {
     if (process.env.NODE_ENV === 'development') {

@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     // Check current profile
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('id, username')
+      .select('id, username, full_name')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -148,12 +148,22 @@ export async function POST(request: Request) {
         }
       }
 
-      const fullName =
-        user.user_metadata?.full_name ||
-        user.user_metadata?.name ||
-        user.user_metadata?.user_name ||
-        user.email?.split('@')[0] ||
-        'Yeni Kullanıcı';
+      // Get full name from metadata - try multiple sources
+      let fullName: string | null = null;
+      
+      if (user.user_metadata?.full_name) {
+        fullName = user.user_metadata.full_name;
+      } else if (user.user_metadata?.name) {
+        fullName = user.user_metadata.name;
+      } else if (user.user_metadata?.given_name && user.user_metadata?.family_name) {
+        fullName = `${user.user_metadata.given_name} ${user.user_metadata.family_name}`.trim();
+      } else if (user.user_metadata?.user_name) {
+        fullName = user.user_metadata.user_name;
+      } else if (user.user_metadata?.display_name) {
+        fullName = user.user_metadata.display_name;
+      } else if (user.email) {
+        fullName = user.email.split('@')[0];
+      }
 
       const phone = user.user_metadata?.phone || null;
       const avatarUrl = 
@@ -240,9 +250,22 @@ export async function POST(request: Request) {
         }
       }
 
+      // Also update full_name if it's empty
+      const fullName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.user_metadata?.user_name ||
+        user.email?.split('@')[0] ||
+        null;
+
+      const updateData: any = { username: username.trim() };
+      if (fullName && (!profile.full_name || profile.full_name.trim() === '')) {
+        updateData.full_name = fullName;
+      }
+
       const { error: updateError } = await supabase
         .from('user_profiles')
-        .update({ username: username.trim() })
+        .update(updateData)
         .eq('id', user.id);
 
       if (updateError) {
@@ -259,10 +282,38 @@ export async function POST(request: Request) {
         { 
           success: true, 
           username: username.trim(),
+          full_name: updateData.full_name || profile.full_name,
           message: 'Kullanıcı adı oluşturuldu.' 
         },
         { status: 200 }
       );
+    }
+
+    // Username already exists, but check if full_name is empty
+    if (!profile.full_name || profile.full_name.trim() === '') {
+      const fullName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.user_metadata?.user_name ||
+        user.email?.split('@')[0] ||
+        null;
+
+      if (fullName) {
+        await supabase
+          .from('user_profiles')
+          .update({ full_name: fullName })
+          .eq('id', user.id);
+        
+        return NextResponse.json(
+          { 
+            success: true, 
+            username: profile.username,
+            full_name: fullName,
+            message: 'Ad soyad güncellendi.' 
+          },
+          { status: 200 }
+        );
+      }
     }
 
     // Username already exists
@@ -270,6 +321,7 @@ export async function POST(request: Request) {
       { 
         success: true, 
         username: profile.username,
+        full_name: profile.full_name,
         message: 'Kullanıcı adı zaten mevcut.' 
       },
       { status: 200 }
