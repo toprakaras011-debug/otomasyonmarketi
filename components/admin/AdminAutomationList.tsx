@@ -164,7 +164,7 @@ export default function AdminAutomationList({ automations }: Props) {
                     )}
                     <div className="flex items-center gap-2 text-xs text-foreground/60">
                       <span>Başvuru:</span>
-                      <span>{new Date(automation.created_at).toLocaleDateString("tr-TR")}</span>
+                      <span>{typeof window !== 'undefined' ? new Date(automation.created_at).toLocaleDateString("tr-TR") : automation.created_at}</span>
                     </div>
                   </div>
                 </div>

@@ -19,10 +19,12 @@ export function MonitoringInit() {
     });
 
     // Track page view
-    monitoring.trackEvent('page_view', {
-      path: window.location.pathname,
-      timestamp: new Date().toISOString(),
-    });
+    if (typeof window !== 'undefined') {
+      monitoring.trackEvent('page_view', {
+        path: window.location.pathname,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }, []);
 
   return null; // This component doesn't render anything
