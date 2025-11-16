@@ -334,14 +334,9 @@ export default function SignUpPage() {
             </div>
 
             {/* Email/Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information Section */}
               <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <User className="h-5 w-5 text-purple-500" />
-                  <h3 className="text-base font-semibold text-foreground">Kişisel Bilgiler</h3>
-                </div>
-                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 group">
                     <Label htmlFor="username" className="text-sm font-medium flex items-center gap-1.5">
@@ -357,13 +352,13 @@ export default function SignUpPage() {
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         required
-                        className="h-11 pl-3 pr-10"
+                        className="h-11 pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       />
                       {formData.username && formData.username.length >= 3 && (
-                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 animate-in fade-in-0 zoom-in-95 duration-200" />
                       )}
                     </div>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                       <Shield className="h-3.5 w-3.5" />
                       <span>Kalıcıdır, değiştirilemez</span>
                     </p>
@@ -381,7 +376,7 @@ export default function SignUpPage() {
                       placeholder="Adınız Soyadınız"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="h-11"
+                      className="h-11 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                     />
                   </div>
                 </div>
@@ -389,11 +384,6 @@ export default function SignUpPage() {
 
               {/* Contact Information Section */}
               <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <Mail className="h-5 w-5 text-purple-500" />
-                  <h3 className="text-base font-semibold text-foreground">İletişim Bilgileri</h3>
-                </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium flex items-center gap-1.5">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -410,10 +400,10 @@ export default function SignUpPage() {
                       onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                       required
                       autoComplete="email"
-                      className="h-11 pl-3 pr-10"
+                      className="h-11 pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                     />
                     {formData.email && formData.email.includes('@') && (
-                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 animate-in fade-in-0 zoom-in-95 duration-200" />
                     )}
                   </div>
                 </div>
@@ -429,7 +419,7 @@ export default function SignUpPage() {
                       value={formData.phoneCountryCode}
                       onValueChange={(value) => setFormData({ ...formData, phoneCountryCode: value })}
                     >
-                      <SelectTrigger className="w-[140px] h-11">
+                      <SelectTrigger className="w-[140px] h-11 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20">
                         <SelectValue placeholder="Ülke" />
                       </SelectTrigger>
                       <SelectContent>
@@ -466,22 +456,17 @@ export default function SignUpPage() {
                       }}
                       onBlur={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
                       autoComplete="tel"
-                      className="h-11 flex-1"
+                      className="h-11 flex-1 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                     />
                   </div>
                   {formData.phoneCountryCode === '+90' && (
-                    <p className="text-xs text-muted-foreground">Türkiye (+90) - 10 haneli numara</p>
+                    <p className="text-xs text-muted-foreground mt-1">Türkiye (+90) - 10 haneli numara</p>
                   )}
                 </div>
               </div>
 
               {/* Security Section */}
               <div className="space-y-4">
-                <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <Lock className="h-5 w-5 text-purple-500" />
-                  <h3 className="text-base font-semibold text-foreground">Güvenlik</h3>
-                </div>
-                
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-sm font-medium flex items-center gap-1.5">
@@ -498,59 +483,59 @@ export default function SignUpPage() {
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required
                         minLength={8}
-                        className="h-11"
+                        className="h-11 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       />
                       {formData.password && passwordRequirements.minLength && passwordRequirements.hasUpperCase && passwordRequirements.hasLowerCase && passwordRequirements.hasNumber && passwordRequirements.hasSpecialChar && (
-                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 animate-in fade-in-0 zoom-in-95 duration-200" />
                       )}
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2.5 pt-1">
                       <p className="text-xs text-muted-foreground">Min. 8 karakter</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                             passwordRequirements.hasUpperCase 
-                              ? 'border-green-500 bg-green-500' 
-                              : 'border-muted-foreground'
+                              ? 'border-green-500 bg-green-500 shadow-sm' 
+                              : 'border-muted-foreground/40 bg-background'
                           }`}>
                             {passwordRequirements.hasUpperCase && (
-                              <CheckCircle2 className="h-3 w-3 text-white" />
+                              <CheckCircle2 className="h-2.5 w-2.5 text-white animate-in zoom-in-95 duration-200" />
                             )}
                           </div>
                           <span className="text-xs text-muted-foreground">Büyük harf</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                        <div className="flex items-center gap-2.5">
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                             passwordRequirements.hasLowerCase 
-                              ? 'border-green-500 bg-green-500' 
-                              : 'border-muted-foreground'
+                              ? 'border-green-500 bg-green-500 shadow-sm' 
+                              : 'border-muted-foreground/40 bg-background'
                           }`}>
                             {passwordRequirements.hasLowerCase && (
-                              <CheckCircle2 className="h-3 w-3 text-white" />
+                              <CheckCircle2 className="h-2.5 w-2.5 text-white animate-in zoom-in-95 duration-200" />
                             )}
                           </div>
                           <span className="text-xs text-muted-foreground">Küçük harf</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                        <div className="flex items-center gap-2.5">
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                             passwordRequirements.hasNumber 
-                              ? 'border-green-500 bg-green-500' 
-                              : 'border-muted-foreground'
+                              ? 'border-green-500 bg-green-500 shadow-sm' 
+                              : 'border-muted-foreground/40 bg-background'
                           }`}>
                             {passwordRequirements.hasNumber && (
-                              <CheckCircle2 className="h-3 w-3 text-white" />
+                              <CheckCircle2 className="h-2.5 w-2.5 text-white animate-in zoom-in-95 duration-200" />
                             )}
                           </div>
                           <span className="text-xs text-muted-foreground">Rakam</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                        <div className="flex items-center gap-2.5">
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                             passwordRequirements.hasSpecialChar 
-                              ? 'border-green-500 bg-green-500' 
-                              : 'border-muted-foreground'
+                              ? 'border-green-500 bg-green-500 shadow-sm' 
+                              : 'border-muted-foreground/40 bg-background'
                           }`}>
                             {passwordRequirements.hasSpecialChar && (
-                              <CheckCircle2 className="h-3 w-3 text-white" />
+                              <CheckCircle2 className="h-2.5 w-2.5 text-white animate-in zoom-in-95 duration-200" />
                             )}
                           </div>
                           <span className="text-xs text-muted-foreground">Özel karakter</span>
@@ -574,17 +559,17 @@ export default function SignUpPage() {
                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         required
                         minLength={8}
-                        className="h-11"
+                        className="h-11 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       />
                       {formData.confirmPassword && formData.password === formData.confirmPassword && (
-                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 animate-in fade-in-0 zoom-in-95 duration-200" />
                       )}
                       {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                        <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                        <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500 animate-in fade-in-0 zoom-in-95 duration-200" />
                       )}
                     </div>
                     {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                      <p className="text-xs text-red-500">Şifreler eşleşmiyor</p>
+                      <p className="text-xs text-red-500 animate-in fade-in-0 duration-200">Şifreler eşleşmiyor</p>
                     )}
                   </div>
                 </div>
@@ -599,12 +584,12 @@ export default function SignUpPage() {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <motion.label 
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all duration-300 ${
                       formData.role === 'user' 
-                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10 shadow-lg shadow-purple-500/20' 
-                        : 'border-border hover:border-purple-500/50 hover:shadow-md'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-blue-500/10 shadow-lg shadow-purple-500/20' 
+                        : 'border-border bg-card hover:border-purple-500/50 hover:shadow-md hover:bg-accent/50'
                     }`}
                   >
                     <input
@@ -618,29 +603,30 @@ export default function SignUpPage() {
                     {formData.role === 'user' && (
                       <motion.div 
                         layoutId="activeRole"
-                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/5 rounded-xl"
+                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-blue-500/5 rounded-xl"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <div className="relative flex flex-col items-center gap-2">
+                    <div className="relative flex flex-col items-center gap-2.5">
                       <div className={`rounded-xl p-2.5 transition-all duration-300 ${
                         formData.role === 'user' 
-                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg' 
+                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30' 
                           : 'bg-muted'
                       }`}>
-                        <ShoppingBag className={`h-5 w-5 transition-colors ${
+                        <ShoppingBag className={`h-5 w-5 transition-colors duration-200 ${
                           formData.role === 'user' ? 'text-white' : 'text-muted-foreground'
                         }`} />
                       </div>
                       <div className="text-center space-y-0.5">
-                        <span className="text-sm font-bold block">Kullanıcı</span>
+                        <span className="text-sm font-bold block text-foreground">Kullanıcı</span>
                         <span className="text-[11px] text-muted-foreground block">Otomasyonları satın al</span>
                       </div>
                       {formData.role === 'user' && (
                         <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1"
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", bounce: 0.4, duration: 0.5 }}
+                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1 shadow-md"
                         >
                           <CheckCircle2 className="h-3 w-3 text-white" />
                         </motion.div>
@@ -648,12 +634,12 @@ export default function SignUpPage() {
                     </div>
                   </motion.label>
                   <motion.label 
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all duration-300 ${
                       formData.role === 'developer' 
-                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-blue-500/10 shadow-lg shadow-purple-500/20' 
-                        : 'border-border hover:border-purple-500/50 hover:shadow-md'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-blue-500/10 shadow-lg shadow-purple-500/20' 
+                        : 'border-border bg-card hover:border-purple-500/50 hover:shadow-md hover:bg-accent/50'
                     }`}
                   >
                     <input
@@ -667,29 +653,30 @@ export default function SignUpPage() {
                     {formData.role === 'developer' && (
                       <motion.div 
                         layoutId="activeRole"
-                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/5 rounded-xl"
+                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-blue-500/5 rounded-xl"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <div className="relative flex flex-col items-center gap-2">
+                    <div className="relative flex flex-col items-center gap-2.5">
                       <div className={`rounded-xl p-2.5 transition-all duration-300 ${
                         formData.role === 'developer' 
-                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg' 
+                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30' 
                           : 'bg-muted'
                       }`}>
-                        <Code2 className={`h-5 w-5 transition-colors ${
+                        <Code2 className={`h-5 w-5 transition-colors duration-200 ${
                           formData.role === 'developer' ? 'text-white' : 'text-muted-foreground'
                         }`} />
                       </div>
                       <div className="text-center space-y-0.5">
-                        <span className="text-sm font-bold block">Geliştirici</span>
+                        <span className="text-sm font-bold block text-foreground">Geliştirici</span>
                         <span className="text-[11px] text-muted-foreground block">Otomasyonları sat</span>
                       </div>
                       {formData.role === 'developer' && (
                         <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1"
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", bounce: 0.4, duration: 0.5 }}
+                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1 shadow-md"
                         >
                           <CheckCircle2 className="h-3 w-3 text-white" />
                         </motion.div>
