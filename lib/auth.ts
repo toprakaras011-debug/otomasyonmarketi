@@ -86,7 +86,8 @@ export const signUp = async (
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
       (typeof window !== 'undefined' ? window.location.origin : '');
 
-    const emailRedirectTo = `${(siteUrl || 'http://localhost:3000')}/auth/callback`;
+    // Redirect to confirm page after email verification
+    const emailRedirectTo = `${(siteUrl || 'http://localhost:3000')}/auth/confirm?email=${encodeURIComponent(normalizedEmail)}`;
 
     // Attempt sign up with optional email verification
     // User can login immediately, but email verification is still sent
@@ -205,6 +206,10 @@ export const signUp = async (
       throw new Error('Profil oluşturulamadı. Lütfen tekrar deneyin.');
     }
 
+    // Sign out the user immediately after signup to require email verification
+    // This ensures users must verify their email before logging in
+    await supabase.auth.signOut();
+
     return authData;
   } catch (error: any) {
     // Only log in development
@@ -263,14 +268,21 @@ export const signIn = async (email: string, password: string) => {
       const errorMessage = error.message?.toLowerCase() || '';
       const errorCode = error.status;
 
+      // Email not confirmed
+      if (
+        errorMessage.includes('email not confirmed') ||
+        errorMessage.includes('email_not_confirmed') ||
+        errorMessage.includes('email address not confirmed') ||
+        errorMessage.includes('email not verified')
+      ) {
+        throw new Error('EMAIL_NOT_CONFIRMED'); // Special error code for email verification
+      }
+
       // Invalid credentials
       if (
         errorMessage.includes('invalid login credentials') ||
         errorMessage.includes('invalid_credentials') ||
         errorMessage.includes('invalid email or password') ||
-        errorMessage.includes('email not confirmed') ||
-        errorMessage.includes('email_not_confirmed') ||
-        errorMessage.includes('email address not confirmed') ||
         (errorCode === 400 && errorMessage.includes('credentials'))
       ) {
         throw new Error('E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.');

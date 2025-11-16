@@ -74,6 +74,17 @@ export default function SignInPage() {
         throw new Error('Giriş başarısız. Lütfen tekrar deneyin.');
       }
 
+      // Check if email is confirmed
+      if (!result.user.email_confirmed_at) {
+        // Redirect to email verification page
+        router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`);
+        toast.warning('E-posta adresinizi doğrulamanız gerekiyor.', {
+          duration: 5000,
+          description: 'E-posta kutunuzu kontrol edin ve doğrulama linkine tıklayın.',
+        });
+        return;
+      }
+
       // Wait for session to be established
       await new Promise(resolve => setTimeout(resolve, 100));
       
@@ -88,6 +99,16 @@ export default function SignInPage() {
       }, 500);
     } catch (error: any) {
       const errorMessage = error?.message || 'Giriş yapılamadı';
+      
+      // Check if it's an email not confirmed error
+      if (errorMessage === 'EMAIL_NOT_CONFIRMED') {
+        router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`);
+        toast.warning('E-posta adresinizi doğrulamanız gerekiyor.', {
+          duration: 6000,
+          description: 'E-posta kutunuzu kontrol edin ve doğrulama linkine tıklayın.',
+        });
+        return;
+      }
       
       toast.error(errorMessage, {
         duration: 6000,

@@ -164,13 +164,13 @@ export default function SignUpPage() {
       
       toast.success('Hesabınız başarıyla oluşturuldu!', {
         duration: 5000,
-        description: 'E-posta doğrulama linki gönderildi. Şimdi giriş yapabilirsiniz.',
+        description: 'E-posta doğrulama linki gönderildi. Lütfen e-posta kutunuzu kontrol edin.',
       });
       
-      // Redirect to sign in page
+      // Redirect to email verification page
       setTimeout(() => {
-        router.push('/auth/signin');
-      }, 2000);
+        router.push(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`);
+      }, 1500);
     } catch (error: any) {
       const errorMessage = error?.message || 'Kayıt oluşturulamadı';
       toast.error(errorMessage, {

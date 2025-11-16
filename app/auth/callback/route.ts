@@ -138,6 +138,15 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Check if email is confirmed
+  const { data: { user } } = await supabase.auth.getUser();
+  
   // URL to redirect to after sign in process completes
-  return NextResponse.redirect(new URL('/dashboard', request.url));
+  // If email is confirmed, go to dashboard, otherwise go to verify email page
+  if (user?.email_confirmed_at) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  } else {
+    const email = user?.email || '';
+    return NextResponse.redirect(new URL(`/auth/verify-email?email=${encodeURIComponent(email)}`, request.url));
+  }
 }
