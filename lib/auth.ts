@@ -345,8 +345,33 @@ export const signIn = async (email: string, password: string) => {
 };
 
 export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  return { error };
+  try {
+    // Sign out from all scopes
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
+    
+    // Clear any cached session data
+    if (typeof window !== 'undefined') {
+      // Clear Supabase session storage
+      const supabaseKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('sb-') || key.includes('supabase')
+      );
+      supabaseKeys.forEach(key => localStorage.removeItem(key));
+      
+      // Clear session storage
+      const sessionKeys = Object.keys(sessionStorage).filter(key => 
+        key.startsWith('sb-') || key.includes('supabase')
+      );
+      sessionKeys.forEach(key => sessionStorage.removeItem(key));
+    }
+    
+    return { error };
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Sign out exception:', error);
+    }
+    // Return error but don't throw - let caller handle redirect
+    return { error: error as Error };
+  }
 };
 
 export const getCurrentUser = async () => {

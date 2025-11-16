@@ -53,11 +53,31 @@ export function ProfileDropdown({ user, profile }: ProfileDropdownProps) {
 
   const handleSignOut = async () => {
     try {
+      // Clear any cached data
+      if (typeof window !== 'undefined') {
+        // Clear localStorage
+        localStorage.clear();
+        // Clear sessionStorage
+        sessionStorage.clear();
+      }
+      
+      // Sign out from Supabase
       await signOut();
-      window.location.href = '/';
+      
+      // Force a hard refresh to clear all state
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     } catch (error) {
-      console.error('Sign out error:', error);
-      window.location.href = '/';
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Sign out error:', error);
+      }
+      // Even if there's an error, clear storage and redirect
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/';
+      }
     }
   };
 
