@@ -122,6 +122,16 @@ const nextConfig = {
     // React compiler optimizations
     reactRemoveProperties: process.env.NODE_ENV === 'production',
   },
+
+  // API timeout configuration
+  async rewrites() {
+    return [];
+  },
+
+  // Configure API timeout
+  serverRuntimeConfig: {
+    apiTimeout: 30000, // 30 seconds
+  },
   
   // Headers for security and performance
   async headers() {

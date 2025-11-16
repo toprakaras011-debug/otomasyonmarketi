@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     if (process.env.NODE_ENV === 'development') {
-      console.error('Function error:', error);
+    console.error('Function error:', error);
     }
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });

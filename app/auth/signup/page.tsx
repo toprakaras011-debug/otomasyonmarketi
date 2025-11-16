@@ -37,6 +37,16 @@ export default function SignUpPage() {
     newsletter: false,
   });
 
+  const [usernameStatus, setUsernameStatus] = useState<{
+    checking: boolean;
+    available: boolean | null;
+    message: string;
+  }>({
+    checking: false,
+    available: null,
+    message: '',
+  });
+
   // Password requirements
   const passwordRequirements = {
     minLength: formData.password.length >= 8,
@@ -45,6 +55,74 @@ export default function SignUpPage() {
     hasNumber: /[0-9]/.test(formData.password),
     hasSpecialChar: /[^A-Za-z0-9]/.test(formData.password),
   };
+
+  // Check username availability
+  const checkUsernameAvailability = async (username: string) => {
+    const trimmedUsername = username.trim();
+    
+    // Reset status if username is too short
+    if (trimmedUsername.length < 3) {
+      setUsernameStatus({
+        checking: false,
+        available: null,
+        message: '',
+      });
+      return;
+    }
+
+    // Validate format
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!usernameRegex.test(trimmedUsername)) {
+      setUsernameStatus({
+        checking: false,
+        available: false,
+        message: 'Sadece harf, rakam, alt çizgi ve tire kullanılabilir',
+      });
+      return;
+    }
+
+    setUsernameStatus({
+      checking: true,
+      available: null,
+      message: 'Kontrol ediliyor...',
+    });
+
+    try {
+      const response = await fetch('/api/auth/check-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: trimmedUsername }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (data.available) {
+        setUsernameStatus({
+          checking: false,
+          available: true,
+          message: 'Bu kullanıcı adı kullanılabilir',
+        });
+      } else {
+        setUsernameStatus({
+          checking: false,
+          available: false,
+          message: data.error || 'Bu kullanıcı adı zaten kullanılıyor',
+        });
+      }
+    } catch (error) {
+      setUsernameStatus({
+        checking: false,
+        available: null,
+        message: '',
+      });
+    }
+  };
+
+  // Debounce username check
+  const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
@@ -350,18 +428,71 @@ export default function SignUpPage() {
                         type="text"
                         placeholder="@kullaniciadi"
                         value={formData.username}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        onChange={(e) => {
+                          const newUsername = e.target.value;
+                          setFormData({ ...formData, username: newUsername });
+                          
+                          // Clear previous timeout
+                          if (usernameCheckTimeout) {
+                            clearTimeout(usernameCheckTimeout);
+                          }
+                          
+                          // Debounce username check (500ms delay)
+                          if (newUsername.trim().length >= 3) {
+                            const timeout = setTimeout(() => {
+                              checkUsernameAvailability(newUsername);
+                            }, 500);
+                            setUsernameCheckTimeout(timeout);
+                          } else {
+                            setUsernameStatus({
+                              checking: false,
+                              available: null,
+                              message: '',
+                            });
+                          }
+                        }}
                         required
-                        className="h-11 pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        className={`h-11 pl-3 pr-10 transition-all duration-200 focus:ring-2 ${
+                          usernameStatus.available === true
+                            ? 'focus:ring-green-500/20 border-green-500/50'
+                            : usernameStatus.available === false
+                            ? 'focus:ring-red-500/20 border-red-500/50'
+                            : 'focus:ring-purple-500/20'
+                        }`}
                       />
-                      {formData.username && formData.username.length >= 3 && (
+                      {usernameStatus.checking && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                      )}
+                      {!usernameStatus.checking && usernameStatus.available === true && formData.username.trim().length >= 3 && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 animate-in fade-in-0 zoom-in-95 duration-200" />
                       )}
+                      {!usernameStatus.checking && usernameStatus.available === false && formData.username.trim().length >= 3 && (
+                        <AlertCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500 animate-in fade-in-0 zoom-in-95 duration-200" />
+                      )}
                     </div>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                      <Shield className="h-3.5 w-3.5" />
-                      <span>Kalıcıdır, değiştirilemez</span>
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                        <Shield className="h-3.5 w-3.5" />
+                        <span>Kalıcıdır, değiştirilemez</span>
+                      </p>
+                      {usernameStatus.message && (
+                        <p className={`text-xs flex items-center gap-1.5 ${
+                          usernameStatus.available === true
+                            ? 'text-green-600 dark:text-green-400'
+                            : usernameStatus.available === false
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-muted-foreground'
+                        }`}>
+                          {usernameStatus.available === true && (
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          )}
+                          {usernameStatus.available === false && (
+                            <AlertCircle className="h-3.5 w-3.5" />
+                          )}
+                          <span>{usernameStatus.message}</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="space-y-2">

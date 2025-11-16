@@ -55,6 +55,33 @@ export const signUp = async (
       throw new Error('Kullanıcı adı sadece harf, rakam, alt çizgi ve tire içerebilir.');
     }
 
+    // Check if username is already taken (client-side check before signup)
+    try {
+      const checkResponse = await fetch('/api/auth/check-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: trimmedUsername }),
+        credentials: 'include',
+      });
+
+      const checkData = await checkResponse.json();
+
+      if (!checkData.available) {
+        throw new Error(checkData.error || 'Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
+      }
+    } catch (error: any) {
+      // If it's already our error message, re-throw it
+      if (error.message && (error.message.includes('kullanıcı adı') || error.message.includes('zaten kullanılıyor'))) {
+        throw error;
+      }
+      // For network errors, log but continue (server-side will also check)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Username availability check failed, continuing with signup:', error.message);
+      }
+    }
+
     // Phone validation (if provided)
     let normalizedPhone = phone?.trim() || null;
     if (normalizedPhone) {

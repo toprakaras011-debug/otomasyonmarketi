@@ -55,11 +55,11 @@ export async function POST(req: Request) {
     const err = error as Error & { code?: string; stack?: string };
     
     if (process.env.NODE_ENV === 'development') {
-      console.error('E-posta gönderilirken hata oluştu:', {
+    console.error('E-posta gönderilirken hata oluştu:', {
         message: err.message,
         code: err.code,
         stack: err.stack
-      });
+    });
     }
 
     return NextResponse.json(

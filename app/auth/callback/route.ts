@@ -18,26 +18,51 @@ const buildUsernameCandidates = (params: {
   const { email, metadata = {} } = params;
   const candidates: string[] = [];
 
+  // Try metadata usernames first (from OAuth providers)
   const metaUsernames = [
     metadata.username,
     metadata.user_name,
     metadata.preferred_username,
-    metadata.full_name,
-    metadata.name,
+    metadata.login, // GitHub username
+    metadata.nickname, // Google nickname
   ]
     .filter(Boolean)
     .map((value: string) => normalizeUsername(value));
 
   candidates.push(...metaUsernames.filter(Boolean));
 
+  // Try full name from metadata
+  const fullName = metadata.full_name || metadata.name;
+  if (fullName) {
+    const nameParts = fullName.split(' ').filter(Boolean);
+    if (nameParts.length > 0) {
+      // Try first name + last name initial
+      if (nameParts.length >= 2) {
+        const firstName = normalizeUsername(nameParts[0]);
+        const lastNameInitial = normalizeUsername(nameParts[nameParts.length - 1][0] || '');
+        if (firstName && lastNameInitial) {
+          candidates.push(`${firstName}${lastNameInitial}`);
+        }
+      }
+      // Try just first name
+      const firstName = normalizeUsername(nameParts[0]);
+      if (firstName && firstName.length >= 3) {
+        candidates.push(firstName);
+      }
+    }
+  }
+
+  // Try email username
   if (email) {
     const emailUser = normalizeUsername(email.split('@')[0] ?? '');
-    if (emailUser) {
+    if (emailUser && emailUser.length >= 3) {
       candidates.push(emailUser);
     }
   }
 
-  candidates.push(`kullanici-${Math.random().toString(36).slice(2, 8)}`);
+  // Generate random username as fallback
+  const randomSuffix = Math.random().toString(36).slice(2, 8);
+  candidates.push(`kullanici${randomSuffix}`);
 
   return Array.from(new Set(candidates)).filter(Boolean);
 };
@@ -62,7 +87,9 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     metadata: user.user_metadata ?? {},
   });
 
-  let username = candidates[0];
+  // Find available username from candidates
+  let username = candidates[0] || `kullanici${Math.random().toString(36).slice(2, 8)}`;
+  
   for (const candidate of candidates) {
     const { data: sameUsername } = await supabase
       .from('user_profiles')
@@ -73,6 +100,31 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     if (!sameUsername) {
       username = candidate;
       break;
+    }
+  }
+
+  // If all candidates are taken, generate a unique one
+  if (!username || username === candidates[0]) {
+    let attempts = 0;
+    const maxAttempts = 10;
+    while (attempts < maxAttempts) {
+      const randomUsername = `kullanici${Math.random().toString(36).slice(2, 10)}`;
+      const { data: existing } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('username', randomUsername)
+        .maybeSingle();
+      
+      if (!existing) {
+        username = randomUsername;
+        break;
+      }
+      attempts++;
+    }
+    
+    // Final fallback with timestamp
+    if (attempts >= maxAttempts) {
+      username = `kullanici${Date.now().toString(36)}${Math.random().toString(36).slice(2, 4)}`;
     }
   }
 

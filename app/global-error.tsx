@@ -11,7 +11,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.error('Global error:', error);
+    console.error('Global error:', error);
     }
   }, [error]);
 

@@ -43,6 +43,15 @@ export const createClient = async () => {
         detectSessionInUrl: true,
         flowType: 'pkce',
       },
+      global: {
+        // Set timeout for all requests
+        headers: {
+          'x-connection-timeout': '20000', // 20 seconds
+        },
+      },
+      db: {
+        schema: 'public',
+      },
     }
   );
 };
