@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 
 // Note: API routes are dynamic by default in Next.js
 // This route uses cookies() which requires runtime execution
+// Updated: 2025-01-16
 
 // Admin email list - matches auth.ts and callback route
 const ADMIN_EMAILS = [
