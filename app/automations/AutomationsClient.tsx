@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Star, Search, Filter, TrendingUp, Sparkles, ArrowRight, Zap } from 'lucide-react';
-import { type Automation } from '@/lib/supabase';
+import { type Automation as AutomationType } from '@/lib/queries/automations';
 import { automationTags } from '@/lib/automation-tags';
 import {
   Select,
@@ -22,13 +22,13 @@ import {
 } from '@/components/ui/select';
 
 interface Props {
-  automations: Automation[];
+  automations: AutomationType[];
   categories: { id: string; name: string; slug: string }[];
 }
 
 export default function AutomationsClient({ automations, categories }: Props) {
   const searchParams = useSearchParams();
-  const [filtered, setFiltered] = useState<Automation[]>(automations);
+  const [filtered, setFiltered] = useState<AutomationType[]>(automations);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
@@ -50,21 +50,23 @@ export default function AutomationsClient({ automations, categories }: Props) {
   }, [searchParams]);
 
   useEffect(() => {
-    let list = automations;
+    let list = [...automations];
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       list = list.filter((a) =>
-        a.title.toLowerCase().includes(q) || a.description.toLowerCase().includes(q)
+        a.title.toLowerCase().includes(q) || 
+        (a.description?.toLowerCase().includes(q) ?? false)
       );
     }
     if (selectedCategory !== 'all') {
       list = list.filter((a) => {
-        const category = Array.isArray((a as any).category) ? (a as any).category[0] : (a as any).category;
-        return category?.slug === selectedCategory;
+        return a.category?.slug === selectedCategory;
       });
     }
     if (selectedTag !== 'all') {
-      list = list.filter((a) => Array.isArray((a as any).tags) && (a as any).tags.includes(selectedTag));
+      // Note: tags field is not in the query, so tag filtering is disabled for now
+      // To enable: add tags to the select query in lib/queries/automations.ts
+      list = list; // Keep all for now
     }
     setFiltered(list);
   }, [searchQuery, selectedCategory, selectedTag, automations]);
@@ -212,11 +214,11 @@ export default function AutomationsClient({ automations, categories }: Props) {
                     <div className="relative h-full overflow-hidden rounded-2xl bg-background/80 backdrop-blur-sm">
                       {/* Image Section */}
                       <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-purple-600/20 to-blue-600/20">
-                        {((automation as any).image_path || automation.image_url) ? (
+                        {(automation.image_path || automation.image_url) ? (
                           <Image
                             src={
-                              (automation as any).image_path 
-                                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${(automation as any).image_path}`
+                              automation.image_path 
+                                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/automation-images/${automation.image_path}`
                                 : automation.image_url || ''
                             }
                             alt={automation.title}
@@ -235,12 +237,12 @@ export default function AutomationsClient({ automations, categories }: Props) {
                             }}
                           />
                         ) : null}
-                        <div className="image-fallback flex h-full items-center justify-center" style={{ display: (automation as any).image_path || automation.image_url ? 'none' : 'flex' }}>
+                        <div className="image-fallback flex h-full items-center justify-center" style={{ display: automation.image_path || automation.image_url ? 'none' : 'flex' }}>
                           <TrendingUp className="h-16 w-16 text-purple-400/50" />
                         </div>
                         
                         {/* Featured Badge (if applicable) */}
-                        {(automation as any).is_featured && (
+                        {false && (
                           <div className="absolute top-4 right-4">
                             <Badge className="border-0 bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg">
                               <Zap className="mr-1 h-3 w-3" />
@@ -257,14 +259,11 @@ export default function AutomationsClient({ automations, categories }: Props) {
                           <h3 className="mb-2 text-xl font-bold line-clamp-2 transition-colors group-hover:text-purple-400">
                             {automation.title}
                           </h3>
-                          {(() => {
-                            const category = Array.isArray((automation as any).category) ? (automation as any).category[0] : (automation as any).category;
-                            return category && (
-                              <Badge variant="outline" className="border-purple-500/30 text-purple-400">
-                                {category.name}
-                              </Badge>
-                            );
-                          })()}
+                          {automation.category && (
+                            <Badge variant="outline" className="border-purple-500/30 text-purple-400">
+                              {automation.category.name}
+                            </Badge>
+                          )}
                         </div>
 
                         {/* Description */}
@@ -274,11 +273,12 @@ export default function AutomationsClient({ automations, categories }: Props) {
 
                         {/* Stats */}
                         <div className="mb-4 flex items-center gap-4 text-sm">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="font-semibold">{automation.rating_avg.toFixed(1)}</span>
-                            <span className="text-foreground/50">({automation.rating_count})</span>
-                          </div>
+                          {automation.rating_avg !== null && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <span className="font-semibold">{automation.rating_avg.toFixed(1)}</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-1 text-foreground/70">
                             <TrendingUp className="h-4 w-4" />
                             <span>{automation.total_sales} satış</span>

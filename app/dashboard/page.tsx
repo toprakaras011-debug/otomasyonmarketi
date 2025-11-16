@@ -27,40 +27,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Wait a bit for session to be established (especially after redirect)
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Try to get session first
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      console.log('[DEBUG] dashboard/page.tsx - Session check', {
-        hasSession: !!session,
-        hasUser: !!session?.user,
-        sessionError: sessionError ? {
-          message: sessionError.message,
-          code: sessionError.code,
-        } : null,
-      });
-      
-      // If no session, try getUser
-      if (!session) {
-        console.log('[DEBUG] dashboard/page.tsx - No session, trying getUser...');
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-      
-      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-
-      console.log('[DEBUG] dashboard/page.tsx - User check', {
-        hasUser: !!currentUser,
-        userId: currentUser?.id,
-        userError: userError ? {
-          message: userError.message,
-          code: userError.code,
-        } : null,
-      });
+      // Get user session
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
 
       if (!currentUser) {
-        console.warn('[DEBUG] dashboard/page.tsx - No user found, redirecting to signin');
         router.replace('/auth/signin');
         return;
       }
@@ -104,13 +74,12 @@ export default function DashboardPage() {
         
         if (purchasesError) {
           // Silently handle errors - purchases may not exist for new users
-          console.warn('Purchases fetch error:', purchasesError.message);
           setPurchases([]);
         } else {
           setPurchases(purchasesData || []);
         }
       } catch (error) {
-        console.error('Purchases fetch exception:', error);
+        // Silently handle errors - purchases may not exist for new users
         setPurchases([]);
       }
 
@@ -139,7 +108,7 @@ export default function DashboardPage() {
 
   const totalSpent = purchases
     .filter(p => p.status === 'completed')
-    .reduce((sum, p) => sum + Number(p.price_paid), 0);
+    .reduce((sum, p) => sum + Number(p.price || 0), 0);
 
   if (loading) {
     return (
@@ -338,7 +307,7 @@ export default function DashboardPage() {
                           <div className="mt-4 flex items-center justify-between">
                             <div className="flex items-baseline gap-2">
                               <span className="text-3xl font-black bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                                {Number(purchase.price_paid).toLocaleString('tr-TR')} ₺
+                                {Number(purchase.price || 0).toLocaleString('tr-TR')} ₺
                               </span>
                             </div>
                             

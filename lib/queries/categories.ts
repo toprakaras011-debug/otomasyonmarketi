@@ -1,10 +1,11 @@
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { cacheTag, cacheLife } from 'next/cache';
 
 export type CategoryWithStats = {
   id: string;
   slug: string;
   name: string;
-  description: string;
+  description: string | null;
   icon?: string;
   gradientFrom?: string;
   gradientTo?: string;
@@ -16,19 +17,22 @@ export type CategoryWithStats = {
 
 /**
  * Fetch all categories with their automation counts and stats
- * Client-safe version without caching
+ * Uses server-side caching for better performance
  */
-export async function getCategoriesWithStats() {
+export async function getCategoriesWithStats(): Promise<CategoryWithStats[]> {
+  "use cache";
+  cacheTag("categories-stats");
+  cacheLife("minutes");
+  
   try {
-    // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.warn('Supabase environment variables not set. Returning empty categories.');
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
       return [];
     }
 
     // Fetch all data in parallel for better performance
     const [categoriesResult, automationsResult] = await Promise.all([
-      ((supabase.from as any) as any)('categories').select('*').order('name'),
+      supabase.from('categories').select('*').order('name'),
       supabase
         .from('automations')
         .select('id, category_id, total_sales, rating_avg')
@@ -37,25 +41,15 @@ export async function getCategoriesWithStats() {
     ]);
 
     if (categoriesResult.error) {
-      console.error('Categories fetch error:', {
-        message: categoriesResult.error.message,
-        code: categoriesResult.error.code,
-        details: categoriesResult.error.details,
-        hint: categoriesResult.error.hint,
-      });
-      throw categoriesResult.error;
+      return [];
     }
 
     if (automationsResult.error) {
-      console.error('Automations fetch error:', {
-        message: automationsResult.error.message,
-        code: automationsResult.error.code,
-      });
       // Continue with empty automations array if this fails
     }
 
-    const categories = (categoriesResult.data as any[]) || [];
-    const automations = (automationsResult.data as any[]) || [];
+    const categories = categoriesResult.data || [];
+    const automations = automationsResult.data || [];
     
     // Group automations by category (O(n) instead of N queries)
     const automationsByCategory = automations.reduce((acc, auto) => {
@@ -63,18 +57,15 @@ export async function getCategoriesWithStats() {
       if (!acc[auto.category_id]) acc[auto.category_id] = [];
       acc[auto.category_id].push(auto);
       return acc;
-    }, {} as Record<string, any[]>);
-
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    }, {} as Record<string, typeof automations>);
 
     // Calculate stats for each category
     const stats = categories.map((category) => {
       const categoryAutomations = automationsByCategory[category.id] || [];
       const automationCount = categoryAutomations.length;
-      const totalSales = categoryAutomations.reduce((sum: number, a: any) => sum + (a.total_sales || 0), 0);
+      const totalSales = categoryAutomations.reduce((sum, a) => sum + (a.total_sales || 0), 0);
       const avgRating = automationCount > 0
-        ? (categoryAutomations.reduce((sum: number, a: any) => sum + Number(a.rating_avg || 0), 0) / automationCount).toFixed(1)
+        ? (categoryAutomations.reduce((sum, a) => sum + Number(a.rating_avg || 0), 0) / automationCount).toFixed(1)
         : '0.0';
 
       return {
@@ -86,16 +77,8 @@ export async function getCategoriesWithStats() {
       };
     });
 
-    return stats;
-  } catch (error: any) {
-    console.error('Error fetching categories with stats:', {
-      message: error?.message || 'Unknown error',
-      name: error?.name,
-      code: error?.code,
-      details: error?.details,
-      hint: error?.hint,
-      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
-    });
+    return stats as CategoryWithStats[];
+  } catch {
     // Return empty array on error to prevent UI crashes
     return [];
   }
@@ -103,18 +86,31 @@ export async function getCategoriesWithStats() {
 
 /**
  * Fetch a single category by slug
+ * Uses server-side caching for better performance
  */
 export async function getCategoryBySlug(slug: string) {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('slug', slug)
-    .single();
+  "use cache";
+  cacheTag(`category-${slug}`);
+  cacheLife("minutes");
+  
+  try {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      return null;
+    }
 
-  if (error) {
-    console.error('Error fetching category:', error);
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (error) {
+      return null;
+    }
+
+    return data;
+  } catch {
     return null;
   }
-
-  return data;
 }

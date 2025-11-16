@@ -1,25 +1,25 @@
-'use client';
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import { getCategoriesWithStats } from '@/lib/queries/categories';
+import CategoriesLoading from './loading';
 
-import { useEffect, useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Navbar } from '@/components/navbar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { HoloIcon } from '@/components/ui/holo-icon';
-import {
-  ArrowRight,
-  Code2,
-  Globe,
-  Shield,
-  Sparkles,
-  TrendingUp,
-  Users,
-  UserCheck,
-  Zap,
-  Star,
-} from 'lucide-react';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+const CategoriesClient = dynamic(() => import('./CategoriesClient'), {
+  loading: () => <CategoriesLoading />,
+  ssr: true,
+});
+
+async function CategoriesData() {
+  const categoriesWithStats = await getCategoriesWithStats();
+  return <CategoriesClient initialCategories={categoriesWithStats} />;
+}
+
+export default function CategoriesPage() {
+  return (
+    <Suspense fallback={<CategoriesLoading />}>
+      <CategoriesData />
+    </Suspense>
+  );
+}
 
 const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   'crm-musteri-yonetimi': 'CRM & Müşteri Yönetimi',

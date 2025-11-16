@@ -11,14 +11,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Star, Download, ExternalLink, ShoppingCart, Sparkles, TrendingUp, Zap, CheckCircle2, FileText, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { supabase, type Automation, type Review } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import type { AutomationDetail, Review } from '@/lib/queries/automation-detail';
 import { toast } from 'sonner';
 import { useCart } from '@/components/cart-context';
 import { useAuth } from '@/components/auth-provider';
 import type { User } from '@supabase/supabase-js';
 
 interface AutomationDetailClientProps {
-  automation: Automation;
+  automation: AutomationDetail;
   initialReviews: Review[];
   initialHasPurchased: boolean;
   currentUser: User | null;
