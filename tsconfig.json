@@ -41,6 +41,7 @@
     "supabase/**",
     ".next/**",
     "e2e/**",
-    "tests/**"
+    "tests/**",
+    "playwright.config.ts"
   ]
 }
