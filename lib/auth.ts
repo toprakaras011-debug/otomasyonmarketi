@@ -134,7 +134,7 @@ export const signUp = async (
 
       // Too many requests
       if (errorCode === 429 || errorMessage.includes('too many requests') || errorMessage.includes('rate limit')) {
-        throw new Error('Çok fazla deneme yapıldı. Lütfen birkaç dakika sonra tekrar deneyin.');
+        throw new Error('Çok fazla kayıt denemesi yapıldı. Lütfen 15-30 dakika sonra tekrar deneyin veya farklı bir e-posta adresi kullanın.');
       }
 
       // Network errors
@@ -154,29 +154,19 @@ export const signUp = async (
     // This is normal behavior - the user will be created after email confirmation
     if (!authData.user) {
       // Log for debugging
-      console.warn('Sign up successful but user is null. This may be normal if email confirmation is required.', {
+      console.log('Sign up successful but user is null. This is normal if email confirmation is required.', {
         email: normalizedEmail,
         session: authData.session,
       });
       
       // If email confirmation is required, this is expected behavior
       // The user will be created after they confirm their email
-      // We should still proceed with profile creation attempt (it will be created on email confirmation)
-      // But we need to return success so the user sees the verification page
-      
-      // Return a success response even without user object
-      // The profile will be created when user confirms email via callback
+      // Profile will be created automatically when user confirms email via callback
+      // Return success so the user sees the verification page
       return {
         user: null,
         session: authData.session,
       };
-    }
-
-    // If user is null (email confirmation required), skip profile creation
-    // Profile will be created automatically when user confirms email via callback
-    if (!authData.user) {
-      console.log('User is null, skipping profile creation. Will be created on email confirmation.');
-      return authData;
     }
 
     // Wait a bit for session to be established
