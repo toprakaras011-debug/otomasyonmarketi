@@ -38,6 +38,8 @@
   "exclude": [
     "node_modules",
     "supabase/**",
-    ".next/**"
+    ".next/**",
+    "e2e/**",
+    "tests/**"
   ]
 }
