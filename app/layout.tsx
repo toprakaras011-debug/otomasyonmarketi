@@ -1,6 +1,5 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Suspense } from 'react';
 import { Inter, Poppins } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { CartProvider } from '@/components/cart-context';
@@ -352,25 +351,23 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
-        <Suspense fallback={<div>Yükleniyor...</div>}>
-          <ErrorBoundary>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <CartProvider>
-                <AuthProvider>
-                  {children}
-                  <CookieConsent />
-                  <SpeedInsights />
-                  <Analytics />
-                </AuthProvider>
-              </CartProvider>
-            </ThemeProvider>
-          </ErrorBoundary>
-        </Suspense>
+        <ErrorBoundary>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <CartProvider>
+              <AuthProvider>
+                {children}
+                <CookieConsent />
+                <SpeedInsights />
+                <Analytics />
+              </AuthProvider>
+            </CartProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
         {/* Toaster outside ErrorBoundary - FIXED POSITION */}
         <Toaster />
       </body>
