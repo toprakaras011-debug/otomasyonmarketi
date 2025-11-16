@@ -408,27 +408,53 @@ export const getUserProfile = async (userId: string) => {
 };
 
 export const signInWithGithub = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'github',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      // Check if provider is not enabled
+      if (error.message?.includes('provider is not enabled') || error.error_code === 'validation_failed') {
+        throw new Error('GitHub OAuth provider aktif değil. Lütfen Supabase dashboard\'da GitHub provider\'ı aktif edin.');
+      }
+      throw error;
+    }
+    return data;
+  } catch (error: any) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('GitHub OAuth error:', error);
+    }
+    throw error;
+  }
 };
 
 export const signInWithGoogle = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      // Check if provider is not enabled
+      if (error.message?.includes('provider is not enabled') || error.error_code === 'validation_failed') {
+        throw new Error('Google OAuth provider aktif değil. Lütfen Supabase dashboard\'da Google provider\'ı aktif edin.');
+      }
+      throw error;
+    }
+    return data;
+  } catch (error: any) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Google OAuth error:', error);
+    }
+    throw error;
+  }
 };
 
 export const resetPassword = async (email: string) => {

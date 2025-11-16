@@ -119,13 +119,22 @@ export async function GET(request: NextRequest) {
     try {
       await supabase.auth.exchangeCodeForSession(code);
       await ensureUserProfile(supabase);
-    } catch (error) {
+    } catch (error: any) {
       // Log error in development only
       if (process.env.NODE_ENV === 'development') {
         console.error('OAuth callback error:', error);
       }
+      
+      // Check for specific OAuth errors
+      const errorMessage = error?.message || '';
+      let errorParam = 'oauth_failed';
+      
+      if (errorMessage.includes('provider is not enabled') || error?.error_code === 'validation_failed') {
+        errorParam = 'provider_not_enabled';
+      }
+      
       // Redirect to signin with error parameter
-      return NextResponse.redirect(new URL('/auth/signin?error=oauth_failed', request.url));
+      return NextResponse.redirect(new URL(`/auth/signin?error=${errorParam}`, request.url));
     }
   }
 

@@ -39,6 +39,13 @@ export default function SignInPage() {
       });
       // Clean URL
       router.replace('/auth/signin');
+    } else if (oauthError === 'provider_not_enabled') {
+      toast.error('OAuth provider aktif değil. Lütfen Supabase dashboard\'da provider\'ı aktif edin.', {
+        duration: 8000,
+        description: 'Detaylı kurulum bilgileri için OAUTH_SETUP.md dosyasına bakın.',
+      });
+      // Clean URL
+      router.replace('/auth/signin');
     }
   }, [oauthError, router]);
 
