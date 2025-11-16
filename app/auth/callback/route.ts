@@ -25,11 +25,16 @@ const buildUsernameCandidates = (params: {
     metadata.preferred_username,
     metadata.login, // GitHub username
     metadata.nickname, // Google nickname
+    metadata.sub, // OAuth subject (unique ID, can be used as fallback)
   ]
     .filter(Boolean)
-    .map((value: string) => normalizeUsername(value));
+    .map((value: string) => {
+      const normalized = normalizeUsername(value);
+      return normalized && normalized.length >= 3 ? normalized : null;
+    })
+    .filter(Boolean);
 
-  candidates.push(...metaUsernames.filter(Boolean));
+  candidates.push(...metaUsernames);
 
   // Try full name from metadata
   const fullName = metadata.full_name || metadata.name;
@@ -72,25 +77,81 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('ensureUserProfile: No user found');
+    }
+    return;
+  }
 
   const { data: existingProfile } = await supabase
     .from('user_profiles')
-    .select('id')
+    .select('id, username')
     .eq('id', user.id)
     .maybeSingle();
 
-  if (existingProfile) return;
+  if (existingProfile) {
+    // Profile exists, but check if username is empty
+    if (!existingProfile.username || existingProfile.username.trim() === '') {
+      // Username is empty, generate one
+      const candidates = buildUsernameCandidates({
+        email: user.email,
+        metadata: user.user_metadata ?? {},
+      });
+
+      let username = candidates[0] || `kullanici${Math.random().toString(36).slice(2, 8)}`;
+      
+      for (const candidate of candidates) {
+        const { data: sameUsername } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('username', candidate)
+          .maybeSingle();
+
+        if (!sameUsername) {
+          username = candidate;
+          break;
+        }
+      }
+
+      // Ensure username is not empty
+      if (!username || username.trim() === '') {
+        username = `kullanici${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      }
+
+      // Update existing profile with username
+      await supabase
+        .from('user_profiles')
+        .update({ username })
+        .eq('id', user.id);
+    }
+    return;
+  }
+
+  // Log metadata for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('OAuth user metadata:', {
+      email: user.email,
+      metadata: user.user_metadata,
+      provider: user.app_metadata?.provider,
+    });
+  }
 
   const candidates = buildUsernameCandidates({
     email: user.email,
     metadata: user.user_metadata ?? {},
   });
 
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Username candidates:', candidates);
+  }
+
   // Find available username from candidates
   let username = candidates[0] || `kullanici${Math.random().toString(36).slice(2, 8)}`;
   
   for (const candidate of candidates) {
+    if (!candidate || candidate.trim() === '') continue;
+    
     const { data: sameUsername } = await supabase
       .from('user_profiles')
       .select('id')
@@ -103,8 +164,9 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     }
   }
 
-  // If all candidates are taken, generate a unique one
-  if (!username || username === candidates[0]) {
+  // Ensure username is not empty
+  if (!username || username.trim() === '') {
+    // If all candidates are taken, generate a unique one
     let attempts = 0;
     const maxAttempts = 10;
     while (attempts < maxAttempts) {
@@ -123,9 +185,14 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     }
     
     // Final fallback with timestamp
-    if (attempts >= maxAttempts) {
+    if (!username || username.trim() === '' || attempts >= maxAttempts) {
       username = `kullanici${Date.now().toString(36)}${Math.random().toString(36).slice(2, 4)}`;
     }
+  }
+
+  // Final validation - username must not be empty
+  if (!username || username.trim() === '') {
+    username = `kullanici${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   }
 
   const fullName =
@@ -138,15 +205,35 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
   // Get phone from metadata if available
   const phone = user.user_metadata?.phone || null;
 
-  await supabase.from('user_profiles').insert({
+  // Get avatar URL from Google
+  const avatarUrl = 
+    user.user_metadata?.avatar_url || 
+    user.user_metadata?.picture || 
+    user.user_metadata?.avatar || 
+    null;
+
+  const { error: insertError } = await supabase.from('user_profiles').insert({
     id: user.id,
-    username,
+    username: username.trim(),
     full_name: fullName,
     phone: phone,
-    avatar_url: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null,
+    avatar_url: avatarUrl,
     is_developer: false,
     developer_approved: false,
   });
+
+  if (insertError) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error creating user profile:', insertError);
+    }
+    // If insert fails due to duplicate, try to update instead
+    if (insertError.code === '23505') {
+      await supabase
+        .from('user_profiles')
+        .update({ username: username.trim() })
+        .eq('id', user.id);
+    }
+  }
 };
 
 export async function GET(request: NextRequest) {
