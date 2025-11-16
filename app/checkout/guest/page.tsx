@@ -36,26 +36,29 @@ export default function GuestCheckoutPage() {
     e.preventDefault();
     setLoading(true);
 
+    const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | null = null;
+
     try {
+      console.log('Frontend: Starting checkout request at:', new Date().toISOString());
+      
       // Save guest order to database
+      timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds - Vercel API route limit
+      
+      console.log('Frontend: Sending fetch request at:', new Date().toISOString());
+      
       const response = await fetch('/api/checkout/guest', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          items: items.map(item => ({
-            id: item.id,
-            title: item.title,
-            price: item.price,
-          })),
-          customerInfo: {
-            email: formData.email,
-            name: formData.name,
-            phone: formData.phone,
-            address: formData.address,
-          },
+          items,
+          customerInfo: formData,
         }),
+        signal: controller.signal,
+        cache: 'no-store',
+        credentials: 'same-origin',
       });
 
       const data = await response.json();
@@ -73,9 +76,23 @@ export default function GuestCheckoutPage() {
         router.push(`/checkout/success?orderId=${data.orderId || 'guest'}`);
       }, 1500);
     } catch (error: any) {
-      console.error('Checkout error:', error);
-      toast.error(error.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Frontend: Checkout error at:', new Date().toISOString(), error);
+      console.error('Frontend: Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Handle timeout specifically
+      if (error.name === 'AbortError' || error.message.includes('zaman aşımına uğradı')) {
+        toast.error('İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.');
+      } else {
+        toast.error(error.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+      }
     } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       setLoading(false);
     }
   };

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// Set route config for timeout handling
+export const maxDuration = 30; // 30 seconds max for Vercel
+export const dynamic = 'force-dynamic';
+
 interface CartItem {
   id: string;
   price: number;
