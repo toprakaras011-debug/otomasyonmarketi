@@ -10,6 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileUpload } from '@/components/file-upload';
 import { Textarea } from '@/components/ui/textarea';
@@ -139,6 +150,8 @@ export default function SettingsPage() {
     billing_address: '',
   });
   const [savingPayment, setSavingPayment] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   
   const handleIbanChange = (iban: string) => {
     const cleanIban = iban.replace(/[\s\-_.,]/g, '').toUpperCase();
@@ -636,6 +649,54 @@ export default function SettingsPage() {
       toast.error(error?.message || 'Tercihler kaydedilemedi');
     } finally {
       setNotificationSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id) {
+      toast.error('Kullanıcı bilgisi bulunamadı.');
+      return;
+    }
+
+    if (deleteConfirmText !== 'SİL') {
+      toast.error('Onaylamak için "SİL" yazmanız gerekiyor.');
+      return;
+    }
+
+    setDeletingAccount(true);
+
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Hesap silinirken bir hata oluştu.');
+      }
+
+      if (data.requiresSignOut) {
+        await supabase.auth.signOut();
+        toast.warning(data.message || 'Hesap silme işlemi tamamlandı.');
+      } else {
+        toast.success(data.message || 'Hesabınız başarıyla silindi.');
+      }
+
+      // Ana sayfaya yönlendir
+      router.push('/');
+    } catch (error: any) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Account deletion error:', error);
+      }
+      toast.error(error?.message || 'Hesap silinirken bir hata oluştu.');
+    } finally {
+      setDeletingAccount(false);
+      setDeleteConfirmText('');
     }
   };
 
@@ -1465,13 +1526,68 @@ export default function SettingsPage() {
                   <div>
                     Geliştirici hesabınızı silmek istiyorsanız önce ödemelerinizi tamamlayın ve aktif abonelikleri sonlandırın.
                   </div>
-                  <Button
-                    variant="destructive"
-                    className="group relative overflow-hidden border-none bg-gradient-to-r from-red-500 via-rose-600 to-red-700 px-6 py-2 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(248,113,113,0.35)] hover:opacity-90"
-                  >
-                    <span className="absolute inset-0 translate-y-[120%] bg-gradient-to-r from-white/40 via-white/10 to-transparent opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100" />
-                    <span className="relative">Hesabı Sil</span>
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        disabled={deletingAccount}
+                        className="group relative overflow-hidden border-none bg-gradient-to-r from-red-500 via-rose-600 to-red-700 px-6 py-2 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(248,113,113,0.35)] hover:opacity-90 disabled:opacity-50"
+                      >
+                        <span className="absolute inset-0 translate-y-[120%] bg-gradient-to-r from-white/40 via-white/10 to-transparent opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100" />
+                        <span className="relative">
+                          {deletingAccount ? 'Siliniyor...' : 'Hesabı Sil'}
+                        </span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="border-red-200 dark:border-red-900/50">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-red-600 dark:text-red-400">
+                          Hesabınızı Silmek İstediğinize Emin misiniz?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-4">
+                          <p>
+                            Bu işlem geri alınamaz. Hesabınız ve tüm verileriniz kalıcı olarak silinecektir.
+                          </p>
+                          <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/20">
+                            <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-2">
+                              Silinecek veriler:
+                            </p>
+                            <ul className="text-xs text-red-600 dark:text-red-400 space-y-1 list-disc list-inside">
+                              <li>Profil bilgileriniz</li>
+                              <li>Satın aldığınız otomasyonlar</li>
+                              <li>Favorileriniz</li>
+                              <li>Ayarlarınız</li>
+                            </ul>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="delete-confirm" className="text-sm font-semibold">
+                              Onaylamak için <span className="text-red-600 dark:text-red-400 font-mono">SİL</span> yazın:
+                            </Label>
+                            <Input
+                              id="delete-confirm"
+                              type="text"
+                              value={deleteConfirmText}
+                              onChange={(e) => setDeleteConfirmText(e.target.value)}
+                              placeholder="SİL yazın"
+                              className="font-mono"
+                            />
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDeleteConfirmText('')}>
+                          İptal
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteAccount}
+                          disabled={deleteConfirmText !== 'SİL' || deletingAccount}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          {deletingAccount ? 'Siliniyor...' : 'Evet, Hesabımı Sil'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>
