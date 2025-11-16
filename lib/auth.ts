@@ -433,7 +433,12 @@ export const signInWithGithub = async () => {
 
     if (error) {
       // Check if provider is not enabled
-      if (error.message?.includes('provider is not enabled') || error.error_code === 'validation_failed') {
+      const errorMessage = error.message?.toLowerCase() || '';
+      if (
+        errorMessage.includes('provider is not enabled') ||
+        errorMessage.includes('validation_failed') ||
+        errorMessage.includes('unsupported provider')
+      ) {
         throw new Error('GitHub OAuth provider aktif değil. Lütfen Supabase dashboard\'da GitHub provider\'ı aktif edin.');
       }
       throw error;
@@ -458,7 +463,12 @@ export const signInWithGoogle = async () => {
 
     if (error) {
       // Check if provider is not enabled
-      if (error.message?.includes('provider is not enabled') || error.error_code === 'validation_failed') {
+      const errorMessage = error.message?.toLowerCase() || '';
+      if (
+        errorMessage.includes('provider is not enabled') ||
+        errorMessage.includes('validation_failed') ||
+        errorMessage.includes('unsupported provider')
+      ) {
         throw new Error('Google OAuth provider aktif değil. Lütfen Supabase dashboard\'da Google provider\'ı aktif edin.');
       }
       throw error;
