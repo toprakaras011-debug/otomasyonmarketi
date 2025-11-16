@@ -12,9 +12,12 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 import { CookieConsent } from '@/components/cookie-consent';
 
+// Theme initialization script - client-side only
+// Must be inline to avoid module-level execution
 const timeBasedThemeInitScript = `
 (function() {
   try {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
     var storageKey = 'theme';
     var modeKey = 'theme-mode';
     var mode = localStorage.getItem(modeKey);
@@ -313,17 +316,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
 
+  // Access environment variables at runtime, not module-level
+  const supabaseUrl = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SUPABASE_URL;
+  const storageUrl = supabaseUrl?.replace('/rest/v1', '/storage/v1');
+
   return (
     <html lang="tr" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Resource Hints for Performance - Critical */}
-        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+        {supabaseUrl && (
           <>
-            <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
-            <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={supabaseUrl} />
+            <link rel="preconnect" href={supabaseUrl} crossOrigin="anonymous" />
             {/* Preconnect to Supabase storage for faster image loading */}
-            <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} />
-            <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} crossOrigin="anonymous" />
+            {storageUrl && (
+              <>
+                <link rel="dns-prefetch" href={storageUrl} />
+                <link rel="preconnect" href={storageUrl} crossOrigin="anonymous" />
+              </>
+            )}
           </>
         )}
         {/* Preconnect to Google Fonts - Early connection */}
