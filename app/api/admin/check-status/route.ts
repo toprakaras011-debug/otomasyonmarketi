@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
-// Force dynamic rendering - this route uses cookies() which can't be prerendered
-export const dynamic = 'force-dynamic';
+// Note: API routes are dynamic by default in Next.js
+// This route uses cookies() which requires runtime execution
 
 // Admin email list - matches auth.ts and callback route
 const ADMIN_EMAILS = [
