@@ -732,14 +732,18 @@ export default function SignUpPage() {
                     <span className="text-sm text-muted-foreground font-normal">(Opsiyonel)</span>
                   </Label>
                   <div className="flex gap-2">
-                    <Select
-                      value={formData.phoneCountryCode}
-                      onValueChange={(value) => setFormData({ ...formData, phoneCountryCode: value })}
-                    >
-                      <SelectTrigger className="w-[140px] h-11 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20">
-                        <SelectValue placeholder="Ülke" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <SelectProvider>
+                      <Select
+                        value={formData.phoneCountryCode}
+                        onValueChange={(value) => setFormData({ ...formData, phoneCountryCode: value })}
+                      >
+                        <SelectTrigger 
+                          id="phone-country-code-select"
+                          className="w-[140px] h-11 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        >
+                          <SelectValue placeholder="Ülke" />
+                        </SelectTrigger>
+                        <SelectContent>
                         <SelectItem value="+90">TR +90</SelectItem>
                         <SelectItem value="+1">US +1</SelectItem>
                         <SelectItem value="+44">UK +44</SelectItem>
