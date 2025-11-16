@@ -42,6 +42,7 @@
     ".next/**",
     "e2e/**",
     "tests/**",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "vitest.config.ts"
   ]
 }
