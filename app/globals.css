@@ -61,6 +61,7 @@
     scroll-behavior: smooth;
     /* Calculate scrollbar width and reserve space */
     scrollbar-gutter: stable;
+    @apply bg-background;
   }
 
   body {
@@ -71,6 +72,7 @@
     /* Ensure body doesn't shift when modals/dropdowns open */
     width: 100%;
     position: relative;
+    transition: color 0.2s, background-color 0.2s;
   }
 
   /* Prevent layout shift from images */

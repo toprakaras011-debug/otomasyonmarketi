@@ -1,80 +1,81 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
-// Note: In Next.js 16+, middleware is still supported but proxy is recommended for future
-// This middleware adds security and performance headers + handles Supabase session
+// --- Configuration ---
+const RATE_LIMIT_WINDOW = 60 * 1000; // 60 seconds
+const RATE_LIMIT_MAX_REQUESTS = 100; // Max 100 requests per window per IP
+const BLOCKED_USER_AGENTS = ['BadBot', 'AhrefsBot', 'SemrushBot', 'MJ12bot']; // Example bot names
+const BLOCKED_COUNTRIES = ['KP', 'IR', 'SY']; // Block North Korea, Iran, Syria (example)
+
+// In-memory store for rate limiting (for demonstration; use Redis/Upstash in production)
+const ipRequestCounts = new Map<string, { count: number; timestamp: number }>();
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   });
 
-  // Create Supabase client for session management
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? '127.0.0.1';
+  const userAgent = request.headers.get('user-agent') ?? '';
+  const country = request.headers.get('x-vercel-ip-country') ?? '';
+
+  // --- Security Checks ---
+
+  // 1. Bot Detection
+  if (BLOCKED_USER_AGENTS.some(bot => userAgent.toLowerCase().includes(bot.toLowerCase()))) {
+    console.warn(`Blocked bot detected: ${userAgent}`);
+    return new NextResponse('Forbidden', { status: 403 });
+  }
+
+  // 2. Geo-blocking
+  if (BLOCKED_COUNTRIES.includes(country)) {
+    console.warn(`Blocked country detected: ${country}`);
+    return new NextResponse('Forbidden', { status: 403 });
+  }
+
+  // 3. Rate Limiting
+  const now = Date.now();
+  const record = ipRequestCounts.get(ip);
+
+  if (record && now - record.timestamp < RATE_LIMIT_WINDOW) {
+    if (record.count > RATE_LIMIT_MAX_REQUESTS) {
+      console.warn(`Rate limit exceeded for IP: ${ip}`);
+      return new NextResponse('Too Many Requests', { status: 429 });
+    }
+    ipRequestCounts.set(ip, { count: record.count + 1, timestamp: record.timestamp });
+  } else {
+    ipRequestCounts.set(ip, { count: 1, timestamp: now });
+  }
+
+  // Clean up old entries from the map to prevent memory leaks
+  for (const [key, value] of ipRequestCounts.entries()) {
+    if (now - value.timestamp > RATE_LIMIT_WINDOW) {
+      ipRequestCounts.delete(key);
+    }
+  }
+
+  // --- Supabase Session Management ---
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        get: (name: string) => request.cookies.get(name)?.value,
+        set: (name: string, value: string, options: CookieOptions) => {
+          request.cookies.set({ name, value, ...options });
+          response = NextResponse.next({ request: { headers: request.headers } });
+          response.cookies.set({ name, value, ...options });
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
+        remove: (name: string, options: CookieOptions) => {
+          request.cookies.set({ name, value: '', ...options });
+          response = NextResponse.next({ request: { headers: request.headers } });
+          response.cookies.set({ name, value: '', ...options });
         },
       },
     }
   );
 
-  // Refresh session if needed (this updates cookies automatically)
   await supabase.auth.getSession();
-
-  // Security headers (Enhanced)
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  
-  // Performance headers
-  response.headers.set('X-DNS-Prefetch-Control', 'on');
-  
-  // HSTS (HTTP Strict Transport Security) for HTTPS enforcement
-  if (request.nextUrl.protocol === 'https:') {
-    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  }
   
   return response;
 }

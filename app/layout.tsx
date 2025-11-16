@@ -359,6 +359,22 @@ export default async function RootLayout({
           }}
           suppressHydrationWarning
         />
+        {/* Critical CSS to prevent flash of unstyled content (FOUC) */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              html {
+                background-color: hsl(0 0% 100%);
+                color: hsl(0 0% 3.9%);
+              }
+              html.dark {
+                background-color: hsl(222 47% 4%);
+                color: hsl(210 40% 98%);
+              }
+            `,
+          }}
+          suppressHydrationWarning
+        />
         
         {/* Structured Data - Defer to avoid blocking render */}
         <script
@@ -389,13 +405,12 @@ export default async function RootLayout({
           defer
         />
       </head>
-      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
+      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
         <ErrorBoundary>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
-            disableTransitionOnChange
           >
             <CartProvider>
               <AuthProvider initialUser={user ?? null} initialProfile={profile}>
