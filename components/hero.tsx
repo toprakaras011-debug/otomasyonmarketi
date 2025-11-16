@@ -70,13 +70,13 @@ function HeroComponent({ initialStats }: HeroProps) {
   const opacity = useTransform(scrollYProgress, [0, 1], isMobile ? [1, 1] : [1, 0.3]);
 
   const [stats, setStats] = useState({
-    automations: initialStats?.automations ?? 1,
-    developers: initialStats?.developers ?? 3,
-    users: initialStats?.users ?? 1,
-    integrations: initialStats?.integrations ?? 1,
-    estimatedHours: initialStats?.estimatedHours ?? 60,
-    efficiencyMultiplier: initialStats?.efficiencyMultiplier ?? 8,
-    loading: false,
+    automations: initialStats?.automations ?? 0,
+    developers: initialStats?.developers ?? 0,
+    users: initialStats?.users ?? 0,
+    integrations: initialStats?.integrations ?? 0,
+    estimatedHours: initialStats?.estimatedHours ?? 0,
+    efficiencyMultiplier: initialStats?.efficiencyMultiplier ?? 0,
+    loading: !initialStats,
   });
 
   useEffect(() => {
@@ -107,21 +107,21 @@ function HeroComponent({ initialStats }: HeroProps) {
     {
       icon: Zap,
       label: 'Verimlilik Artışı',
-      value: stats.loading ? '...' : `${stats.efficiencyMultiplier}x`,
+      value: `${stats.efficiencyMultiplier}x`,
       gradient: 'from-purple-600 to-purple-500',
       bg: 'from-purple-500/10 to-transparent',
     },
     {
       icon: Globe,
       label: 'Canlı Entegrasyon',
-      value: stats.loading ? '...' : formatWithPlus(stats.integrations),
+      value: formatWithPlus(stats.integrations),
       gradient: 'from-blue-600 to-cyan-500',
       bg: 'from-blue-500/10 to-transparent',
     },
     {
       icon: Code2,
       label: 'Tasarruf Edilen Saat',
-      value: stats.loading ? '...' : formatWithPlus(stats.estimatedHours, 'Saat'),
+      value: formatWithPlus(stats.estimatedHours, 'Saat'),
       gradient: 'from-pink-600 to-rose-500',
       bg: 'from-pink-500/10 to-transparent',
     },
@@ -137,21 +137,21 @@ function HeroComponent({ initialStats }: HeroProps) {
     {
       icon: Sparkles,
       label: 'Workflow & Otomasyon',
-      value: stats.loading ? '...' : formatWithPlus(stats.automations),
+      value: formatWithPlus(stats.automations),
       gradient: 'from-purple-600 via-purple-500 to-pink-600',
       bg: 'from-purple-500/15 via-transparent to-pink-500/15',
     },
     {
       icon: Users,
       label: 'Profesyonel Geliştirici',
-      value: stats.loading ? '...' : formatWithPlus(stats.developers),
+      value: formatWithPlus(stats.developers),
       gradient: 'from-blue-600 via-cyan-500 to-blue-600',
       bg: 'from-blue-500/15 via-transparent to-cyan-500/15',
     },
     {
       icon: TrendingUp,
       label: 'Aktif Kullanıcı',
-      value: stats.loading ? '...' : formatWithPlus(stats.users),
+      value: formatWithPlus(stats.users),
       gradient: 'from-pink-600 via-rose-500 to-orange-600',
       bg: 'from-pink-500/15 via-transparent to-orange-500/15',
     },

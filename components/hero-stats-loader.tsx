@@ -10,7 +10,7 @@ async function HeroStatsLoader() {
 
 export function HeroStatsLoaderWithSuspense() {
   return (
-    <Suspense fallback={<Hero initialStats={null} />}>
+    <Suspense fallback={null}>
       <HeroStatsLoader />
     </Suspense>
   );

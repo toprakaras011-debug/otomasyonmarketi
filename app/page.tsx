@@ -6,17 +6,17 @@ import { HeroStatsLoaderWithSuspense } from '@/components/hero-stats-loader';
 
 // Lazy load non-critical components for better initial page load
 const CategoriesSection = dynamic(() => import('@/components/categories-section').then(mod => ({ default: mod.CategoriesSection })), {
-  loading: () => <div className="h-96 animate-pulse bg-muted/10" />,
+  loading: () => null,
   ssr: true, // Keep SSR for SEO
 });
 
 const FeaturedAutomations = dynamic(() => import('@/components/featured-automations.server'), {
-  loading: () => <div className="h-96 animate-pulse bg-muted/10" />,
+  loading: () => null,
   ssr: true, // Keep SSR for SEO
 });
 
 const Footer = dynamic(() => import('@/components/footer').then(mod => ({ default: mod.Footer })), {
-  loading: () => <div className="h-64 animate-pulse bg-muted/10" />,
+  loading: () => null,
   ssr: true, // Keep SSR for SEO
 });
 
@@ -87,9 +87,7 @@ export default function Home() {
         <Navbar />
         <HeroStatsLoaderWithSuspense />
         <CategoriesSection />
-        <Suspense fallback={<div className="h-96 animate-pulse bg-muted/10" />}>
-          <FeaturedAutomations />
-        </Suspense>
+        <FeaturedAutomations />
         <Footer />
       </main>
     </>

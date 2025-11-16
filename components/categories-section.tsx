@@ -197,18 +197,22 @@ export function CategoriesSection() {
           
           <p className="text-lg text-muted-foreground sm:text-xl">
             AI destekli otomasyon çözümleriyle işlerinizi hızlandırın ve verimliliğinizi artırın.{' '}
-            <span className="font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              {isLoading ? 'Veriler yükleniyor...' : totalAutomationLabel}
-            </span>
+            {!isLoading && (
+              <span className="font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                {totalAutomationLabel}
+              </span>
+            )}
           </p>
         </motion.div>
 
         {/* Categories Grid */}
-        <div className="mb-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {categories.slice(0, 6).map((category, index) => (
-            <CategoryCard key={category.slug} category={category} index={index} />
-          ))}
-        </div>
+        {!isLoading && categories.length > 0 && (
+          <div className="mb-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {categories.slice(0, 6).map((category, index) => (
+              <CategoryCard key={category.slug} category={category} index={index} />
+            ))}
+          </div>
+        )}
 
         {/* View All Button */}
         <motion.div 
