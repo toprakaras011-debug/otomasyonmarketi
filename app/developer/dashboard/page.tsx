@@ -27,6 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Plus, TrendingUp, DollarSign, Package, Pencil, Trash2, Sparkles, Info, Loader2, Wand2, Tags, Layers, FileText, ShieldCheck, Rocket, Zap, Star, Filter, CreditCard, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { supabase, type Automation } from '@/lib/supabase';
+import { useAuth } from '@/components/auth-provider';
 import { toast } from 'sonner';
 import { FileUpload } from '@/components/file-upload';
 import { CATEGORY_DEFINITIONS } from '@/lib/constants/categories';
@@ -62,12 +63,11 @@ const slugify = (value: string) =>
 
 export default function DeveloperDashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const { user: authUser, profile: authProfile } = useAuth();
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalSales: 0, totalEarnings: 0, totalProducts: 0 });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false - show UI immediately
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAutomation, setEditingAutomation] = useState<Automation | null>(null);
   const [formUploading, setFormUploading] = useState(false);
@@ -132,51 +132,54 @@ export default function DeveloperDashboardPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-
+      // Use auth context data (already available - no need to fetch)
+      const currentUser = authUser;
+      const currentProfile = authProfile;
+      
       if (!currentUser) {
         router.push('/auth/signin');
         return;
       }
 
-      setUser(currentUser);
-
-      const { data: profileData } = await supabase
-        .from('user_profiles')
-        .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-
-      if (!profileData?.is_developer) {
-        toast.error('Geliştirici hesabınız yok');
-        router.push('/developer/register');
-        return;
-      }
-
-      setProfile(profileData);
-      
-      // Fetch payment data separately if needed
-      let paymentInfo = null;
-      if (profileData) {
-        const { data: paymentDataResult } = await supabase
+      // Check if developer - use existing profile if available
+      if (!currentProfile?.is_developer) {
+        // Only fetch if profile is missing or not a developer
+        const { data: profileData } = await supabase
           .from('user_profiles')
-          .select('full_name,tc_no,tax_office,iban,bank_name')
+          .select('id,username,avatar_url,role,is_admin,is_developer,developer_approved,full_name,tc_no,tax_office,iban,bank_name')
           .eq('id', currentUser.id)
           .maybeSingle();
-        
-        paymentInfo = paymentDataResult;
-        
-        if (paymentInfo) {
+
+        if (!profileData?.is_developer) {
+          toast.error('Geliştirici hesabınız yok');
+          router.push('/developer/register');
+          return;
+        }
+
+        // Set payment data from profile
+        if (profileData) {
           setPaymentData({
-            full_name: paymentInfo.full_name || '',
-            tc_no: paymentInfo.tc_no || '',
-            tax_office: paymentInfo.tax_office || '',
-            iban: paymentInfo.iban || '',
-            bank_name: paymentInfo.bank_name || '',
+            full_name: profileData.full_name || '',
+            tc_no: profileData.tc_no || '',
+            tax_office: profileData.tax_office || '',
+            iban: profileData.iban || '',
+            bank_name: profileData.bank_name || '',
+          });
+        }
+      } else {
+        // Use existing profile data from auth context
+        if (currentProfile.full_name || currentProfile.tc_no || currentProfile.iban) {
+          setPaymentData({
+            full_name: currentProfile.full_name || '',
+            tc_no: currentProfile.tc_no || '',
+            tax_office: currentProfile.tax_office || '',
+            iban: currentProfile.iban || '',
+            bank_name: currentProfile.bank_name || '',
           });
         }
       }
 
+      // Fetch all data in parallel immediately (optimized)
       const [
         { data: automationsData },
         { data: categoriesData },
@@ -215,12 +218,10 @@ export default function DeveloperDashboardPage() {
       if (categoriesData) {
         setCategories(categoriesData);
       }
-
-      setLoading(false);
       
       // İlk girişte ödeme bilgileri eksikse dialog'u otomatik aç
-      if (profileData && (!paymentInfo?.iban || !paymentInfo?.full_name || !paymentInfo?.tc_no)) {
-        // Sadece ilk yüklemede aç (localStorage ile kontrol)
+      const finalProfile = currentProfile || authProfile;
+      if (finalProfile && (!finalProfile.iban || !finalProfile.full_name || !finalProfile.tc_no)) {
         if (typeof window !== 'undefined') {
           const hasShownPaymentDialog = localStorage.getItem('payment_dialog_shown');
           if (!hasShownPaymentDialog) {
@@ -233,13 +234,15 @@ export default function DeveloperDashboardPage() {
       }
     };
 
-    fetchData();
-  }, [router]);
+    if (authUser) {
+      fetchData();
+    }
+  }, [router, authUser, authProfile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user) return;
+    if (!authUser) return;
 
     setFormSubmitting(true);
 
@@ -289,7 +292,7 @@ export default function DeveloperDashboardPage() {
     }
 
     const automationData = {
-      developer_id: user.id,
+      developer_id: authUser.id,
       title: formData.title,
       slug: editingAutomation ? editingAutomation.slug : slug,
       description: formData.description,
@@ -336,7 +339,7 @@ export default function DeveloperDashboardPage() {
           id,title,slug,description,price,image_path,file_path,total_sales,rating_avg,created_at,is_published,admin_approved,
           category:categories(id,name,slug)
         `)
-        .eq('developer_id', user.id)
+        .eq('developer_id', authUser.id)
         .order('created_at', { ascending: false });
 
       if (automationsData) {
@@ -383,7 +386,7 @@ export default function DeveloperDashboardPage() {
   };
 
   const handleSavePaymentInfo = async () => {
-    if (!user) return;
+    if (!authUser) return;
 
     // Validation
     if (!paymentData.full_name.trim()) {
@@ -437,7 +440,7 @@ export default function DeveloperDashboardPage() {
           iban: cleanIban,
           bank_name: bankName,
         })
-        .eq('id', user.id)
+        .eq('id', authUser.id)
         .select()
         .single();
 
@@ -767,7 +770,7 @@ export default function DeveloperDashboardPage() {
                           accept="image/*"
                           maxSizeMB={5}
                           fileType="image"
-                          userId={user?.id || ''}
+                          userId={authUser?.id || ''}
                           currentFile={formData.image_path}
                           onUploadComplete={(path) => setFormData({ ...formData, image_path: path })}
                           onUploadingChange={setImageUploading}
@@ -779,7 +782,7 @@ export default function DeveloperDashboardPage() {
                           accept=".zip,.rar,.7z,.json,.js,.py,.php,.txt,.md"
                           maxSizeMB={100}
                           fileType="file"
-                          userId={user?.id || ''}
+                          userId={authUser?.id || ''}
                           currentFile={formData.file_path}
                           onUploadComplete={(path) => setFormData({ ...formData, file_path: path })}
                           onUploadingChange={setFileUploading}
