@@ -89,8 +89,7 @@ export const signUp = async (
     // Redirect to confirm page after email verification
     const emailRedirectTo = `${(siteUrl || 'http://localhost:3000')}/auth/confirm?email=${encodeURIComponent(normalizedEmail)}`;
 
-    // Attempt sign up with optional email verification
-    // User can login immediately, but email verification is still sent
+    // Attempt sign up with email verification required
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password: password, // Don't trim password
@@ -101,14 +100,13 @@ export const signUp = async (
     });
 
     if (authError) {
-      // Only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Sign up error:', {
-          message: authError.message,
-          status: authError.status,
-          name: authError.name,
-        });
-      }
+      // Log error in both development and production for debugging
+      console.error('Sign up error:', {
+        message: authError.message,
+        status: authError.status,
+        name: authError.name,
+        code: authError.code,
+      });
 
       // Check for specific error codes and messages
       const errorMessage = authError.message?.toLowerCase() || '';
@@ -148,12 +146,37 @@ export const signUp = async (
         throw new Error('Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.');
       }
 
-      // Generic error
+      // Generic error with more details
       throw new Error(authError.message || 'Kayıt oluşturulamadı. Lütfen tekrar deneyin.');
     }
 
+    // When email confirmation is required, Supabase may return null user
+    // This is normal behavior - the user will be created after email confirmation
     if (!authData.user) {
-      throw new Error('Kullanıcı oluşturulamadı. Lütfen tekrar deneyin.');
+      // Log for debugging
+      console.warn('Sign up successful but user is null. This may be normal if email confirmation is required.', {
+        email: normalizedEmail,
+        session: authData.session,
+      });
+      
+      // If email confirmation is required, this is expected behavior
+      // The user will be created after they confirm their email
+      // We should still proceed with profile creation attempt (it will be created on email confirmation)
+      // But we need to return success so the user sees the verification page
+      
+      // Return a success response even without user object
+      // The profile will be created when user confirms email via callback
+      return {
+        user: null,
+        session: authData.session,
+      };
+    }
+
+    // If user is null (email confirmation required), skip profile creation
+    // Profile will be created automatically when user confirms email via callback
+    if (!authData.user) {
+      console.log('User is null, skipping profile creation. Will be created on email confirmation.');
+      return authData;
     }
 
     // Wait a bit for session to be established
@@ -180,30 +203,38 @@ export const signUp = async (
       if (!profileResponse.ok) {
         // If profile creation fails, we should still return authData
         // The user can retry profile creation later
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Profile creation failed:', profileData.error);
-        }
+        console.error('Profile creation failed:', profileData.error);
         
         // Check if it's a username conflict
         if (profileData.error?.includes('kullanıcı adı zaten kullanılıyor')) {
           throw new Error(profileData.error);
         }
         
-        // For other errors, throw a generic message
-        throw new Error(profileData.error || 'Profil oluşturulamadı. Lütfen tekrar deneyin.');
+        // For other errors, log but don't throw - profile can be created later
+        console.warn('Profile creation failed but continuing. Error:', profileData.error);
+        // Don't throw error - user account is created, profile can be created on email confirmation
       }
     } catch (error: any) {
       // If it's already a user-friendly error message, re-throw it
       if (error?.message && typeof error.message === 'string') {
         // Check if it's a network error
         if (error.message.includes('fetch') || error.message.includes('network')) {
-          throw new Error('Bağlantı hatası. Profil oluşturulamadı. Lütfen tekrar deneyin.');
+          console.warn('Network error during profile creation, but continuing:', error.message);
+          // Don't throw - profile will be created on email confirmation
+          return authData;
         }
-        throw error;
+        // Only throw if it's a username conflict
+        if (error.message.includes('kullanıcı adı zaten kullanılıyor')) {
+          throw error;
+        }
+        // For other errors, log and continue
+        console.warn('Profile creation error, but continuing:', error.message);
+        return authData;
       }
       
-      // Otherwise, provide a generic error
-      throw new Error('Profil oluşturulamadı. Lütfen tekrar deneyin.');
+      // Otherwise, log and continue
+      console.warn('Profile creation error, but continuing:', error);
+      return authData;
     }
 
     // Sign out the user immediately after signup to require email verification

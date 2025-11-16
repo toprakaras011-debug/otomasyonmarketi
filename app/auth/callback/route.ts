@@ -83,10 +83,14 @@ const ensureUserProfile = async (supabase: ReturnType<typeof createServerClient>
     user.email?.split('@')[0] ||
     'Yeni Kullanıcı';
 
+  // Get phone from metadata if available
+  const phone = user.user_metadata?.phone || null;
+
   await supabase.from('user_profiles').insert({
     id: user.id,
     username,
     full_name: fullName,
+    phone: phone,
     avatar_url: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null,
     is_developer: false,
     developer_approved: false,
