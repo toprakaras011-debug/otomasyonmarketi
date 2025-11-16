@@ -596,7 +596,7 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 rounded-lg border border-border/50 bg-muted/30 p-3">
+              <div className="space-y-3 rounded-lg border border-border/50 bg-muted/30 p-4">
                 <div className="flex items-start space-x-2">
                   <Checkbox
                     id="terms"
@@ -604,7 +604,7 @@ export default function SignUpPage() {
                     onCheckedChange={(checked) => setFormData({ ...formData, terms: checked as boolean })}
                     className="mt-0.5"
                   />
-                  <label htmlFor="terms" className="cursor-pointer text-xs leading-tight">
+                  <label htmlFor="terms" className="cursor-pointer text-sm leading-tight">
                     <Link href="/terms" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                       Kullanım Koşulları
                     </Link>
@@ -619,7 +619,7 @@ export default function SignUpPage() {
                     onCheckedChange={(checked) => setFormData({ ...formData, kvkk: checked as boolean })}
                     className="mt-0.5"
                   />
-                  <label htmlFor="kvkk" className="cursor-pointer text-xs leading-tight">
+                  <label htmlFor="kvkk" className="cursor-pointer text-sm leading-tight">
                     <Link href="/kvkk" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                       KVKK Aydınlatma Metni
                     </Link>
@@ -636,7 +636,7 @@ export default function SignUpPage() {
                         onCheckedChange={(checked) => setFormData({ ...formData, developerTerms: checked as boolean })}
                         className="mt-0.5"
                       />
-                      <label htmlFor="developerTerms" className="cursor-pointer text-xs leading-tight">
+                      <label htmlFor="developerTerms" className="cursor-pointer text-sm leading-tight">
                         <Link href="/developer-agreement" target="_blank" className="font-medium text-purple-600 hover:text-purple-500">
                           Geliştirici Sözleşmesi
                         </Link>
@@ -651,7 +651,7 @@ export default function SignUpPage() {
                         onCheckedChange={(checked) => setFormData({ ...formData, commission: checked as boolean })}
                         className="mt-0.5"
                       />
-                      <label htmlFor="commission" className="cursor-pointer text-xs leading-tight">
+                      <label htmlFor="commission" className="cursor-pointer text-sm leading-tight">
                         %15 komisyon sistemini kabul ediyorum <span className="text-red-500">*</span>
                       </label>
                     </div>
@@ -665,7 +665,7 @@ export default function SignUpPage() {
                     onCheckedChange={(checked) => setFormData({ ...formData, newsletter: checked as boolean })}
                     className="mt-0.5"
                   />
-                  <label htmlFor="newsletter" className="cursor-pointer text-xs leading-tight">
+                  <label htmlFor="newsletter" className="cursor-pointer text-sm leading-tight">
                     Kampanya ve duyuru e-postaları almak istiyorum
                   </label>
                 </div>
@@ -710,8 +710,8 @@ export default function SignUpPage() {
               </Button>
             </form>
 
-            <div className="space-y-3 pt-3 border-t">
-              <p className="text-center text-xs text-muted-foreground">
+            <div className="space-y-4 pt-4 border-t">
+              <p className="text-center text-sm text-muted-foreground">
                 Zaten hesabınız var mı?{' '}
                 <Link href="/auth/signin" className="font-semibold text-purple-600 hover:text-purple-500 transition-colors">
                   Giriş Yap
@@ -719,9 +719,9 @@ export default function SignUpPage() {
               </p>
               <Link
                 href="/"
-                className="flex items-center justify-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center justify-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Ana Sayfaya Dön
               </Link>
             </div>
