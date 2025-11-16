@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { signUp, signInWithGithub, signInWithGoogle } from '@/lib/auth';
 import { toast } from 'sonner';
-import { Zap, Github, ArrowLeft, Sparkles, Shield, User, Mail, Phone, Lock, Code2, ShoppingBag, Info, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Zap, Github, ArrowLeft, Sparkles, Shield, User, Mail, Phone, Lock, Code2, ShoppingBag, Info, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { Turnstile } from '@/components/turnstile';
 
 export default function SignUpPage() {
@@ -592,9 +592,9 @@ export default function SignUpPage() {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                        <Shield className="h-3.5 w-3.5" />
-                        <span>Kalıcıdır, değiştirilemez</span>
+                      <p className="text-xs text-muted-foreground/80 flex items-center gap-1.5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                        <span>Kullanıcı adı değiştirilemez</span>
                       </p>
                       {usernameStatus.message && (
                         <p className={`text-xs flex items-center gap-1.5 ${
