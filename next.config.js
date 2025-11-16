@@ -63,6 +63,9 @@ const nextConfig = {
     // Enable image optimization
     unoptimized: false,
   },
+  // Enable cache components (Next.js 16+ - moved out of experimental)
+  cacheComponents: true,
+  
   // Enable experimental features for better performance
   experimental: {
     optimizePackageImports: [
@@ -84,8 +87,6 @@ const nextConfig = {
     },
     optimizeServerReact: true,
     memoryBasedWorkersCount: true,
-    // Enable cache components to fix Next.js 16 Segment Cache error
-    cacheComponents: true,
   },
   // Turbopack configuration (Next.js 16+)
   // Turbopack automatically handles code splitting and optimization
