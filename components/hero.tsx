@@ -85,15 +85,10 @@ function HeroComponent({ initialStats }: HeroProps) {
       setStats({ ...initialStats, loading: false });
     }
     // Detect mobile for performance optimization
-    setIsMobile(window.innerWidth < 768);
-    // Ensure container has explicit position for framer-motion scroll tracking
-    if (containerRef.current) {
-      const element = containerRef.current;
-      // Force position relative if not already set
-      if (getComputedStyle(element).position === 'static') {
-        element.style.position = 'relative';
-      }
-    }
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile, { passive: true });
+    return () => window.removeEventListener('resize', checkMobile);
   }, [initialStats]);
 
   const formatWithPlus = useCallback((value: number, suffix?: string) => {

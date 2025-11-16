@@ -118,44 +118,17 @@ export const signUp = async (
       // Use error handler utility
       const parsedError = parseAuthError(authError, { operation: 'Kayıt', email: normalizedEmail, username: trimmedUsername });
       
-      // Special handling for email already exists - check if profile exists
+      // Special handling for email already exists
+      // Note: Username uniqueness is no longer enforced - users can have duplicate usernames
       if (parsedError.code === 'USER_EXISTS') {
-        try {
-          // Check if username is already taken
-          const { data: profileByUsername } = await supabase
-            .from('user_profiles')
-            .select('id, username')
-            .eq('username', trimmedUsername)
-            .maybeSingle();
-
-          // Profile exists - username conflict
-          type ProfileData = { id: string; username: string } | null;
-          const profile = profileByUsername as ProfileData;
-          if (profile && profile.username === trimmedUsername) {
-            throw new AuthError(
-              'Username already exists',
-              'USERNAME_EXISTS',
-              'Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.',
-              true,
-              409
-            );
-          }
-
-          // If username is available but email is registered, it's likely an orphaned account
-          throw new AuthError(
-            'Email registered but profile missing',
-            'ORPHANED_ACCOUNT',
-            'Bu e-posta adresi kayıtlı görünüyor ancak profil bulunamadı. Bu durum genellikle hesap silme işleminden sonra oluşur. Lütfen giriş yapın veya şifre sıfırlama sayfasını kullanın. Eğer sorun devam ederse destek ekibiyle iletişime geçin.',
-            true,
-            422
-          );
-        } catch (profileError: any) {
-          // If it's our custom AuthError, throw it
-          if (profileError instanceof AuthError) {
-            throw profileError;
-          }
-          // Otherwise, continue with default error
-        }
+        // Email is already registered - user should sign in or reset password
+        throw new AuthError(
+          'Email registered',
+          'USER_EXISTS',
+          'Bu e-posta adresi zaten kayıtlı. Lütfen giriş yapın veya şifre sıfırlama sayfasını kullanın.',
+          true,
+          409
+        );
       }
       
       throw parsedError;
@@ -207,26 +180,7 @@ export const signUp = async (
       }
     }
 
-    // Check if username already exists before creating profile
-    // This prevents duplicate username errors
-    const { data: existingProfile } = await supabase
-      .from('user_profiles')
-      .select('id, username')
-      .ilike('username', trimmedUsername)
-      .maybeSingle();
-
-    type ExistingProfile = { id: string; username: string } | null;
-    const profile = existingProfile as ExistingProfile;
-    if (profile && profile.username && profile.username.toLowerCase() === trimmedUsername.toLowerCase()) {
-      throw new AuthError(
-        'Username already exists',
-        'USERNAME_EXISTS',
-        'Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.',
-        true,
-        409
-      );
-    }
-
+    // Note: Username uniqueness is no longer enforced - users can have duplicate usernames
     // Use upsert instead of insert to handle potential race conditions
     // This prevents errors if profile already exists
     // Note: RLS policy requires auth.uid() = id, so session must be established

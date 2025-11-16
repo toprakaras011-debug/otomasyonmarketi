@@ -82,17 +82,6 @@ export default function Home() {
 
   return (
     <>
-      {/* Defer structured data to avoid blocking render */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        defer
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-        defer
-      />
       <main className="min-h-screen pt-0 w-full overflow-x-hidden">
         <AuthRedirectHandler />
         <Navbar />

@@ -39,16 +39,6 @@ function SignUpForm() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [turnstileSiteKey, setTurnstileSiteKey] = useState<string>('');
-  const [usernameStatus, setUsernameStatus] = useState<{
-    checking: boolean;
-    available: boolean | null;
-    message: string;
-  }>({
-    checking: false,
-    available: null,
-    message: '',
-  });
-  const [usernameCheckTimeout, setUsernameCheckTimeout] = useState<NodeJS.Timeout | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -72,89 +62,6 @@ function SignUpForm() {
     }
   }, []);
 
-  // Real-time username validation
-  useEffect(() => {
-    const username = formData.username.trim();
-    
-    // Clear previous timeout
-    if (usernameCheckTimeout) {
-      clearTimeout(usernameCheckTimeout);
-    }
-    
-    // Reset status if username is empty
-    if (!username) {
-      setUsernameStatus({
-        checking: false,
-        available: null,
-        message: '',
-      });
-      return;
-    }
-    
-    // Validate format first
-    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
-    if (!usernameRegex.test(username)) {
-      setUsernameStatus({
-        checking: false,
-        available: false,
-        message: 'Kullanıcı adı sadece harf, rakam, alt çizgi ve tire içerebilir',
-      });
-      return;
-    }
-    
-    if (username.length < 3) {
-      setUsernameStatus({
-        checking: false,
-        available: false,
-        message: 'Kullanıcı adı en az 3 karakter olmalıdır',
-      });
-      return;
-    }
-    
-    if (username.length > 30) {
-      setUsernameStatus({
-        checking: false,
-        available: false,
-        message: 'Kullanıcı adı en fazla 30 karakter olabilir',
-      });
-      return;
-    }
-    
-    // Debounce: wait 500ms before checking
-    setUsernameStatus({
-      checking: true,
-      available: null,
-      message: 'Kontrol ediliyor...',
-    });
-    
-    const timeout = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
-        const data = await response.json();
-        
-        setUsernameStatus({
-          checking: false,
-          available: data.available,
-          message: data.message || (data.available ? 'Kullanıcı adı kullanılabilir' : 'Bu kullanıcı adı zaten kullanılıyor'),
-        });
-      } catch (error) {
-        setUsernameStatus({
-          checking: false,
-          available: null,
-          message: 'Kontrol edilemedi',
-        });
-      }
-    }, 500);
-    
-    setUsernameCheckTimeout(timeout);
-    
-    // Cleanup
-    return () => {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
-    };
-  }, [formData.username]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,21 +95,6 @@ function SignUpForm() {
       return;
     }
 
-    // Check if username is available
-    if (usernameStatus.available === false) {
-      toast.error(usernameStatus.message || 'Bu kullanıcı adı zaten kullanılıyor', {
-        duration: 4000,
-      });
-      return;
-    }
-    
-    if (usernameStatus.checking) {
-      toast.error('Lütfen kullanıcı adı kontrolünün tamamlanmasını bekleyin', {
-        duration: 4000,
-      });
-      return;
-    }
-    
     // Username format validation
     const usernameRegex = /^[a-zA-Z0-9_-]+$/;
     if (!usernameRegex.test(formData.username.trim())) {
@@ -477,48 +369,16 @@ function SignUpForm() {
                       Kullanıcı Adı
                       <span className="text-red-500">*</span>
                     </Label>
-                    <div className="relative">
-                      <Input
-                        id="username"
-                        type="text"
-                        placeholder="@kullaniciadi"
-                        value={formData.username}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        required
-                        disabled={loading}
-                        className={`h-12 border-2 transition-colors ${
-                          usernameStatus.available === true
-                            ? 'border-green-500/50 focus:border-green-500'
-                            : usernameStatus.available === false
-                            ? 'border-red-500/50 focus:border-red-500'
-                            : 'border-purple-500/20 focus:border-purple-500'
-                        }`}
-                      />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                        {usernameStatus.checking && (
-                          <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
-                        )}
-                        {!usernameStatus.checking && usernameStatus.available === true && (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        )}
-                        {!usernameStatus.checking && usernameStatus.available === false && (
-                          <AlertCircle className="h-4 w-4 text-red-500" />
-                        )}
-                      </div>
-                      {usernameStatus.message && (
-                        <p
-                          className={`text-xs mt-1 ${
-                            usernameStatus.available === true
-                              ? 'text-green-600 dark:text-green-400'
-                              : usernameStatus.available === false
-                              ? 'text-red-600 dark:text-red-400'
-                              : 'text-muted-foreground'
-                          }`}
-                        >
-                          {usernameStatus.message}
-                        </p>
-                      )}
-                    </div>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="@kullaniciadi"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      required
+                      disabled={loading}
+                      className="h-12 border-2 border-purple-500/20 focus:border-purple-500 transition-colors"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="fullName" className="text-sm font-medium flex items-center gap-1.5">

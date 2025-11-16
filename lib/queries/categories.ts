@@ -84,33 +84,3 @@ export async function getCategoriesWithStats(): Promise<CategoryWithStats[]> {
   }
 }
 
-/**
- * Fetch a single category by slug
- * Uses server-side caching for better performance
- */
-export async function getCategoryBySlug(slug: string) {
-  "use cache";
-  cacheTag(`category-${slug}`);
-  cacheLife("minutes");
-  
-  try {
-    const supabase = getSupabaseAdmin();
-    if (!supabase) {
-      return null;
-    }
-
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('slug', slug)
-      .maybeSingle();
-
-    if (error) {
-      return null;
-    }
-
-    return data;
-  } catch {
-    return null;
-  }
-}

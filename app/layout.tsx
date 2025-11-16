@@ -344,28 +344,6 @@ export default function RootLayout({
           suppressHydrationWarning
         />
         
-        {/* Structured Data - Defer to avoid blocking render */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "Otomasyon Mağazası",
-              "url": "https://www.otomasyonmagazasi.com",
-              "alternateName": ["https://otomasyonmagazasi.com", "https://www.otomasyonmagazasi.com"],
-              "potentialAction": {
-                "@type": "SearchAction",
-                "target": "https://www.otomasyonmagazasi.com/arama?q={search_term_string}",
-                "query-input": "required name=search_term_string"
-              }
-            }),
-          }}
-          defer
-          suppressHydrationWarning
-        />
-        
-        {/* Icons and manifest - Managed by metadata API */}
         {/* Cloudflare Turnstile Script */}
         <script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js"

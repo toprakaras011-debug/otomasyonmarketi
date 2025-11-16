@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 
 export type CartItem = {
   id: string;
@@ -68,7 +68,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const count = items.length;
   const total = useMemo(() => items.reduce((s, i) => s + (i.price || 0), 0), [items]);
 
-  const value = useMemo(() => ({ items, add, remove, clear, count, total }), [items, add, remove, clear, count, total]);
+  const value = useMemo(() => ({ items, add, remove, clear, count, total }), [items, add, remove, clear, total]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Menu, X, Sparkles, Package, Layers, Code2, BookOpen, ChevronDown, Shield, ShoppingCart, User, Heart, Settings, Zap } from 'lucide-react';
+import { Menu, X, Sparkles, Package, Layers, Code2, BookOpen, Zap, Shield, User, Heart, Settings, ShoppingCart } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/components/cart-context';
@@ -31,16 +31,11 @@ function NavbarComponent() {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [opacity, setOpacity] = useState(0.8);
 
   useEffect(() => {
     setMounted(true);
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setScrolled(scrollY > 10);
-      // Calculate opacity based on scroll position (0.8 to 1.0)
-      const newOpacity = Math.min(0.8 + (scrollY / 100) * 0.2, 1.0);
-      setOpacity(newOpacity);
+      setScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
@@ -136,14 +131,8 @@ function NavbarComponent() {
   ];
 
   return (
-    <nav className="fixed top-0 z-50 w-full h-16" style={{ position: 'fixed', top: 0, left: 0, right: 0 }}>
-      <div 
-        className="relative w-full h-full transition-all duration-300"
-        style={{ 
-          opacity: mounted ? opacity : 0.8,
-          position: 'relative'
-        }}
-      >
+    <nav className="fixed top-0 z-50 w-full h-16">
+      <div className="relative w-full h-full transition-all duration-300">
         <div
           className={`w-full h-full transition-all duration-300 gpu-accelerated ${
             scrolled

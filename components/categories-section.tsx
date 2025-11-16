@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { getCategoriesWithStats } from '@/lib/queries/categories';
 import {
   CATEGORY_CONFIG,
   CATEGORY_ICON_MAP,
@@ -102,8 +101,9 @@ export function CategoriesSection() {
     const fetchCategoryStats = async () => {
       setIsLoading(true);
       try {
-        // Use centralized query utility for better performance
-        const stats = await getCategoriesWithStats();
+        // Fetch from API route (server-side function cannot be called from client component)
+        const response = await fetch('/api/categories/stats');
+        const stats = response.ok ? await response.json() : [];
         
         // Merge with static config for gradients and icons
         const mergedCategories = CATEGORY_CONFIG.map((config) => {

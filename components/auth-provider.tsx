@@ -84,10 +84,10 @@ export function AuthProvider({
         setProfile(null);
         return null;
       } finally {
-        // Clean up cache after 5 seconds
+        // Clean up cache after 30 seconds (reduced API calls)
         setTimeout(() => {
           profileFetchRef.current.delete(cacheKey);
-        }, 5000);
+        }, 30000);
       }
     })();
 
