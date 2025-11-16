@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { signUp, signInWithGithub, signInWithGoogle } from '@/lib/auth';
 import { toast } from 'sonner';
+import { notification } from '@/components/ui/notification-banner';
 import { Zap, Github, ArrowLeft, Sparkles, Shield, User, Mail, Phone, Lock, Code2, ShoppingBag, Info, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { Turnstile } from '@/components/turnstile';
 
@@ -215,107 +216,79 @@ export default function SignUpPage() {
 
     // Validate Turnstile token
     if (!!turnstileSiteKey && !turnstileToken) {
-      toast.error('Lütfen güvenlik doğrulamasını tamamlayın', {
-        duration: 4000,
-      });
+      notification.error('Güvenlik Doğrulaması Gerekli', 'Lütfen güvenlik doğrulamasını tamamlayın');
       return;
     }
 
     // Client-side validation
     if (!formData.email?.trim()) {
-      toast.error('E-posta adresi gereklidir', {
-        duration: 4000,
-      });
+      notification.error('E-posta Gerekli', 'E-posta adresi gereklidir');
       return;
     }
 
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim().toLowerCase())) {
-      toast.error('Geçerli bir e-posta adresi giriniz', {
-        duration: 4000,
-      });
+      notification.error('Geçersiz E-posta', 'Geçerli bir e-posta adresi giriniz');
       return;
     }
 
     // Check email availability before submitting
     if (emailStatus.available === false) {
-      toast.error('Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.', {
-        duration: 4000,
-      });
+      notification.error('E-posta Zaten Kayıtlı', 'Bu e-posta adresi zaten kayıtlı. Giriş yapmayı deneyin.');
       return;
     }
 
     if (emailStatus.checking) {
-      toast.error('E-posta adresi kontrol ediliyor, lütfen bekleyin...', {
-        duration: 3000,
-      });
+      notification.info('E-posta Kontrol Ediliyor', 'E-posta adresi kontrol ediliyor, lütfen bekleyin...');
       return;
     }
 
     if (emailStatus.valid === false) {
-      toast.error('Geçerli bir e-posta adresi giriniz', {
-        duration: 4000,
-      });
+      notification.error('Geçersiz E-posta', 'Geçerli bir e-posta adresi giriniz');
       return;
     }
 
     if (!formData.username?.trim()) {
-      toast.error('Kullanıcı adı gereklidir', {
-        duration: 4000,
-      });
+      notification.error('Kullanıcı Adı Gerekli', 'Kullanıcı adı gereklidir');
       return;
     }
 
     if (formData.username.trim().length < 3) {
-      toast.error('Kullanıcı adı en az 3 karakter olmalıdır', {
-        duration: 4000,
-      });
+      notification.error('Kullanıcı Adı Çok Kısa', 'Kullanıcı adı en az 3 karakter olmalıdır');
       return;
     }
 
     if (formData.username.trim().length > 30) {
-      toast.error('Kullanıcı adı en fazla 30 karakter olabilir', {
-        duration: 4000,
-      });
+      notification.error('Kullanıcı Adı Çok Uzun', 'Kullanıcı adı en fazla 30 karakter olabilir');
       return;
     }
 
     // Username format validation
     const usernameRegex = /^[a-zA-Z0-9_-]+$/;
     if (!usernameRegex.test(formData.username.trim())) {
-      toast.error('Kullanıcı adı sadece harf, rakam, alt çizgi ve tire içerebilir', {
-        duration: 4000,
-      });
+      notification.error('Geçersiz Kullanıcı Adı', 'Kullanıcı adı sadece harf, rakam, alt çizgi ve tire içerebilir');
       return;
     }
 
     // Check username availability before submitting
     if (usernameStatus.available === false) {
-      toast.error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.', {
-        duration: 4000,
-      });
+      notification.error('Kullanıcı Adı Kullanımda', 'Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
       return;
     }
 
     if (usernameStatus.checking) {
-      toast.error('Kullanıcı adı kontrol ediliyor, lütfen bekleyin...', {
-        duration: 3000,
-      });
+      notification.info('Kullanıcı Adı Kontrol Ediliyor', 'Kullanıcı adı kontrol ediliyor, lütfen bekleyin...');
       return;
     }
 
     if (!formData.password || formData.password.length < 6) {
-      toast.error('Şifre en az 6 karakter olmalıdır', {
-        duration: 4000,
-      });
+      notification.error('Şifre Çok Kısa', 'Şifre en az 6 karakter olmalıdır');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Şifreler eşleşmiyor', {
-        duration: 4000,
-      });
+      notification.error('Şifreler Eşleşmiyor', 'Şifreler eşleşmiyor');
       return;
     }
 
@@ -323,38 +296,28 @@ export default function SignUpPage() {
     if (formData.phone?.trim()) {
       const phoneDigits = formData.phone.replace(/\D/g, '');
       if (phoneDigits.length !== 10 && phoneDigits.length !== 11) {
-        toast.error('Geçerli bir telefon numarası giriniz (10 veya 11 haneli)', {
-          duration: 4000,
-        });
+        notification.error('Geçersiz Telefon', 'Geçerli bir telefon numarası giriniz (10 veya 11 haneli)');
         return;
       }
     }
 
     if (!formData.terms) {
-      toast.error('Kullanım Koşulları\'nı kabul etmelisiniz', {
-        duration: 4000,
-      });
+      notification.error('Kullanım Koşulları Gerekli', 'Kullanım Koşulları\'nı kabul etmelisiniz');
       return;
     }
 
     if (!formData.kvkk) {
-      toast.error('KVKK Aydınlatma Metni\'ni okumalısınız', {
-        duration: 4000,
-      });
+      notification.error('KVKK Gerekli', 'KVKK Aydınlatma Metni\'ni okumalısınız');
       return;
     }
 
     if (formData.role === 'developer') {
       if (!formData.developerTerms) {
-        toast.error('Geliştirici Sözleşmesi\'ni kabul etmelisiniz', {
-          duration: 4000,
-        });
+        notification.error('Geliştirici Sözleşmesi Gerekli', 'Geliştirici Sözleşmesi\'ni kabul etmelisiniz');
         return;
       }
       if (!formData.commission) {
-        toast.error('%15 komisyon sistemini kabul etmelisiniz', {
-          duration: 4000,
-        });
+        notification.error('Komisyon Sistemi Gerekli', '%15 komisyon sistemini kabul etmelisiniz');
         return;
       }
     }
@@ -377,10 +340,7 @@ export default function SignUpPage() {
         fullPhone
       );
       
-      toast.success('Hesabınız başarıyla oluşturuldu!', {
-        duration: 5000,
-        description: 'E-posta doğrulama linki gönderildi. Lütfen e-posta kutunuzu kontrol edin.',
-      });
+      notification.success('Kayıt Başarılı!', 'Hesabınız başarıyla oluşturuldu! E-posta doğrulama linki gönderildi. Lütfen e-posta kutunuzu kontrol edin.');
       
       // Redirect to email verification page
       setTimeout(() => {
@@ -388,12 +348,8 @@ export default function SignUpPage() {
       }, 1500);
     } catch (error: any) {
       const errorMessage = error?.message || 'Kayıt oluşturulamadı';
-      toast.error(errorMessage, {
-        duration: 6000,
-        description: errorMessage.includes('e-posta') || errorMessage.includes('kullanıcı adı')
-          ? 'Lütfen farklı bir e-posta veya kullanıcı adı deneyin.'
-          : undefined,
-      });
+      notification.error('Kayıt Hatası', errorMessage + (errorMessage.includes('e-posta') || errorMessage.includes('kullanıcı adı')
+        ? ' Lütfen farklı bir e-posta veya kullanıcı adı deneyin.' : ''));
       setTurnstileToken(null); // Reset Turnstile on error
     } finally {
       setLoading(false);
@@ -409,10 +365,7 @@ export default function SignUpPage() {
       // OAuth redirects, so we don't need to handle success here
     } catch (error: any) {
       const errorMessage = error?.message || 'GitHub ile kayıt yapılamadı';
-      toast.error(errorMessage, {
-        duration: 5000,
-        description: 'Lütfen tekrar deneyin veya e-posta ile kayıt olun.',
-      });
+      notification.error('GitHub Kayıt Hatası', errorMessage + ' Lütfen tekrar deneyin veya e-posta ile kayıt olun.');
       setOauthLoading(null);
     }
   };
@@ -426,10 +379,7 @@ export default function SignUpPage() {
       // OAuth redirects, so we don't need to handle success here
     } catch (error: any) {
       const errorMessage = error?.message || 'Google ile kayıt yapılamadı';
-      toast.error(errorMessage, {
-        duration: 5000,
-        description: 'Lütfen tekrar deneyin veya e-posta ile kayıt olun.',
-      });
+      notification.error('Google Kayıt Hatası', errorMessage + ' Lütfen tekrar deneyin veya e-posta ile kayıt olun.');
       setOauthLoading(null);
     }
   };
@@ -536,7 +486,7 @@ export default function SignUpPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Information Section */}
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2 group">
                     <Label htmlFor="username" className="text-sm font-medium flex items-center gap-1.5">
                       <User className="h-4 w-4 text-muted-foreground" />
@@ -732,18 +682,17 @@ export default function SignUpPage() {
                     <span className="text-sm text-muted-foreground font-normal">(Opsiyonel)</span>
                   </Label>
                   <div className="flex gap-2">
-                    <SelectProvider>
-                      <Select
-                        value={formData.phoneCountryCode}
-                        onValueChange={(value) => setFormData({ ...formData, phoneCountryCode: value })}
+                    <Select
+                      value={formData.phoneCountryCode}
+                      onValueChange={(value) => setFormData({ ...formData, phoneCountryCode: value })}
+                    >
+                      <SelectTrigger 
+                        id="phone-country-code-select"
+                        className="w-[140px] h-11 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                       >
-                        <SelectTrigger 
-                          id="phone-country-code-select"
-                          className="w-[140px] h-11 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
-                        >
-                          <SelectValue placeholder="Ülke" />
-                        </SelectTrigger>
-                        <SelectContent>
+                        <SelectValue placeholder="Ülke" />
+                      </SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="+90">TR +90</SelectItem>
                         <SelectItem value="+1">US +1</SelectItem>
                         <SelectItem value="+44">UK +44</SelectItem>
@@ -812,7 +761,7 @@ export default function SignUpPage() {
                     </div>
                     <div className="space-y-2.5 pt-1">
                       <p className="text-xs text-muted-foreground">Min. 8 karakter</p>
-                      <div className="grid grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         <div className="flex items-center gap-2.5">
                           <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                             passwordRequirements.hasUpperCase 
@@ -903,7 +852,7 @@ export default function SignUpPage() {
                   <h3 className="text-base font-semibold text-foreground">Hesap Türü Seçimi</h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <motion.label 
                     whileHover={{ scale: 1.01, y: -1 }}
                     whileTap={{ scale: 0.99 }}
@@ -1090,11 +1039,11 @@ export default function SignUpPage() {
                     onVerify={(token) => setTurnstileToken(token)}
                     onError={() => {
                       setTurnstileToken(null);
-                      toast.error('Güvenlik doğrulaması başarısız. Lütfen tekrar deneyin.');
+                      notification.error('Güvenlik Doğrulaması Hatası', 'Güvenlik doğrulaması başarısız. Lütfen tekrar deneyin.');
                     }}
                     onExpire={() => {
                       setTurnstileToken(null);
-                      toast.warning('Güvenlik doğrulaması süresi doldu. Lütfen tekrar doğrulayın.');
+                      notification.warning('Güvenlik Doğrulaması Süresi Doldu', 'Güvenlik doğrulaması süresi doldu. Lütfen tekrar doğrulayın.');
                     }}
                     theme="auto"
                     size="normal"

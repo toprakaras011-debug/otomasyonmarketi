@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
+import { NotificationBannerContainer } from '@/components/ui/notification-banner';
 import { CartProvider } from '@/components/cart-context';
 import { AuthProvider } from '@/components/auth-provider';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -411,19 +412,22 @@ export default async function RootLayout({
             attribute="class"
             defaultTheme="system"
             enableSystem
+            disableTransitionOnChange
           >
-            <CartProvider>
-              <AuthProvider initialUser={user ?? null} initialProfile={profile}>
+            <AuthProvider initialUser={user} initialProfile={profile}>
+              <CartProvider>
+                {/* Notification Banner Container - Top of page */}
+                <NotificationBannerContainer />
+                {/* Toaster inside main content for better visibility */}
+                <Toaster />
+                <Analytics />
                 {children}
                 <CookieConsent />
                 <SpeedInsights />
-                <Analytics />
-              </AuthProvider>
-            </CartProvider>
+              </CartProvider>
+            </AuthProvider>
           </ThemeProvider>
         </ErrorBoundary>
-        {/* Toaster outside ErrorBoundary - FIXED POSITION */}
-        <Toaster />
       </body>
     </html>
   );

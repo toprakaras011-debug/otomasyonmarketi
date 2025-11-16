@@ -1544,33 +1544,33 @@ export default function SettingsPage() {
                         <AlertDialogTitle className="text-red-600 dark:text-red-400">
                           Hesabınızı Silmek İstediğinize Emin misiniz?
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="space-y-4">
-                          <p>
-                            Bu işlem geri alınamaz. Hesabınız ve tüm verileriniz kalıcı olarak silinecektir.
-                          </p>
-                          <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/20">
-                            <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-2">
-                              Silinecek veriler:
+                        <AlertDialogDescription asChild>
+                          <div className="space-y-4">
+                            <p>
+                              Bu işlem geri alınamaz. Hesabınız ve tüm verileriniz kalıcı olarak silinecektir.
                             </p>
-                            <ul className="text-xs text-red-600 dark:text-red-400 space-y-1 list-disc list-inside">
-                              <li>Profil bilgileriniz</li>
-                              <li>Satın aldığınız otomasyonlar</li>
-                              <li>Favorileriniz</li>
-                              <li>Ayarlarınız</li>
-                            </ul>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="delete-confirm" className="text-sm font-semibold">
-                              Onaylamak için <span className="text-red-600 dark:text-red-400 font-mono">SİL</span> yazın:
-                            </Label>
-                            <Input
-                              id="delete-confirm"
-                              type="text"
-                              value={deleteConfirmText}
-                              onChange={(e) => setDeleteConfirmText(e.target.value)}
-                              placeholder="SİL yazın"
-                              className="font-mono"
-                            />
+                            <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/20">
+                              <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-2">
+                                Silinecek veriler:
+                              </p>
+                              <ul className="text-xs text-red-600 dark:text-red-400 space-y-1 list-disc list-inside">
+                                <li>Profil bilgileriniz</li>
+                                <li>Satın aldığınız otomasyonlar</li>
+                                <li>Favorileriniz</li>
+                                <li>Ayarlarınız</li>
+                              </ul>
+                            </div>
+                            <div className="space-y-2">
+                              <p className="text-sm text-muted-foreground">
+                                Onaylamak için lütfen <span className="font-mono font-bold text-red-600">SİL</span> yazın:
+                              </p>
+                              <Input
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder="SİL yazın"
+                                className="font-mono"
+                              />
+                            </div>
                           </div>
                         </AlertDialogDescription>
                       </AlertDialogHeader>

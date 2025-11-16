@@ -17,15 +17,24 @@ const Toaster = ({ ...props }: ToasterProps) => {
         const element = toaster as HTMLElement;
         // Force inline styles (highest specificity)
         element.style.setProperty('position', 'fixed', 'important');
-        element.style.setProperty('bottom', '1.5rem', 'important');
-        element.style.setProperty('right', '1.5rem', 'important');
-        element.style.setProperty('top', 'auto', 'important');
-        element.style.setProperty('left', 'auto', 'important');
+        // Mobile-first positioning - top center on mobile, top center on desktop
+        if (window.innerWidth < 640) {
+          element.style.setProperty('top', '1rem', 'important');
+          element.style.setProperty('right', '1rem', 'important');
+          element.style.setProperty('left', '1rem', 'important');
+          element.style.setProperty('bottom', 'auto', 'important');
+          element.style.setProperty('transform', 'translateX(0)', 'important');
+        } else {
+          element.style.setProperty('top', '1.5rem', 'important');
+          element.style.setProperty('right', '1.5rem', 'important');
+          element.style.setProperty('left', '1.5rem', 'important');
+          element.style.setProperty('bottom', 'auto', 'important');
+          element.style.setProperty('transform', 'translateX(0)', 'important');
+        }
         element.style.setProperty('z-index', '2147483647', 'important'); // Max z-index
-        element.style.setProperty('transform', 'none', 'important');
         element.style.setProperty('margin', '0', 'important');
         element.style.setProperty('padding', '0', 'important');
-        element.style.setProperty('inset', 'auto 1.5rem 1.5rem auto', 'important');
+        element.style.setProperty('inset', '1rem auto auto 1rem', 'important');
       });
     };
 
@@ -64,18 +73,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps['theme']}
       className="toaster group"
-      position="bottom-right"
+      position="top-center"
       richColors
       closeButton
       expand={false}
       visibleToasts={5}
-      offset="24px"
+      offset="16px"
       gap={14}
       toastOptions={{
         duration: 5000,
         classNames: {
           toast:
-            'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:shadow-2xl group-[.toaster]:z-[99999] group-[.toaster]:rounded-2xl',
+            'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:shadow-2xl group-[.toaster]:z-[99999] group-[.toaster]:rounded-2xl max-w-[calc(100vw-2rem)] sm:max-w-md',
           description: 'group-[.toast]:text-white/90 group-[.toast]:text-[13px] group-[.toast]:leading-relaxed group-[.toast]:mt-1',
           actionButton:
             'group-[.toast]:bg-white/20 group-[.toast]:text-white group-[.toast]:rounded-lg group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:font-medium group-[.toast]:backdrop-blur-sm hover:group-[.toast]:bg-white/30',
