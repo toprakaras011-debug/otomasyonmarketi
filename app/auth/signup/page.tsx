@@ -901,12 +901,12 @@ export default function SignUpPage() {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <motion.label 
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all duration-300 ${
+                    whileHover={{ scale: 1.01, y: -1 }}
+                    whileTap={{ scale: 0.99 }}
+                    className={`relative cursor-pointer overflow-hidden rounded-lg border-2 p-2.5 transition-all duration-300 ${
                       formData.role === 'user' 
-                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-blue-500/10 shadow-lg shadow-purple-500/20' 
-                        : 'border-border bg-card hover:border-purple-500/50 hover:shadow-md hover:bg-accent/50'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-blue-500/10 shadow-md shadow-purple-500/20' 
+                        : 'border-border bg-card hover:border-purple-500/50 hover:shadow-sm hover:bg-accent/50'
                     }`}
                   >
                     <input
@@ -920,43 +920,43 @@ export default function SignUpPage() {
                     {formData.role === 'user' && (
                       <motion.div 
                         layoutId="activeRole"
-                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-blue-500/5 rounded-xl"
+                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-blue-500/5 rounded-lg"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <div className="relative flex flex-col items-center gap-2.5">
-                      <div className={`rounded-xl p-2.5 transition-all duration-300 ${
+                    <div className="relative flex flex-col items-center gap-1.5">
+                      <div className={`rounded-lg p-1.5 transition-all duration-300 ${
                         formData.role === 'user' 
-                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30' 
+                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-md shadow-purple-500/30' 
                           : 'bg-muted'
                       }`}>
-                        <ShoppingBag className={`h-5 w-5 transition-colors duration-200 ${
+                        <ShoppingBag className={`h-4 w-4 transition-colors duration-200 ${
                           formData.role === 'user' ? 'text-white' : 'text-muted-foreground'
                         }`} />
                       </div>
                       <div className="text-center space-y-0.5">
-                        <span className="text-sm font-bold block text-foreground">Kullanıcı</span>
-                        <span className="text-[11px] text-muted-foreground block">Otomasyonları satın al</span>
+                        <span className="text-xs font-semibold block text-foreground">Kullanıcı</span>
+                        <span className="text-[10px] text-muted-foreground block">Otomasyonları satın al</span>
                       </div>
                       {formData.role === 'user' && (
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
                           animate={{ scale: 1, rotate: 0 }}
                           transition={{ type: "spring", bounce: 0.4, duration: 0.5 }}
-                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1 shadow-md"
+                          className="absolute -top-0.5 -right-0.5 bg-purple-500 rounded-full p-0.5 shadow-sm"
                         >
-                          <CheckCircle2 className="h-3 w-3 text-white" />
+                          <CheckCircle2 className="h-2.5 w-2.5 text-white" />
                         </motion.div>
                       )}
                     </div>
                   </motion.label>
                   <motion.label 
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`relative cursor-pointer overflow-hidden rounded-xl border-2 p-4 transition-all duration-300 ${
+                    whileHover={{ scale: 1.01, y: -1 }}
+                    whileTap={{ scale: 0.99 }}
+                    className={`relative cursor-pointer overflow-hidden rounded-lg border-2 p-2.5 transition-all duration-300 ${
                       formData.role === 'developer' 
-                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-blue-500/10 shadow-lg shadow-purple-500/20' 
-                        : 'border-border bg-card hover:border-purple-500/50 hover:shadow-md hover:bg-accent/50'
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 via-purple-500/10 to-blue-500/10 shadow-md shadow-purple-500/20' 
+                        : 'border-border bg-card hover:border-purple-500/50 hover:shadow-sm hover:bg-accent/50'
                     }`}
                   >
                     <input
@@ -970,32 +970,32 @@ export default function SignUpPage() {
                     {formData.role === 'developer' && (
                       <motion.div 
                         layoutId="activeRole"
-                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-blue-500/5 rounded-xl"
+                        className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-blue-500/5 rounded-lg"
                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
-                    <div className="relative flex flex-col items-center gap-2.5">
-                      <div className={`rounded-xl p-2.5 transition-all duration-300 ${
+                    <div className="relative flex flex-col items-center gap-1.5">
+                      <div className={`rounded-lg p-1.5 transition-all duration-300 ${
                         formData.role === 'developer' 
-                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/30' 
+                          ? 'bg-gradient-to-br from-purple-600 to-blue-600 shadow-md shadow-purple-500/30' 
                           : 'bg-muted'
                       }`}>
-                        <Code2 className={`h-5 w-5 transition-colors duration-200 ${
+                        <Code2 className={`h-4 w-4 transition-colors duration-200 ${
                           formData.role === 'developer' ? 'text-white' : 'text-muted-foreground'
                         }`} />
                       </div>
                       <div className="text-center space-y-0.5">
-                        <span className="text-sm font-bold block text-foreground">Geliştirici</span>
-                        <span className="text-[11px] text-muted-foreground block">Otomasyonları sat</span>
+                        <span className="text-xs font-semibold block text-foreground">Geliştirici</span>
+                        <span className="text-[10px] text-muted-foreground block">Otomasyonları sat</span>
                       </div>
                       {formData.role === 'developer' && (
                         <motion.div
                           initial={{ scale: 0, rotate: -180 }}
                           animate={{ scale: 1, rotate: 0 }}
                           transition={{ type: "spring", bounce: 0.4, duration: 0.5 }}
-                          className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-1 shadow-md"
+                          className="absolute -top-0.5 -right-0.5 bg-purple-500 rounded-full p-0.5 shadow-sm"
                         >
-                          <CheckCircle2 className="h-3 w-3 text-white" />
+                          <CheckCircle2 className="h-2.5 w-2.5 text-white" />
                         </motion.div>
                       )}
                     </div>
