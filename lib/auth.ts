@@ -155,37 +155,52 @@ export const signUp = async (
       throw new Error('Kullanıcı oluşturulamadı. Lütfen tekrar deneyin.');
     }
 
-    // Create user profile
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .insert({
-        id: authData.user.id,
-        username: trimmedUsername,
-        full_name: fullName?.trim() || null,
-        phone: normalizedPhone || null,
+    // Wait a bit for session to be established
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Create user profile via API route (server-side for better RLS handling)
+    try {
+      const profileResponse = await fetch('/api/auth/create-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: trimmedUsername,
+          fullName: fullName?.trim() || null,
+          phone: normalizedPhone || null,
+        }),
+        credentials: 'include',
       });
 
-    if (profileError) {
-      // Only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Profile creation error:', profileError);
+      const profileData = await profileResponse.json();
+
+      if (!profileResponse.ok) {
+        // If profile creation fails, we should still return authData
+        // The user can retry profile creation later
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Profile creation failed:', profileData.error);
+        }
+        
+        // Check if it's a username conflict
+        if (profileData.error?.includes('kullanıcı adı zaten kullanılıyor')) {
+          throw new Error(profileData.error);
+        }
+        
+        // For other errors, throw a generic message
+        throw new Error(profileData.error || 'Profil oluşturulamadı. Lütfen tekrar deneyin.');
       }
-
-      // Check for specific errors
-      const errorMessage = profileError.message?.toLowerCase() || '';
-      const errorCode = profileError.code;
-
-      // Username already exists
-      if (
-        errorCode === '23505' ||
-        errorMessage.includes('unique') ||
-        errorMessage.includes('duplicate') ||
-        errorMessage.includes('already exists')
-      ) {
-        throw new Error('Bu kullanıcı adı zaten kullanılıyor. Lütfen farklı bir kullanıcı adı seçin.');
+    } catch (error: any) {
+      // If it's already a user-friendly error message, re-throw it
+      if (error?.message && typeof error.message === 'string') {
+        // Check if it's a network error
+        if (error.message.includes('fetch') || error.message.includes('network')) {
+          throw new Error('Bağlantı hatası. Profil oluşturulamadı. Lütfen tekrar deneyin.');
+        }
+        throw error;
       }
-
-      // Generic profile error
+      
+      // Otherwise, provide a generic error
       throw new Error('Profil oluşturulamadı. Lütfen tekrar deneyin.');
     }
 
