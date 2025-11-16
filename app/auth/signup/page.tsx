@@ -320,16 +320,16 @@ export default function SignUpPage() {
             {/* Email/Password Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Personal Information Section */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <User className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-foreground">Kişisel Bilgiler</h3>
+                  <User className="h-5 w-5 text-purple-500" />
+                  <h3 className="text-base font-semibold text-foreground">Kişisel Bilgiler</h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5 group">
-                    <Label htmlFor="username" className="text-xs font-medium flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2 group">
+                    <Label htmlFor="username" className="text-sm font-medium flex items-center gap-1.5">
+                      <User className="h-4 w-4 text-muted-foreground" />
                       Kullanıcı Adı
                       <span className="text-red-500">*</span>
                     </Label>
@@ -341,23 +341,23 @@ export default function SignUpPage() {
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                         required
-                        className="h-10 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        className="h-11 pl-3 pr-10"
                       />
                       {formData.username && formData.username.length >= 3 && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                       )}
                     </div>
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                      <Shield className="h-3 w-3" />
+                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                      <Shield className="h-3.5 w-3.5" />
                       <span>Kalıcıdır, değiştirilemez</span>
                     </p>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <Label htmlFor="fullName" className="text-xs font-medium flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-sm font-medium flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-muted-foreground" />
                       Ad Soyad
-                      <span className="text-xs text-muted-foreground">(Opsiyonel)</span>
+                      <span className="text-sm text-muted-foreground font-normal">(Opsiyonel)</span>
                     </Label>
                     <Input
                       id="fullName"
@@ -365,22 +365,22 @@ export default function SignUpPage() {
                       placeholder="Adınız Soyadınız"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      className="h-11"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Contact Information Section */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <Mail className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-foreground">İletişim Bilgileri</h3>
+                  <Mail className="h-5 w-5 text-purple-500" />
+                  <h3 className="text-base font-semibold text-foreground">İletişim Bilgileri</h3>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-xs font-medium flex items-center gap-1.5">
-                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium flex items-center gap-1.5">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
                     E-posta Adresi
                     <span className="text-red-500">*</span>
                   </Label>
@@ -394,7 +394,7 @@ export default function SignUpPage() {
                       onBlur={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                       required
                       autoComplete="email"
-                      className="h-10 text-sm pl-3 pr-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                      className="h-11 pl-3 pr-10"
                     />
                     {formData.email && formData.email.includes('@') && (
                       <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
@@ -402,11 +402,11 @@ export default function SignUpPage() {
                   </div>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-xs font-medium flex items-center gap-1.5">
-                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-1.5">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
                     Telefon Numarası
-                    <span className="text-xs text-muted-foreground">(Opsiyonel)</span>
+                    <span className="text-sm text-muted-foreground font-normal">(Opsiyonel)</span>
                   </Label>
                   <Input
                     id="phone"
@@ -419,22 +419,22 @@ export default function SignUpPage() {
                     }}
                     onBlur={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
                     autoComplete="tel"
-                    className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                    className="h-11"
                   />
                 </div>
               </div>
 
               {/* Security Section */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <Lock className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-foreground">Güvenlik</h3>
+                  <Lock className="h-5 w-5 text-purple-500" />
+                  <h3 className="text-base font-semibold text-foreground">Güvenlik</h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-xs font-medium flex items-center gap-1.5">
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium flex items-center gap-1.5">
+                      <Lock className="h-4 w-4 text-muted-foreground" />
                       Şifre
                       <span className="text-red-500">*</span>
                     </Label>
@@ -447,18 +447,18 @@ export default function SignUpPage() {
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required
                         minLength={6}
-                        className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        className="h-11"
                       />
                       {formData.password && formData.password.length >= 6 && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                       )}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">Min. 6 karakter</p>
+                    <p className="text-xs text-muted-foreground">Min. 6 karakter</p>
                   </div>
                   
-                  <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-xs font-medium flex items-center gap-1.5">
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-1.5">
+                      <Lock className="h-4 w-4 text-muted-foreground" />
                       Şifre Tekrar
                       <span className="text-red-500">*</span>
                     </Label>
@@ -471,7 +471,7 @@ export default function SignUpPage() {
                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         required
                         minLength={6}
-                        className="h-10 text-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
+                        className="h-11"
                       />
                       {formData.confirmPassword && formData.password === formData.confirmPassword && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
@@ -481,17 +481,17 @@ export default function SignUpPage() {
                       )}
                     </div>
                     {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                      <p className="text-[10px] text-red-500">Şifreler eşleşmiyor</p>
+                      <p className="text-xs text-red-500">Şifreler eşleşmiyor</p>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Account Type Section */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 pb-2 border-b border-border/50">
-                  <Sparkles className="h-4 w-4 text-purple-500" />
-                  <h3 className="text-sm font-semibold text-foreground">Hesap Türü Seçimi</h3>
+                  <Sparkles className="h-5 w-5 text-purple-500" />
+                  <h3 className="text-base font-semibold text-foreground">Hesap Türü Seçimi</h3>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
@@ -693,12 +693,12 @@ export default function SignUpPage() {
 
               <Button
                 type="submit"
-                className="w-full h-10 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02] text-sm"
+                className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold shadow-lg shadow-purple-500/50 transition-all hover:scale-[1.02]"
                 disabled={loading || oauthLoading !== null || (!!turnstileSiteKey && !turnstileToken)}
               >
                 {loading ? (
                   <span className="flex items-center">
-                    <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                    <svg className="mr-2 h-5 w-5 animate-spin" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
