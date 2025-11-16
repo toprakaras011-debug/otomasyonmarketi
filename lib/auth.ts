@@ -166,6 +166,7 @@ export const signUp = async (
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          userId: authData.user.id, // Send user ID in case session is not ready yet
           username: trimmedUsername,
           fullName: fullName?.trim() || null,
           phone: normalizedPhone || null,
