@@ -460,15 +460,14 @@ export default function DeveloperDashboardPage() {
       }
 
       if (data) {
-        // Update local state
-        setProfile((prev: any) => ({
-          ...prev,
+        // Update payment data state (profile is managed by auth context)
+        setPaymentData({
           full_name: paymentData.full_name.trim(),
           tc_no: paymentData.tc_no.trim(),
           tax_office: paymentData.tax_office.trim(),
           iban: cleanIban,
           bank_name: bankName,
-        }));
+        });
 
         toast.success('Ödeme bilgileri kaydedildi!');
         setPaymentDialogOpen(false);
