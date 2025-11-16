@@ -249,24 +249,24 @@ export default function SignUpPage() {
         className="relative z-10 w-full max-w-md"
       >
         <Card className="border-border/50 bg-card/80 backdrop-blur-xl shadow-2xl">
-          <CardHeader className="space-y-2 text-center pb-4">
+          <CardHeader className="space-y-4 text-center">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", duration: 0.6 }}
-              className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/50"
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/50"
             >
-              <Zap className="h-6 w-6 text-white" />
+              <Zap className="h-8 w-8 text-white" />
             </motion.div>
             <div>
-              <CardTitle className="text-2xl font-bold">Hesap Oluşturun</CardTitle>
-              <CardDescription className="mt-1 text-sm">
+              <CardTitle className="text-3xl font-bold">Hesap Oluşturun</CardTitle>
+              <CardDescription className="mt-2 text-base">
                 Otomasyonlarınızı yönetmeye başlayın
               </CardDescription>
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {/* OAuth Buttons */}
             <div className="space-y-2">
               <Button
