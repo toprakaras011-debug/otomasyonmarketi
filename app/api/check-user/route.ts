@@ -5,6 +5,8 @@ import type { NextRequest } from 'next/server';
 import { logger } from '@/lib/logger';
 import { getErrorMessage, getErrorCategory } from '@/lib/error-messages';
 
+// Force dynamic rendering - this route uses searchParams which can't be prerendered
+export const dynamic = 'force-dynamic';
 
 /**
  * Check if a user exists in the database

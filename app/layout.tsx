@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter, Poppins } from 'next/font/google';
+import { Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { CartProvider } from '@/components/cart-context';
 import { AuthProvider } from '@/components/auth-provider';
@@ -359,12 +360,14 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <CartProvider>
-              <AuthProvider>
-                {children}
-                <CookieConsent />
-                <SpeedInsights />
-                <Analytics />
-              </AuthProvider>
+              <Suspense fallback={null}>
+                <AuthProvider>
+                  {children}
+                  <CookieConsent />
+                  <SpeedInsights />
+                  <Analytics />
+                </AuthProvider>
+              </Suspense>
             </CartProvider>
           </ThemeProvider>
         </ErrorBoundary>
