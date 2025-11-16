@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { signUp, signInWithGithub, signInWithGoogle } from '@/lib/auth';
 import { toast } from 'sonner';
 import { Zap, Github, ArrowLeft, Sparkles, Shield, User, Mail, Phone, Lock, Code2, ShoppingBag, Info, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -26,6 +27,7 @@ export default function SignUpPage() {
     confirmPassword: '',
     username: '',
     fullName: '',
+    phoneCountryCode: '+90',
     phone: '',
     role: 'user' as 'user' | 'developer',
     terms: false,
@@ -34,6 +36,15 @@ export default function SignUpPage() {
     commission: false,
     newsletter: false,
   });
+
+  // Password requirements
+  const passwordRequirements = {
+    minLength: formData.password.length >= 8,
+    hasUpperCase: /[A-Z]/.test(formData.password),
+    hasLowerCase: /[a-z]/.test(formData.password),
+    hasNumber: /[0-9]/.test(formData.password),
+    hasSpecialChar: /[^A-Za-z0-9]/.test(formData.password),
+  };
 
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
@@ -154,12 +165,17 @@ export default function SignUpPage() {
     try {
       const normalizedEmail = formData.email.trim().toLowerCase();
 
+      // Combine country code and phone number
+      const fullPhone = formData.phone?.trim() 
+        ? `${formData.phoneCountryCode}${formData.phone.replace(/\D/g, '')}`
+        : undefined;
+
       await signUp(
         normalizedEmail,
         formData.password,
         formData.username.trim(),
         formData.fullName?.trim() || undefined,
-        formData.phone?.trim() || undefined
+        fullPhone
       );
       
       toast.success('Hesabınız başarıyla oluşturuldu!', {
@@ -408,19 +424,54 @@ export default function SignUpPage() {
                     Telefon Numarası
                     <span className="text-sm text-muted-foreground font-normal">(Opsiyonel)</span>
                   </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="0555 123 45 67"
-                    value={formData.phone}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d\s-]/g, '');
-                      setFormData({ ...formData, phone: value });
-                    }}
-                    onBlur={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
-                    autoComplete="tel"
-                    className="h-11"
-                  />
+                  <div className="flex gap-2">
+                    <Select
+                      value={formData.phoneCountryCode}
+                      onValueChange={(value) => setFormData({ ...formData, phoneCountryCode: value })}
+                    >
+                      <SelectTrigger className="w-[140px] h-11">
+                        <SelectValue placeholder="Ülke" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+90">TR +90</SelectItem>
+                        <SelectItem value="+1">US +1</SelectItem>
+                        <SelectItem value="+44">UK +44</SelectItem>
+                        <SelectItem value="+49">DE +49</SelectItem>
+                        <SelectItem value="+33">FR +33</SelectItem>
+                        <SelectItem value="+39">IT +39</SelectItem>
+                        <SelectItem value="+34">ES +34</SelectItem>
+                        <SelectItem value="+31">NL +31</SelectItem>
+                        <SelectItem value="+32">BE +32</SelectItem>
+                        <SelectItem value="+41">CH +41</SelectItem>
+                        <SelectItem value="+43">AT +43</SelectItem>
+                        <SelectItem value="+46">SE +46</SelectItem>
+                        <SelectItem value="+47">NO +47</SelectItem>
+                        <SelectItem value="+45">DK +45</SelectItem>
+                        <SelectItem value="+358">FI +358</SelectItem>
+                        <SelectItem value="+48">PL +48</SelectItem>
+                        <SelectItem value="+420">CZ +420</SelectItem>
+                        <SelectItem value="+36">HU +36</SelectItem>
+                        <SelectItem value="+40">RO +40</SelectItem>
+                        <SelectItem value="+30">GR +30</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="555 123 45 67"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d\s-]/g, '');
+                        setFormData({ ...formData, phone: value });
+                      }}
+                      onBlur={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
+                      autoComplete="tel"
+                      className="h-11 flex-1"
+                    />
+                  </div>
+                  {formData.phoneCountryCode === '+90' && (
+                    <p className="text-xs text-muted-foreground">Türkiye (+90) - 10 haneli numara</p>
+                  )}
                 </div>
               </div>
 
@@ -431,7 +482,7 @@ export default function SignUpPage() {
                   <h3 className="text-base font-semibold text-foreground">Güvenlik</h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-sm font-medium flex items-center gap-1.5">
                       <Lock className="h-4 w-4 text-muted-foreground" />
@@ -446,14 +497,66 @@ export default function SignUpPage() {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required
-                        minLength={6}
+                        minLength={8}
                         className="h-11"
                       />
-                      {formData.password && formData.password.length >= 6 && (
+                      {formData.password && passwordRequirements.minLength && passwordRequirements.hasUpperCase && passwordRequirements.hasLowerCase && passwordRequirements.hasNumber && passwordRequirements.hasSpecialChar && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">Min. 6 karakter</p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">Min. 8 karakter</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                            passwordRequirements.hasUpperCase 
+                              ? 'border-green-500 bg-green-500' 
+                              : 'border-muted-foreground'
+                          }`}>
+                            {passwordRequirements.hasUpperCase && (
+                              <CheckCircle2 className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">Büyük harf</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                            passwordRequirements.hasLowerCase 
+                              ? 'border-green-500 bg-green-500' 
+                              : 'border-muted-foreground'
+                          }`}>
+                            {passwordRequirements.hasLowerCase && (
+                              <CheckCircle2 className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">Küçük harf</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                            passwordRequirements.hasNumber 
+                              ? 'border-green-500 bg-green-500' 
+                              : 'border-muted-foreground'
+                          }`}>
+                            {passwordRequirements.hasNumber && (
+                              <CheckCircle2 className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">Rakam</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                            passwordRequirements.hasSpecialChar 
+                              ? 'border-green-500 bg-green-500' 
+                              : 'border-muted-foreground'
+                          }`}>
+                            {passwordRequirements.hasSpecialChar && (
+                              <CheckCircle2 className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">Özel karakter</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
@@ -470,7 +573,7 @@ export default function SignUpPage() {
                         value={formData.confirmPassword}
                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                         required
-                        minLength={6}
+                        minLength={8}
                         className="h-11"
                       />
                       {formData.confirmPassword && formData.password === formData.confirmPassword && (

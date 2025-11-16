@@ -34,8 +34,8 @@ export const signUp = async (
     }
 
     // Password validation
-    if (password.length < 6) {
-      throw new Error('Şifre en az 6 karakter olmalıdır.');
+    if (password.length < 8) {
+      throw new Error('Şifre en az 8 karakter olmalıdır.');
     }
 
     // Username validation
