@@ -1,67 +1,69 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter, Poppins } from 'next/font/google';
+import Head from 'next/head';
 import { Toaster } from '@/components/ui/sonner';
-import { NotificationBannerContainer } from '@/components/ui/notification-banner';
 import { CartProvider } from '@/components/cart-context';
 import { AuthProvider } from '@/components/auth-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ErrorBoundary } from '@/components/error-boundary';
-import { createClient } from '@/lib/supabase/server';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 import { CookieConsent } from '@/components/cookie-consent';
+import { createClient } from '@/lib/supabase/server';
 
-const timeBasedThemeInitScript = `
-(function() {
-  try {
-    var storageKey = 'theme';
-    var modeKey = 'theme-mode';
-    var mode = localStorage.getItem(modeKey);
-    var root = document.documentElement;
-
-    if (mode === 'manual') {
-      var storedTheme = localStorage.getItem(storageKey);
-      if (storedTheme) {
-        root.classList.remove('light', 'dark');
-        root.classList.add(storedTheme);
-      }
-      return;
-    }
-
-    var hour = new Date().getHours();
-    var theme = hour >= 7 && hour < 19 ? 'light' : 'dark';
-
-    localStorage.setItem(storageKey, theme);
-    localStorage.setItem(modeKey, 'auto');
-
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-  } catch (error) {
-    console.warn('Theme initialization failed', error);
-  }
-})();
-`;
-
+// Font optimizasyonu
 const inter = Inter({
   subsets: ['latin'],
+  display: 'swap',
   variable: '--font-inter',
-  display: 'optional', // Prevent layout shift - use fallback immediately
-  preload: true, // Preload critical font
+  preload: true,
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
   adjustFontFallback: true,
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '600'],
+  style: 'normal',
 });
 
 const poppins = Poppins({
-  weight: ['600', '700', '900'],
+  weight: '700',
   subsets: ['latin'],
   variable: '--font-poppins',
-  display: 'optional', // Prevent layout shift - use fallback immediately
-  preload: false, // Defer non-critical font
+  display: 'swap',
+  preload: true,
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
   adjustFontFallback: true,
 });
+
+// Preconnect to external domains for performance
+const preconnectDomains = [
+  'https://kizewqavkosvrwfnbxme.supabase.co',
+  'https://fonts.googleapis.com',
+  'https://fonts.gstatic.com',
+  'https://vercel.live',
+  'https://cdn.vercel-insights.com',
+];
+
+// Simple theme script for initial theme setup
+const themeScript = `
+  (function() {
+    try {
+      // Check for saved theme preference or use system preference
+      const theme = localStorage.getItem('theme') || 'system';
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      // Apply theme immediately to prevent flash of default theme
+      if (theme === 'dark' || (theme === 'system' && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (e) {}
+  })();
+`;
+
+// Optimize Inter font loading
+
+// Optimize Poppins font loading
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -311,9 +313,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Optimize: Only fetch essential profile fields for initial render
   let profile: any = null;
@@ -327,20 +327,17 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="tr" suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang="tr" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {/* Resource Hints for Performance - Critical */}
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <>
             <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
             <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
             {/* Preconnect to Supabase storage for faster image loading */}
-            {process.env.NEXT_PUBLIC_SUPABASE_URL.includes('/rest/v1') && (
-              <>
-                <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} />
-                <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} crossOrigin="anonymous" />
-              </>
-            )}
+            <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} />
+            <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace('/rest/v1', '/storage/v1')} crossOrigin="anonymous" />
           </>
         )}
         {/* Preconnect to Google Fonts - Early connection */}
@@ -348,86 +345,75 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Preconnect to Vercel Analytics */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
-        <link rel="preconnect" href="https://vitals.vercel-insights.com" crossOrigin="anonymous" />
-        {/* Preconnect to Cloudflare Turnstile */}
-        <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
-        <link rel="preconnect" href="https://challenges.cloudflare.com" crossOrigin="anonymous" />
         
-        {/* Critical inline script - must run before render (non-blocking) */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: timeBasedThemeInitScript,
-          }}
-          suppressHydrationWarning
-        />
-        {/* Critical CSS to prevent flash of unstyled content (FOUC) */}
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-              html {
-                background-color: hsl(0 0% 100%);
-                color: hsl(0 0% 3.9%);
-              }
-              html.dark {
-                background-color: hsl(222 47% 4%);
-                color: hsl(210 40% 98%);
-              }
-            `,
-          }}
-          suppressHydrationWarning
-        />
+        {/* Theme initialization is handled by ThemeScript component */}
         
         {/* Structured Data - Defer to avoid blocking render */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "Otomasyon Mağazası",
-              "url": "https://www.otomasyonmagazasi.com",
-              "alternateName": ["https://otomasyonmagazasi.com", "https://www.otomasyonmagazasi.com"],
-              "potentialAction": {
-                "@type": "SearchAction",
-                "target": "https://www.otomasyonmagazasi.com/arama?q={search_term_string}",
-                "query-input": "required name=search_term_string"
-              }
-            }),
+            __html: `
+              /* Critical CSS Inlined */
+              html{scroll-behavior:smooth}body{margin:0;padding:0;font-family:var(--font-inter),-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Open Sans','Helvetica Neue',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}img{max-width:100%;height:auto;vertical-align:middle;font-style:italic;background-repeat:no-repeat;background-size:cover;shape-margin:.75rem}@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+            `,
           }}
-          defer
-          suppressHydrationWarning
         />
-        
-        {/* Icons and manifest - Managed by metadata API */}
-        {/* Cloudflare Turnstile Script */}
-        <script
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          async
-          defer
+
+        {/* Theme Script */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+
+        {/* Preconnect and Preload */}
+        {preconnectDomains.map((url) => (
+          <link key={url} rel="preconnect" href={url} crossOrigin="anonymous" />
+        ))}
+
+        {/* Preload Critical Assets */}
+        <link
+          rel="preload"
+          href="/_next/static/media/2aaf0723116ed430-s.p.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
         />
+        <link
+          rel="preload"
+          href="/_next/static/media/3f32b9a3d5f3a3b3-s.p.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+
+        {/* Preload LCP Image if exists */}
+        <link
+          rel="preload"
+          href="/hero-image.webp"
+          as="image"
+          type="image/webp"
+          imageSrcSet="/hero-image.webp 1x, /hero-image@2x.webp 2x"
+        />
+
+        {/* Next SEO */}
       </head>
-      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
-        <ErrorBoundary>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+
+      <body className="min-h-screen bg-background font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ErrorBoundary>
             <AuthProvider initialUser={user} initialProfile={profile}>
               <CartProvider>
-                {/* Notification Banner Container - Top of page */}
-                <NotificationBannerContainer />
-                {/* Toaster inside main content for better visibility */}
-                <Toaster />
-                <Analytics />
                 {children}
-                <CookieConsent />
+                <Toaster position="top-center" richColors />
                 <SpeedInsights />
+                <Analytics />
+                <CookieConsent />
               </CartProvider>
             </AuthProvider>
-          </ThemeProvider>
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   );

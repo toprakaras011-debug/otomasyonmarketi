@@ -90,15 +90,13 @@ function HeroComponent({ initialStats }: HeroProps) {
   }, [initialStats]);
 
   const formatWithPlus = useCallback((value: number, suffix?: string) => {
-    if (!value) {
-      return suffix ? `0 ${suffix}` : '0';
-    }
+    const safeValue = Number.isFinite(value) ? value : 0;
 
-    const formatted = value >= 1000
-      ? new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
-      : new Intl.NumberFormat('tr-TR').format(value);
+    const formatted = safeValue >= 1000
+      ? new Intl.NumberFormat('tr-TR', { notation: 'compact', maximumFractionDigits: 1 }).format(safeValue)
+      : new Intl.NumberFormat('tr-TR').format(safeValue);
 
-    return suffix ? `${formatted}+ ${suffix}` : `${formatted}+`;
+    return suffix ? `${formatted} ${suffix}` : formatted;
   }, []);
 
   const primaryStats = useMemo(() => ([

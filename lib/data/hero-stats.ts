@@ -23,8 +23,7 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
       supabase
         .from('user_profiles')
         .select('id', { count: 'exact', head: true })
-        .eq('is_developer', true)
-        .eq('developer_approved', true),
+        .eq('is_developer', true),
       // Count all user profiles (no filter to get total users)
       supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
       supabase
@@ -34,11 +33,13 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
         .eq('admin_approved', true)
         .limit(1000),
     ]);
+    const { data: authUsersData } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
 
   // Ensure we have valid counts, fallback to 0 if null/undefined
   const automationsCount = automationsResponse.count ?? 0;
   const developersCount = developersResponse.count ?? 0;
-  const usersCount = usersResponse.count ?? 0;
+  const usersProfilesCount = usersResponse.count ?? 0;
+  const usersCount = authUsersData?.users?.length ?? usersProfilesCount;
 
   const tagSet = new Set<string>();
   const integrationsData = integrationsResponse.data as Array<{ tags?: string[] | null }> | null;
@@ -54,23 +55,23 @@ const fetchHeroStats = async (): Promise<HeroStats> => {
 
     // Ensure minimum values for display (even if database is empty)
     return {
-      automations: Math.max(automationsCount, 1),
-      developers: Math.max(developersCount, 3),
-      users: Math.max(usersCount, 1),
-      integrations: Math.max(integrationsCount, 1),
-      estimatedHours: Math.max(estimatedHours, 60),
-      efficiencyMultiplier: Math.max(efficiencyMultiplier, 8),
+      automations: automationsCount,
+      developers: developersCount,
+      users: usersCount,
+      integrations: integrationsCount,
+      estimatedHours,
+      efficiencyMultiplier,
     };
   } catch (error) {
     console.error('Error fetching hero stats:', error);
     // Return fallback values with minimums
     return {
-      automations: 1,
-      developers: 3,
-      users: 1,
-      integrations: 1,
-      estimatedHours: 60,
-      efficiencyMultiplier: 8,
+      automations: 0,
+      developers: 0,
+      users: 0,
+      integrations: 0,
+      estimatedHours: 0,
+      efficiencyMultiplier: 0,
     };
   }
 };
